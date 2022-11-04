@@ -7,12 +7,12 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """
-Raven P2P network half-a-node.
+Evrmore P2P network half-a-node.
 
 This python code was modified from ArtForz' public domain  half-a-node, as
 found in the mini-node branch of http://github.com/jgarzik/pynode.
 
-NodeConn: an object which manages p2p connectivity to a raven node
+NodeConn: an object which manages p2p connectivity to a Evrmore node
 
 NodeConnCB: a base class that describes the interface for receiving
             callbacks with network messages from a NodeConn
@@ -45,7 +45,7 @@ mininode_lock = RLock()
 
 
 class NodeConnCB:
-    """Callback and helper functions for P2P connection to a ravend node.
+    """Callback and helper functions for P2P connection to a evrmored node.
 
     Individual test cases should subclass this and override the on_* methods
     if they want to alter message handling behaviour.
@@ -274,9 +274,9 @@ class NodeConn(asyncore.dispatcher):
     }
 
     MAGIC_BYTES = {
-        "mainnet": b"\x52\x41\x56\x4e",  # mainnet
-        "testnet3": b"\x45\x50\x4f\x45",  # testnet3
-        "regtest": b"\x43\x52\x4f\x57",  # regtest
+        "mainnet": b"\x45\x56\x52\x4d",  # mainnet - EVRM
+        "testnet": b"\x45\x56\x52\x54",  # testnet - EVRT
+        "regtest": b"\xfa\xbf\xb5\xda",  # regtest - same as bitcoin
     }
 
     def __init__(self, dstaddr, dstport, rpc, callback, net="regtest", services=NODE_NETWORK, send_version=True):
@@ -306,7 +306,7 @@ class NodeConn(asyncore.dispatcher):
             vt.addrFrom.port = 0
             self.send_message(vt, True)
 
-        logger.info('Connecting to Raven Node: %s:%d' % (self.dstaddr, self.dstport))
+        logger.info('Connecting to Evrmore Node: %s:%d' % (self.dstaddr, self.dstport))
 
         try:
             self.connect((dstaddr, dstport))

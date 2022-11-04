@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,7 +20,7 @@ class TransactionStatus
 public:
     TransactionStatus():
         countsForBalance(false), sortKey(""),
-        matures_in(0), status(Offline), depth(0), open_for(0), cur_num_blocks(-1)
+        matures_in(0), status(Unconfirmed), depth(0), open_for(0), cur_num_blocks(-1)
     { }
 
     enum Status {
@@ -27,14 +28,12 @@ public:
         /// Normal (sent/received) transactions
         OpenUntilDate,      /**< Transaction not yet final, waiting for date */
         OpenUntilBlock,     /**< Transaction not yet final, waiting for block */
-        Offline,            /**< Not sent to any other nodes **/
         Unconfirmed,        /**< Not yet mined into a block **/
         Confirming,         /**< Confirmed, but waiting for the recommended number of confirmations **/
         Conflicted,         /**< Conflicts with other transaction or mempool **/
         Abandoned,          /**< Abandoned from the wallet **/
         /// Generated (mined) transactions
         Immature,           /**< Mined but waiting for maturity */
-        MaturesWarning,     /**< Transaction will likely not mature because no nodes have confirmed */
         NotAccepted         /**< Mined but not accepted */
     };
 
@@ -90,13 +89,13 @@ public:
     static const int RecommendedNumConfirmations = 6;
 
     TransactionRecord():
-            hash(), time(0), type(Other), address(""), debit(0), credit(0), assetName("RVN"), units(8), idx(0)
+            hash(), time(0), type(Other), address(""), debit(0), credit(0), assetName("EVR"), units(8), idx(0)
     {
     }
 
     TransactionRecord(uint256 _hash, qint64 _time):
             hash(_hash), time(_time), type(Other), address(""), debit(0),
-            credit(0), assetName("RVN"), units(8), idx(0)
+            credit(0), assetName("EVR"), units(8), idx(0)
     {
     }
 
@@ -104,7 +103,7 @@ public:
                 Type _type, const std::string &_address,
                 const CAmount& _debit, const CAmount& _credit):
             hash(_hash), time(_time), type(_type), address(_address), debit(_debit), credit(_credit),
-            assetName("RVN"), units(8), idx(0)
+            assetName("EVR"), units(8), idx(0)
     {
     }
 

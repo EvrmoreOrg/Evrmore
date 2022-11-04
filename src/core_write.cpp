@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -113,8 +114,8 @@ std::string ScriptToAsmStr(const CScript& script, const bool fAttemptSighashDeco
             return str;
         }
 
-        if (opcode == OP_RVN_ASSET) {
-            // Once we hit an OP_RVN_ASSET, we know that all the next data should be considered as hex
+        if (opcode == OP_EVR_ASSET) {
+            // Once we hit an OP_EVR_ASSET, we know that all the next data should be considered as hex
             str += GetOpName(opcode);
             str += " ";
             str += HexStr(vch);

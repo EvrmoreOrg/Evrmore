@@ -3,14 +3,14 @@ Jenkinsfile
 *.tar.gz
 
 *.exe
-src/raven
-src/ravend
-src/raven-cli
-src/raven-tx
-src/test/test_raven
-src/test/test_raven_fuzzy
-src/test/test_raven_hash
-src/qt/test/test_raven-qt
+src/evrmore
+src/evrmored
+src/evrmore-cli
+src/evrmore-tx
+src/test/test_evrmore
+src/test/test_evrmore_fuzzy
+src/test/test_evrmore_hash
+src/qt/test/test_evrmore-qt
 .vscode
 output.txt
 
@@ -35,8 +35,8 @@ config.log
 config.status
 configure
 libtool
-src/config/raven-config.h
-src/config/raven-config.h.in
+src/config/evrmore-config.h
+src/config/evrmore-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist
@@ -65,7 +65,7 @@ src/qt/test/moc*.cpp
 *.pyc
 *.o
 *.o-*
-*.patch
+
 *.a
 *.pb.cc
 *.pb.h
@@ -84,12 +84,12 @@ src/qt/test/moc*.cpp
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
-raven-qt
-Raven-Qt.app
+evrmore-qt
+Evrmore-Qt.app
 
 # Unit-tests
 Makefile.test
-raven-qt_test
+evrmore-qt_test
 
 # Resources cpp
 qrc_*.cpp
@@ -102,7 +102,7 @@ build
 *.gcno
 *.gcda
 /*.info
-test_raven.coverage/
+test_evrmore.coverage/
 total.coverage/
 coverage_percent.txt
 
@@ -117,9 +117,10 @@ test/cache/*
 
 /doc/doxygen/
 
-libravenconsensus.pc
-contrib/devtools/split-debug.sh
+libevrmoreconsensus.pc
 .idea
 cmake-build-debug
 
 CMakeLists.txt
+contrib/devtools/split-debug.sh
+

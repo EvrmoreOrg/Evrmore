@@ -6,7 +6,7 @@
 
 """Test the preciousblock RPC."""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, connect_nodes_bi, sync_chain, sync_blocks
 
 # noinspection PyBroadException
@@ -32,7 +32,7 @@ def node_sync_via_rpc(nodes):
                 continue
             unidirectional_node_sync_via_rpc(node_src, node_dest)
 
-class PreciousTest(RavenTestFramework):
+class PreciousTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3

@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,7 +12,7 @@
 #include "sendcoinsdialog.h"
 #include "coincontroldialog.h"
 #include "guiutil.h"
-#include "ravenunits.h"
+#include "evrmoreunits.h"
 #include "clientmodel.h"
 #include "optionsmodel.h"
 #include "guiconstants.h"
@@ -38,6 +39,8 @@
 #include <QStringListModel>
 #include <QSortFilterProxyModel>
 #include <QCompleter>
+#include <QUrl>
+#include <QDesktopServices>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define QTversionPreFiveEleven
@@ -51,6 +54,7 @@ CreateAssetDialog::CreateAssetDialog(const PlatformStyle *_platformStyle, QWidge
     ui->setupUi(this);
     setWindowTitle("Create Assets");
     connect(ui->ipfsBox, SIGNAL(clicked()), this, SLOT(ipfsStateChanged()));
+    connect(ui->openIpfsButton, SIGNAL(clicked()), this, SLOT(openIpfsBrowser()));
     connect(ui->availabilityButton, SIGNAL(clicked()), this, SLOT(checkAvailabilityClicked()));
     connect(ui->nameText, SIGNAL(textChanged(QString)), this, SLOT(onNameChanged(QString)));
     connect(ui->addressText, SIGNAL(textChanged(QString)), this, SLOT(onAddressNameChanged(QString)));
@@ -264,6 +268,8 @@ void CreateAssetDialog::setUpValues()
     ui->unitBox->setValue(0);
     ui->reissuableBox->setCheckState(Qt::CheckState::Checked);
     ui->ipfsText->hide();
+    ui->openIpfsButton->hide();
+    ui->openIpfsButton->setDisabled(true);
     hideMessage();
     CheckFormState();
     ui->availabilityButton->setDisabled(true);
@@ -272,13 +278,13 @@ void CreateAssetDialog::setUpValues()
 
     // Setup the asset types
     QStringList list;
-    list.append(tr("Main Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::ROOT)) + ")");
-    list.append(tr("Sub Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB)) + ")");
-    list.append(tr("Unique Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::UNIQUE)) + ")");
-    list.append(tr("Messaging Channel Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::MSGCHANNEL)) + ")");
-    list.append(tr("Qualifier Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::QUALIFIER)) + ")");
-    list.append(tr("Sub Qualifier Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB_QUALIFIER)) + ")");
-    list.append(tr("Restricted Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::RESTRICTED)) + ")");
+    list.append(tr("Main Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::ROOT)) + ")");
+    list.append(tr("Sub Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB)) + ")");
+    list.append(tr("Unique Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::UNIQUE)) + ")");
+    list.append(tr("Messaging Channel Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::MSGCHANNEL)) + ")");
+    list.append(tr("Qualifier Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::QUALIFIER)) + ")");
+    list.append(tr("Sub Qualifier Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB_QUALIFIER)) + ")");
+    list.append(tr("Restricted Asset") + " (" + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::RESTRICTED)) + ")");
 
     ui->assetType->addItems(list);
     type = IntFromAssetType(AssetType::ROOT);
@@ -416,7 +422,7 @@ void CreateAssetDialog::setBalance(const CAmount& balance, const CAmount& unconf
 
     if(model && model->getOptionsModel())
     {
-        ui->labelBalance->setText(RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), balance));
+        ui->labelBalance->setText(EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), balance));
     }
 }
 
@@ -432,12 +438,12 @@ void CreateAssetDialog::toggleIPFSText()
 {
     if (ui->ipfsBox->isChecked()) {
         ui->ipfsText->show();
+        ui->openIpfsButton->show();
     } else {
+        ui->openIpfsButton->hide();
         ui->ipfsText->hide();
         ui->ipfsText->clear();
     }
-
-    CheckFormState();
 }
 
 void CreateAssetDialog::showMessage(QString string)
@@ -492,6 +498,8 @@ void CreateAssetDialog::enableCreateButton()
 
 bool CreateAssetDialog::checkIPFSHash(QString hash)
 {
+    ui->openIpfsButton->setDisabled(true);
+
     if (!hash.isEmpty()) {
         std::string error;
         if (!CheckEncoded(DecodeAssetData(hash.toStdString()), error)) {
@@ -505,7 +513,8 @@ bool CreateAssetDialog::checkIPFSHash(QString hash)
             showMessage(tr("IPFS/Txid Hash must have size of 46 characters, or 64 hex characters"));
             disableCreateButton();
             return false;
-        } else if (DecodeAssetData(hash.toStdString()).empty()) {
+        }
+        else if (DecodeAssetData(hash.toStdString()).empty()) {
             showMessage(tr("IPFS/Txid hash is not valid. Please use a valid IPFS/Txid hash"));
             disableCreateButton();
             return false;
@@ -515,6 +524,8 @@ bool CreateAssetDialog::checkIPFSHash(QString hash)
     // No problems where found with the hash, reset the border, and hide the messages.
     hideMessage();
     ui->ipfsText->setStyleSheet("");
+    ui->openIpfsButton->setDisabled(false);
+    
 
     return true;
 }
@@ -523,6 +534,8 @@ void CreateAssetDialog::CheckFormState()
 {
     disableCreateButton(); // Disable the button by default
     hideMessage();
+    ui->openIpfsButton->setDisabled(true);
+    ui->availabilityButton->setDisabled(true);
 
     const CTxDestination dest = DecodeDestination(ui->addressText->text().toStdString());
 
@@ -540,7 +553,7 @@ void CreateAssetDialog::CheckFormState()
         }
     }
 
-    if (!assetNameValid && name.size() != 0) {
+    if (!assetNameValid && name.size() > 2) {
         ui->nameText->setStyleSheet(STYLE_INVALID);
         showMessage(error.c_str());
         ui->availabilityButton->setDisabled(true);
@@ -549,7 +562,7 @@ void CreateAssetDialog::CheckFormState()
 
     if (!(ui->addressText->text().isEmpty() || IsValidDestination(dest)) && assetNameValid) {
         ui->addressText->setStyleSheet(STYLE_INVALID);
-        showMessage(tr("Warning: Invalid Raven address"));
+        showMessage(tr("Warning: Invalid Evrmore address"));
         return;
     }
 
@@ -571,7 +584,7 @@ void CreateAssetDialog::CheckFormState()
                 return;
             } else if (!IsValidDestination(dest)) {
                 ui->addressText->setStyleSheet(STYLE_INVALID);
-                showMessage(tr("Warning: Invalid Raven address"));
+                showMessage(tr("Warning: Invalid Evrmore address"));
                 return;
             }
 
@@ -636,6 +649,26 @@ void CreateAssetDialog::checkAvailabilityClicked()
     }
 
     CheckFormState();
+}
+
+void CreateAssetDialog::openIpfsBrowser()
+{
+    QString ipfshash = ui->ipfsText->text();
+    QString ipfsbrowser = model->getOptionsModel()->getIpfsUrl();
+
+    // If the ipfs hash isn't there or doesn't start with Qm, disable the action item
+    if (ipfshash.count() > 0 && ipfshash.indexOf("Qm") == 0 && ipfsbrowser.indexOf("http") == 0)
+    {
+        QUrl ipfsurl = QUrl::fromUserInput(ipfsbrowser.replace("%s", ipfshash));
+
+        // Create the box with everything.
+        if(QMessageBox::Yes == QMessageBox::question(this,
+                                                        tr("Open IPFS content?"),
+                                                        tr("Open the following IPFS content in your default browser?\n")
+                                                        + ipfsurl.toString()
+                                                    ))
+        QDesktopServices::openUrl(ipfsurl);
+    }
 }
 
 void CreateAssetDialog::onNameChanged(QString name)
@@ -808,7 +841,7 @@ void CreateAssetDialog::onCreateAssetClicked()
     QStringList formatted;
 
     // generate bold amount string
-    QString amount = "<b>" + QString::fromStdString(ValueFromAmountString(GetBurnAmount(type), 8)) + " RVN";
+    QString amount = "<b>" + QString::fromStdString(ValueFromAmountString(GetBurnAmount(type), 8)) + " EVR";
     amount.append("</b>");
     // generate monospace address string
     QString addressburn = "<span style='font-family: monospace;'>" + QString::fromStdString(GetBurnAddress(type));
@@ -836,8 +869,8 @@ void CreateAssetDialog::onCreateAssetClicked()
     if(nFeeRequired > 0)
     {
         // append fee string if a fee is required
-        questionString.append("<hr /><span style='color:#aa0000;'>");
-        questionString.append(RavenUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nFeeRequired));
+        questionString.append("<hr /><span style='color:#e82121;'>");
+        questionString.append(EvrmoreUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nFeeRequired));
         questionString.append("</span> ");
         questionString.append(tr("added as transaction fee"));
 
@@ -849,13 +882,13 @@ void CreateAssetDialog::onCreateAssetClicked()
     questionString.append("<hr />");
     CAmount totalAmount = GetBurnAmount(type) + nFeeRequired;
     QStringList alternativeUnits;
-    for (RavenUnits::Unit u : RavenUnits::availableUnits())
+    for (EvrmoreUnits::Unit u : EvrmoreUnits::availableUnits())
     {
         if(u != model->getOptionsModel()->getDisplayUnit())
-            alternativeUnits.append(RavenUnits::formatHtmlWithUnit(u, totalAmount));
+            alternativeUnits.append(EvrmoreUnits::formatHtmlWithUnit(u, totalAmount));
     }
     questionString.append(tr("Total Amount %1")
-                                  .arg(RavenUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), totalAmount)));
+                                  .arg(EvrmoreUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), totalAmount)));
     questionString.append(QString("<span style='font-size:10pt;font-weight:normal;'><br />(=%2)</span>")
                                   .arg(alternativeUnits.join(" " + tr("or") + "<br />")));
 
@@ -1089,7 +1122,7 @@ void CreateAssetDialog::updateSmartFeeLabel()
     FeeCalculation feeCalc;
     CFeeRate feeRate = CFeeRate(GetMinimumFee(1000, coin_control, ::mempool, ::feeEstimator, &feeCalc));
 
-    ui->labelSmartFee->setText(RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), feeRate.GetFeePerK()) + "/kB");
+    ui->labelSmartFee->setText(EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), feeRate.GetFeePerK()) + "/kB");
 
     if (feeCalc.reason == FeeReason::FALLBACK) {
         ui->labelSmartFee2->show(); // (Smart fee not initialized yet. This usually takes a few blocks...)
@@ -1216,7 +1249,7 @@ void CreateAssetDialog::coinControlChangeEdited(const QString& text)
         }
         else if (!IsValidDestination(dest)) // Invalid address
         {
-            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Raven address"));
+            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Evrmore address"));
         }
         else // Valid address
         {
@@ -1332,7 +1365,7 @@ void CreateAssetDialog::updateFeeMinimizedLabel()
     if (ui->radioSmartFee->isChecked())
         ui->labelFeeMinimized->setText(ui->labelSmartFee->text());
     else {
-        ui->labelFeeMinimized->setText(RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), ui->customFee->value()) + "/kB");
+        ui->labelFeeMinimized->setText(EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), ui->customFee->value()) + "/kB");
     }
 }
 
@@ -1340,7 +1373,7 @@ void CreateAssetDialog::updateMinFeeLabel()
 {
     if (model && model->getOptionsModel())
         ui->checkBoxMinimumFee->setText(tr("Pay only the required fee of %1").arg(
-                RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetRequiredFee(1000)) + "/kB")
+                EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetRequiredFee(1000)) + "/kB")
         );
 }
 
@@ -1440,6 +1473,7 @@ void CreateAssetDialog::clear()
     ui->reissuableBox->setChecked(true);
     ui->ipfsBox->setChecked(false);
     ui->ipfsText->hide();
+    ui->openIpfsButton->hide();
     ui->assetList->hide();
     ui->assetList->setCurrentIndex(0);
     type = 0;

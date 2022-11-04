@@ -20,7 +20,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-HTTP proxy for opening RPC connection to ravend.
+HTTP proxy for opening RPC connection to evrmored.
 
 AuthServiceProxy has the following improvements over python-jsonrpc's
 ServiceProxy class:
@@ -48,7 +48,7 @@ import urllib.parse
 HTTP_TIMEOUT = 30
 USER_AGENT = "AuthServiceProxy/0.1"
 
-log = logging.getLogger("RavenRPC")
+log = logging.getLogger("EvrmoreRPC")
 
 
 class JSONRPCException(Exception):

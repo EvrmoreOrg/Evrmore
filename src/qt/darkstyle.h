@@ -1,3 +1,4 @@
+// Copyright (c) 2022 The Evrmore Core developers
 /*
 ###############################################################################
 #                                                                             #
@@ -11,8 +12,8 @@
 ###############################################################################
 */
 
-#ifndef RAVENCOIN_DARKSTYLE_H
-#define RAVENCOIN_DARKSTYLE_H
+#ifndef EVRMORECOIN_DARKSTYLE_H
+#define EVRMORECOIN_DARKSTYLE_H
 
 #include <QApplication>
 #include <QProxyStyle>
@@ -37,4 +38,4 @@ private:
     QStyle *styleBase(QStyle *style = Q_NULLPTR) const;
 };
 
-#endif //RAVENCOIN_DARKSTYLE_H
+#endif //EVRMORECOIN_DARKSTYLE_H

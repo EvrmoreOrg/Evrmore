@@ -1,5 +1,7 @@
-#ifndef RAVEN_QT_TEST_WALLETTESTS_H
-#define RAVEN_QT_TEST_WALLETTESTS_H
+// Copyright (c) 2022 The Evrmore Core developers
+
+#ifndef EVRMORE_QT_TEST_WALLETTESTS_H
+#define EVRMORE_QT_TEST_WALLETTESTS_H
 
 #include <QObject>
 #include <QTest>
@@ -12,4 +14,4 @@ private Q_SLOTS:
     void walletTests();
 };
 
-#endif // RAVEN_QT_TEST_WALLETTESTS_H
+#endif // EVRMORE_QT_TEST_WALLETTESTS_H

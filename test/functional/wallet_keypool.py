@@ -6,10 +6,10 @@
 
 """Test the wallet keypool and interaction with wallet encryption/locking."""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, time
 
-class KeyPoolTest(RavenTestFramework):
+class KeyPoolTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 

@@ -18,7 +18,7 @@ Generate 427 more blocks.
 
 from io import BytesIO
 import time
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_raises_rpc_error, hex_str_to_bytes, assert_equal
 from test_framework.mininode import CTransaction, NetworkThread
 from test_framework.blocktools import create_coinbase, create_block, add_witness_commitment
@@ -41,7 +41,7 @@ def true_dummy(tx):
     tx.rehash()
 
 
-class NULLDUMMYTest(RavenTestFramework):
+class NULLDUMMYTest(EvrmoreTestFramework):
 
     def set_test_params(self):
         self.num_nodes = 1
@@ -125,7 +125,7 @@ class NULLDUMMYTest(RavenTestFramework):
         node.submitblock(block.serialize(True).hex())
         if accept:
             assert_equal(node.getbestblockhash(), block.hash)
-            self.tip = block.x16r
+            self.tip = block.sha256
             self.lastblockhash = block.hash
             self.lastblocktime += 1
             self.lastblockheight += 1

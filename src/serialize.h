@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_SERIALIZE_H
-#define RAVEN_SERIALIZE_H
+#ifndef EVRMORE_SERIALIZE_H
+#define EVRMORE_SERIALIZE_H
 
 #include "compat/endian.h"
 
@@ -975,4 +976,4 @@ size_t GetSerializeSize(const S& s, const T& t)
     return (CSizeComputer(s.GetType(), s.GetVersion()) << t).size();
 }
 
-#endif // RAVEN_SERIALIZE_H
+#endif // EVRMORE_SERIALIZE_H

@@ -10,7 +10,7 @@ Test BIP68 implementation.
 
 import time
 import random
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import satoshi_round, assert_raises_rpc_error, get_bip9_status, assert_equal, assert_greater_than, sync_blocks
 from test_framework.blocktools import CTransaction, COIN, CTxIn, COutPoint, CTxOut, CScript, create_block, create_coinbase
 from test_framework.mininode import to_hex, from_hex
@@ -24,7 +24,7 @@ SEQUENCE_LOCKTIME_MASK = 0x0000ffff
 NOT_FINAL_ERROR = "64: non-BIP68-final"
 
 
-class BIP68Test(RavenTestFramework):
+class BIP68Test(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
         self.extra_args = [[], ["-acceptnonstdtxn=0"]]
@@ -46,7 +46,7 @@ class BIP68Test(RavenTestFramework):
     def test_disable_flag(self):
         # Create some unconfirmed inputs
         new_addr = self.nodes[0].getnewaddress()
-        self.nodes[0].sendtoaddress(new_addr, 2)  # send 2 RVN
+        self.nodes[0].sendtoaddress(new_addr, 2)  # send 2 EVR
 
         utxos = self.nodes[0].listunspent(0, 0)
         assert (len(utxos) > 0)
@@ -195,7 +195,7 @@ class BIP68Test(RavenTestFramework):
         # Sequence lock of 0 should pass.
         tx2 = CTransaction()
         tx2.nVersion = 2
-        tx2.vin = [CTxIn(COutPoint(tx1.x16r, 0), n_sequence=0)]
+        tx2.vin = [CTxIn(COutPoint(tx1.sha256, 0), n_sequence=0)]
         tx2.vout = [CTxOut(int(tx1.vout[0].nValue - self.relayfee * COIN), CScript([b'a']))]
         tx2_raw = self.nodes[0].signrawtransaction(to_hex(tx2))["hex"]
         tx2 = from_hex(tx2, tx2_raw)
@@ -213,7 +213,7 @@ class BIP68Test(RavenTestFramework):
 
             tx = CTransaction()
             tx.nVersion = 2
-            tx.vin = [CTxIn(COutPoint(orig_tx.x16r, 0), n_sequence=sequence_value)]
+            tx.vin = [CTxIn(COutPoint(orig_tx.sha256, 0), n_sequence=sequence_value)]
             tx.vout = [CTxOut(int(orig_tx.vout[0].nValue - relayfee * COIN), CScript([b'a']))]
             tx.rehash()
 
@@ -298,7 +298,7 @@ class BIP68Test(RavenTestFramework):
             block.nVersion = 3
             block.rehash()
             block.solve()
-            tip = block.x16r
+            tip = block.sha256
             height += 1
             self.nodes[0].submitblock(to_hex(block))
             cur_time += 1
@@ -326,7 +326,7 @@ class BIP68Test(RavenTestFramework):
         # Make an anyone-can-spend transaction
         tx2 = CTransaction()
         tx2.nVersion = 1
-        tx2.vin = [CTxIn(COutPoint(tx1.x16r, 0), n_sequence=0)]
+        tx2.vin = [CTxIn(COutPoint(tx1.sha256, 0), n_sequence=0)]
         tx2.vout = [CTxOut(int(tx1.vout[0].nValue - self.relayfee * COIN), CScript([b'a']))]
 
         # sign tx2
@@ -341,7 +341,7 @@ class BIP68Test(RavenTestFramework):
 
         tx3 = CTransaction()
         tx3.nVersion = 2
-        tx3.vin = [CTxIn(COutPoint(tx2.x16r, 0), n_sequence=sequence_value)]
+        tx3.vin = [CTxIn(COutPoint(tx2.sha256, 0), n_sequence=sequence_value)]
         tx3.vout = [CTxOut(int(tx2.vout[0].nValue - self.relayfee * COIN), CScript([b'a']))]
         tx3.rehash()
 

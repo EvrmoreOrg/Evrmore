@@ -1,10 +1,11 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_LIMITEDMAP_H
-#define RAVEN_LIMITEDMAP_H
+#ifndef EVRMORE_LIMITEDMAP_H
+#define EVRMORE_LIMITEDMAP_H
 
 #include <assert.h>
 #include <map>
@@ -98,4 +99,4 @@ public:
     }
 };
 
-#endif // RAVEN_LIMITEDMAP_H
+#endif // EVRMORE_LIMITEDMAP_H

@@ -3,7 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "addrman.h"
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 #include <string>
 #include <boost/test/unit_test.hpp>
 #include "hash.h"
@@ -96,13 +96,13 @@ BOOST_FIXTURE_TEST_SUITE(net_tests, BasicTestingSetup)
         addrmanUncorrupted.MakeDeterministic();
 
         CService addr1, addr2, addr3;
-        Lookup("250.7.1.1", addr1, 8767, false);
+        Lookup("250.7.1.1", addr1, 8820, false);
         Lookup("250.7.2.2", addr2, 9999, false);
         Lookup("250.7.3.3", addr3, 9999, false);
 
         // Add three addresses to new table.
         CService source;
-        Lookup("252.5.1.1", source, 8767, false);
+        Lookup("252.5.1.1", source, 8820, false);
         addrmanUncorrupted.Add(CAddress(addr1, NODE_NONE), source);
         addrmanUncorrupted.Add(CAddress(addr2, NODE_NONE), source);
         addrmanUncorrupted.Add(CAddress(addr3, NODE_NONE), source);

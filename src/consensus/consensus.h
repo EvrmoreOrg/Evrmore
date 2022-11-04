@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_CONSENSUS_CONSENSUS_H
-#define RAVEN_CONSENSUS_CONSENSUS_H
+#ifndef EVRMORE_CONSENSUS_CONSENSUS_H
+#define EVRMORE_CONSENSUS_CONSENSUS_H
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -26,6 +27,8 @@ static const int64_t MAX_BLOCK_SIGOPS_COST = 80000;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
 static const int COINBASE_MATURITY = 100;
 
+static const int AIRDROP_EXPIRATION = 60*24*60;
+
 static const int WITNESS_SCALE_FACTOR = 4;
 
 static const size_t MIN_TRANSACTION_WEIGHT = WITNESS_SCALE_FACTOR * 60; // 60 is the lower bound for the size of a valid serialized CTransaction
@@ -34,11 +37,11 @@ static const size_t MIN_SERIALIZABLE_TRANSACTION_WEIGHT = WITNESS_SCALE_FACTOR *
 #define UNUSED_VAR     __attribute__ ((unused))
 //! This variable needs to in this class because undo.h uses it. However because it is in this class
 //! it causes unused variable warnings when compiling. This UNUSED_VAR removes the unused warnings
-UNUSED_VAR static bool fAssetsIsActive = false;
-UNUSED_VAR static bool fRip5IsActive = false;
-UNUSED_VAR static bool fTransferScriptIsActive = false;
-UNUSED_VAR static bool fEnforcedValuesIsActive = false;
-UNUSED_VAR static bool fCheckCoinbaseAssetsIsActive = false;
+UNUSED_VAR static bool fAssetsIsActive = true;
+UNUSED_VAR static bool fRip5IsActive = true;
+UNUSED_VAR static bool fTransferScriptIsActive = true;
+UNUSED_VAR static bool fEnforcedValuesIsActive = true;
+UNUSED_VAR static bool fCheckCoinbaseAssetsIsActive = true;
 
 unsigned int GetMaxBlockWeight();
 unsigned int GetMaxBlockSerializedSize();
@@ -52,4 +55,4 @@ enum {
     LOCKTIME_MEDIAN_TIME_PAST = (1 << 1),
 };
 
-#endif // RAVEN_CONSENSUS_CONSENSUS_H
+#endif // EVRMORE_CONSENSUS_CONSENSUS_H

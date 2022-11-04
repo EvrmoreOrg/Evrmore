@@ -1,6 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,6 +16,7 @@
 #include "init.h"
 #include "validation.h"
 #include "miner.h"
+#include "minerdevfund.h"
 #include "net.h"
 #include "policy/fees.h"
 #include "pow.h"
@@ -37,7 +39,7 @@
 
 extern uint64_t nHashesPerSec;
 
-std::map<std::string, CBlock> mapRVNKAWBlockTemplates;
+std::map<std::string, CBlock> mapEVRMOREPROGPOWBlockTemplates;
 
 unsigned int ParseConfirmTarget(const UniValue& value)
 {
@@ -139,7 +141,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         uint256 mix_hash;
         while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHashFull(mix_hash), pblock->nBits,
                                                                                       GetParams().GetConsensus())) {
-            if (pblock->nTime < nKAWPOWActivationTime) {
+            if (!fEvrprogpowAsMiningAlgo) {
                 ++pblock->nNonce;
             } else  {
                 ++pblock->nNonce64;
@@ -153,7 +155,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             continue;
         }
 
-        // KAWPOW Assign the mix_hash to the block that was found
+        // EVRPROGPOW Assign the mix_hash to the block that was found
         pblock->mix_hash = mix_hash;
 
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
@@ -179,7 +181,7 @@ UniValue generatetoaddress(const JSONRPCRequest& request)
             "\nMine blocks immediately to a specified address (before the RPC call returns)\n"
             "\nArguments:\n"
             "1. nblocks      (numeric, required) How many blocks are generated immediately.\n"
-            "2. address      (string, required) The address to send the newly generated raven to.\n"
+            "2. address      (string, required) The address to send the newly generated Evrmore to.\n"
             "3. maxtries     (numeric, optional) How many iterations to try (default = 1000000).\n"
             "\nResult:\n"
             "[ blockhashes ]     (array) hashes of blocks generated\n"
@@ -222,7 +224,7 @@ UniValue getmininginfo(const JSONRPCRequest& request)
             "  \"pooledtx\": n              (numeric) The size of the mempool\n"
             "  \"chain\": \"xxxx\",           (string) current network name as defined in BIP70 (main, test, regtest)\n"
             "  \"warnings\": \"...\"          (string) any network and blockchain warnings\n"
-            "  \"errors\": \"...\"            (string) DEPRECATED. Same as warnings. Only shown when ravend is started with -deprecatedrpc=getmininginfo\n"
+            "  \"errors\": \"...\"            (string) DEPRECATED. Same as warnings. Only shown when evrmored is started with -deprecatedrpc=getmininginfo\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("getmininginfo", "")
@@ -249,7 +251,7 @@ UniValue getmininginfo(const JSONRPCRequest& request)
 }
 
 
-// NOTE: Unlike wallet RPC (which use RVN values), mining RPCs follow GBT (BIP 22) in using satoshi amounts
+// NOTE: Unlike wallet RPC (which use EVR values), mining RPCs follow GBT (BIP 22) in using satoshi amounts
 UniValue prioritisetransaction(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
@@ -320,10 +322,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             "\nIf the request parameters include a 'mode' key, that is used to explicitly select between the default 'template' request or a 'proposal'.\n"
             "It returns data needed to construct a block to work on.\n"
             "For full specification, see BIPs 22, 23, 9, and 145:\n"
-            "    https://github.com/raven/bips/blob/master/bip-0022.mediawiki\n"
-            "    https://github.com/raven/bips/blob/master/bip-0023.mediawiki\n"
-            "    https://github.com/raven/bips/blob/master/bip-0009.mediawiki#getblocktemplate_changes\n"
-            "    https://github.com/raven/bips/blob/master/bip-0145.mediawiki\n"
+            "    https://github.com/bitcoin/bips/blob/master/bip-0022.mediawiki\n"
+            "    https://github.com/bitcoin/bips/blob/master/bip-0023.mediawiki\n"
+            "    https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki#getblocktemplate_changes\n"
+            "    https://github.com/bitcoin/bips/blob/master/bip-0145.mediawiki\n"
 
             "\nArguments:\n"
             "1. template_request         (json object, optional) A json object in the following spec\n"
@@ -370,7 +372,12 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             "      \"flags\" : \"xx\"                  (string) key name is to be ignored, and value included in scriptSig\n"
             "  },\n"
             "  \"coinbasevalue\" : n,              (numeric) maximum allowable input to coinbase transaction, including the generation award and transaction fees (in satoshis)\n"
-            "  \"coinbasetxn\" : { ... },          (json object) information for coinbase transaction\n"
+            "  \"coinbasetxn\" : {                 (json object) information for coinbase transaction\n"
+            "    \"minerdevfund\" : {                (json object) information related to the coinbase minerdevfund\n"
+            "      \"addresses\" : [ ... ],            (array) List of valid addresses for the minerdevfund output\n"
+            "      \"minimumvalue\" : n,               (numeric) The minimum value the minerdevfund output must pay\n"
+            "    },\n"
+            "  },\n"
             "  \"target\" : \"xxxx\",                (string) The hash target\n"
             "  \"mintime\" : xxx,                  (numeric) The minimum timestamp appropriate for next block time in seconds since epoch (Jan 1 1970 GMT)\n"
             "  \"mutable\" : [                     (array of string) list of ways the block template may be changed \n"
@@ -463,10 +470,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
 
     if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 && !gArgs.GetBoolArg("-bypassdownload", false))
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Raven is not connected!");
+        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Evrmore is not connected!");
 
     if (IsInitialBlockDownload() && !gArgs.GetBoolArg("-bypassdownload", false))
-        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Raven is downloading blocks...");
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Evrmore is downloading blocks...");
 
     static unsigned int nTransactionsUpdatedLast;
 
@@ -535,7 +542,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
         pindexPrev = nullptr;
-        mapRVNKAWBlockTemplates.clear();
+        mapEVRMOREPROGPOWBlockTemplates.clear();
 
         // Store the pindexBest used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
@@ -578,19 +585,26 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
     UniValue aCaps(UniValue::VARR); aCaps.push_back("proposal");
 
+    CAmount coinbasevalue = 0;
     UniValue transactions(UniValue::VARR);
     std::map<uint256, int64_t> setTxIndex;
-    int i = 0;
+    int index_in_template = 0;
     for (const auto& it : pblock->vtx) {
         const CTransaction& tx = *it;
         uint256 txHash = tx.GetHash();
-        setTxIndex[txHash] = i++;
+        setTxIndex[txHash] = index_in_template;
 
-        if (tx.IsCoinBase())
+        // EVR start- added to get coinbasevalue for minerdevfund info
+        if (tx.IsCoinBase()) {
+            index_in_template++;
+
+            for (const auto &o : pblock->vtx[0]->vout) {
+                coinbasevalue += o.nValue;
+            }
             continue;
-
+        // EVR end- added to get coinbasevalue for minerdevfund info
+        }
         UniValue entry(UniValue::VOBJ);
-
         entry.push_back(Pair("data", EncodeHexTx(tx)));
         entry.push_back(Pair("txid", txHash.GetHex()));
         entry.push_back(Pair("hash", tx.GetWitnessHash().GetHex()));
@@ -603,7 +617,6 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         }
         entry.push_back(Pair("depends", deps));
 
-        int index_in_template = i - 1;
         entry.push_back(Pair("fee", pblocktemplate->vTxFees[index_in_template]));
         int64_t nTxSigOps = pblocktemplate->vTxSigOpsCost[index_in_template];
         if (fPreSegWit) {
@@ -614,10 +627,31 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         entry.push_back(Pair("weight", GetTransactionWeight(tx)));
 
         transactions.push_back(entry);
+        index_in_template++;
     }
 
     UniValue aux(UniValue::VOBJ);
     aux.push_back(Pair("flags", HexStr(COINBASE_FLAGS.begin(), COINBASE_FLAGS.end())));
+
+
+    // EVR -start of minerdevfund info
+    UniValue minerDevFundList(UniValue::VARR);
+    for (auto fundDestination :
+         GetMinerDevFundWhitelist(consensusParams)) {
+        minerDevFundList.push_back(EncodeDestination(fundDestination));
+    }
+
+    int64_t minerDevFundMinValue = 0;
+    minerDevFundMinValue = int64_t(GetMinerDevFundAmount(coinbasevalue));
+
+    UniValue minerDevFund(UniValue::VOBJ);
+    minerDevFund.pushKV("addresses", minerDevFundList);
+    minerDevFund.pushKV("minimumvalue", minerDevFundMinValue);
+
+    UniValue coinbasetxn(UniValue::VOBJ);
+    coinbasetxn.pushKV("minerdevfund", minerDevFund);
+    // EVR -end of minerdevfund info
+
 
     arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
 
@@ -687,7 +721,9 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
     result.push_back(Pair("transactions", transactions));
     result.push_back(Pair("coinbaseaux", aux));
-    result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0]->vout[0].nValue));
+    result.push_back(Pair("coinbasetxn", coinbasetxn));
+//  result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0]->vout[0].nValue));
+    result.push_back(Pair("coinbasevalue", coinbasevalue));
     result.push_back(Pair("longpollid", chainActive.Tip()->GetBlockHash().GetHex() + i64tostr(nTransactionsUpdatedLast)));
     result.push_back(Pair("target", hashTarget.GetHex()));
     result.push_back(Pair("mintime", (int64_t)pindexPrev->GetMedianTimePast()+1));
@@ -714,12 +750,12 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         result.push_back(Pair("default_witness_commitment", HexStr(pblocktemplate->vchCoinbaseCommitment.begin(), pblocktemplate->vchCoinbaseCommitment.end())));
     }
 
-    if (pblock->nTime >= nKAWPOWActivationTime) {
+    if (fEvrprogpowAsMiningAlgo) {
         std::string address = gArgs.GetArg("-miningaddress", "");
         if (IsValidDestinationString(address)) {
             static std::string lastheader = "";
-            if (mapRVNKAWBlockTemplates.count(lastheader)) {
-                if (pblock->nTime - 30 < mapRVNKAWBlockTemplates.at(lastheader).nTime) {
+            if (mapEVRMOREPROGPOWBlockTemplates.count(lastheader)) {
+                if (pblock->nTime - 30 < mapEVRMOREPROGPOWBlockTemplates.at(lastheader).nTime) {
                     result.pushKV("pprpcheader", lastheader);
                     result.pushKV("pprpcepoch", ethash::get_epoch_number(pblock->nHeight));
                     return result;
@@ -727,10 +763,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             }
 
             pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
-            result.pushKV("pprpcheader", pblock->GetKAWPOWHeaderHash().GetHex());
+            result.pushKV("pprpcheader", pblock->GetEVRPROGPOWHeaderHash().GetHex());
             result.pushKV("pprpcepoch", ethash::get_epoch_number(pblock->nHeight));
-            mapRVNKAWBlockTemplates[pblock->GetKAWPOWHeaderHash().GetHex()] = *pblock;
-            lastheader = pblock->GetKAWPOWHeaderHash().GetHex();
+            mapEVRMOREPROGPOWBlockTemplates[pblock->GetEVRPROGPOWHeaderHash().GetHex()] = *pblock;
+            lastheader = pblock->GetEVRPROGPOWHeaderHash().GetHex();
         }
     }
 
@@ -755,11 +791,11 @@ protected:
     }
 };
 
-static UniValue getkawpowhash(const JSONRPCRequest& request) {
+static UniValue getevrprogpowhash(const JSONRPCRequest& request) {
     if (request.fHelp || request.params.size() < 4) {
         throw std::runtime_error(
-                "getkawpowhash \"header_hash\" \"mix_hash\" nonce, height, \"target\"\n"
-                "\nGet the kawpow hash for a block given its block data\n"
+                "getevrprogpowhash \"header_hash\" \"mix_hash\" nonce, height, \"target\"\n"
+                "\nGet the evrprogpow hash for a block given its block data\n"
 
                 "\nArguments\n"
                 "1. \"header_hash\"        (string, required) the prow_pow header hash that was given to the gpu miner from this rpc client\n"
@@ -769,8 +805,8 @@ static UniValue getkawpowhash(const JSONRPCRequest& request) {
                 "5. \"target\"             (string, optional) the target of the block that is hash is trying to meet\n"
                 "\nResult:\n"
                 "\nExamples:\n"
-                + HelpExampleCli("getkawpowhash", "\"header_hash\" \"mix_hash\" \"0x100000\" 2456")
-                + HelpExampleRpc("getkawpowhash", "\"header_hash\" \"mix_hash\" \"0x100000\" 2456")
+                + HelpExampleCli("getevrprogpowhash", "\"header_hash\" \"mix_hash\" \"0x100000\" 2456")
+                + HelpExampleRpc("getevrprogpowhash", "\"header_hash\" \"mix_hash\" \"0x100000\" 2456")
         );
     }
 
@@ -837,7 +873,7 @@ static UniValue pprpcsb(const JSONRPCRequest& request) {
     if (request.fHelp || request.params.size() != 3) {
         throw std::runtime_error(
                 "pprpcsb \"header_hash\" \"mix_hash\" \"nonce\"\n"
-                "\nAttempts to submit new block to network mined by kawpow gpu miner via rpc.\n"
+                "\nAttempts to submit new block to network mined by evrprogpow gpu miner via rpc.\n"
 
                 "\nArguments\n"
                 "1. \"header_hash\"        (string, required) the prow_pow header hash that was given to the gpu miner from this rpc client\n"
@@ -858,11 +894,11 @@ static UniValue pprpcsb(const JSONRPCRequest& request) {
     if (!ParseUInt64(str_nonce, &nonce, 16))
         throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid hex nonce");
 
-    if (!mapRVNKAWBlockTemplates.count(header_hash))
+    if (!mapEVRMOREPROGPOWBlockTemplates.count(header_hash))
         throw JSONRPCError(RPC_INVALID_PARAMS, "Block header hash not found in block data");
 
     std::shared_ptr<CBlock> blockptr = std::make_shared<CBlock>();
-    *blockptr = mapRVNKAWBlockTemplates.at(header_hash);
+    *blockptr = mapEVRMOREPROGPOWBlockTemplates.at(header_hash);
 
     blockptr->nNonce64 = nonce;
     blockptr->mix_hash = uint256S(mix_hash);
@@ -1025,7 +1061,7 @@ UniValue estimatefee(const JSONRPCRequest& request)
 
     if (!IsDeprecatedRPCEnabled("estimatefee")) {
         throw JSONRPCError(RPC_METHOD_DEPRECATED, "estimatefee is deprecated and will be fully removed in v0.17. "
-            "To use estimatefee in v0.16, restart ravend with -deprecatedrpc=estimatefee.\n"
+            "To use estimatefee in v0.16, restart evrmored with -deprecatedrpc=estimatefee.\n"
             "Projects should transition to using estimatesmartfee before upgrading to v0.17");
     }
 
@@ -1212,7 +1248,7 @@ UniValue getgenerate(const JSONRPCRequest& request)
         throw std::runtime_error(
             "getgenerate\n"
             "\nReturn if the server is set to generate coins or not. The default is false.\n"
-            "It is set with the command line argument -gen (or " + std::string(RAVEN_CONF_FILENAME) + " setting gen)\n"
+            "It is set with the command line argument -gen (or " + std::string(EVRMORE_CONF_FILENAME) + " setting gen)\n"
             "It can also be set with the setgenerate call.\n"
             "\nResult\n"
             "true|false      (boolean) If the server is set to generate coins or not\n"
@@ -1267,7 +1303,7 @@ UniValue setgenerate(const JSONRPCRequest& request)
     gArgs.SoftSetArg("-genproclimit", itostr(nGenProcLimit));
     //mapArgs["-gen"] = (fGenerate ? "1" : "0");
     //mapArgs ["-genproclimit"] = itostr(nGenProcLimit);
-    int numCores = GenerateRavens(fGenerate, nGenProcLimit, GetParams());
+    int numCores = GenerateEVRs(fGenerate, nGenProcLimit, GetParams());
 
     nGenProcLimit = nGenProcLimit >= 0 ? nGenProcLimit : numCores;
     std::string msg = std::to_string(nGenProcLimit) + " of " + std::to_string(numCores);
@@ -1284,7 +1320,7 @@ static const CRPCCommand commands[] =
     { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
     { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
     { "mining",             "pprpcsb",                &pprpcsb,                {"header_hash","mix_hash", "nonce"} },
-    { "mining",             "getkawpowhash",          &getkawpowhash,          {"header_hash", "mix_hash", "nonce", "height"} },
+    { "mining",             "getevrprogpowhash",          &getevrprogpowhash,          {"header_hash", "mix_hash", "nonce", "height"} },
 
     /* Coin generation */
     { "generating",         "getgenerate",            &getgenerate,            {}  },

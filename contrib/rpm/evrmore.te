@@ -1,0 +1,81 @@
+policy_module(evrmore, 1.100.1)
+
+########################################
+#
+# Declarations
+#
+
+type evrmore_t;
+type evrmore_exec_t;
+init_daemon_domain(evrmore_t, evrmore_exec_t)
+
+permissive evrmore_t;
+
+type evrmore_initrc_exec_t;
+init_script_file(evrmore_initrc_exec_t)
+
+type evrmore_conf_t;
+files_type(evrmore_conf_t)
+
+type evrmore_var_lib_t;
+files_type(evrmore_var_lib_t)
+
+type evrmore_var_run_t;
+files_type(evrmore_var_run_t)
+
+type evrmore_port_t;
+corenet_port(evrmore_port_t)
+
+########################################
+#
+# evrmore local policy
+#
+allow evrmore_t self:process { fork };
+
+allow evrmore_t self:fifo_file rw_fifo_file_perms;
+allow evrmore_t self:unix_stream_socket create_stream_socket_perms;
+
+manage_dirs_pattern(evrmore_t, evrmore_conf_t, evrmore_conf_t)
+manage_files_pattern(evrmore_t, evrmore_conf_t, evrmore_conf_t)
+
+manage_dirs_pattern(evrmore_t, evrmore_var_lib_t, evrmore_var_lib_t)
+manage_files_pattern(evrmore_t, evrmore_var_lib_t, evrmore_var_lib_t)
+files_var_lib_filetrans(evrmore_t, evrmore_var_lib_t, { dir file })
+
+manage_dirs_pattern(evrmore_t, evrmore_var_run_t, evrmore_var_run_t)
+manage_files_pattern(evrmore_t, evrmore_var_run_t, evrmore_var_run_t)
+
+sysnet_dns_name_resolve(evrmore_t)
+corenet_all_recvfrom_unlabeled(evrmore_t)
+
+allow evrmore_t self:tcp_socket create_stream_socket_perms;
+corenet_tcp_sendrecv_generic_if(evrmore_t)
+corenet_tcp_sendrecv_generic_node(evrmore_t)
+corenet_tcp_sendrecv_all_ports(evrmore_t)
+corenet_tcp_bind_generic_node(evrmore_t)
+
+gen_require(`
+    type evrmore_port_t;
+')
+allow evrmore_t evrmore_port_t:tcp_socket name_bind;
+
+gen_require(`
+    type evrmore_port_t;
+')
+allow evrmore_t evrmore_port_t:tcp_socket name_connect;
+
+domain_use_interactive_fds(evrmore_t)
+
+files_read_etc_files(evrmore_t)
+
+miscfiles_read_localization(evrmore_t)
+
+sysnet_dns_name_resolve(evrmore_t)
+
+allow evrmore_t evrmore_exec_t:file execute_no_trans;
+allow evrmore_t self:process setsched;
+corecmd_exec_ls(evrmore_t)
+corenet_tcp_connect_http_port(evrmore_t)
+dev_read_urand(evrmore_t)
+fs_getattr_xattr_fs(evrmore_t)
+kernel_read_system_state(evrmore_t)

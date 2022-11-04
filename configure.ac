@@ -1,25 +1,25 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
-define(_CLIENT_VERSION_MAJOR, 4)
-define(_CLIENT_VERSION_MINOR, 7)
-define(_CLIENT_VERSION_REVISION, 0)
+define(_CLIENT_VERSION_MAJOR, 1)
+define(_CLIENT_VERSION_MINOR, 0)
+define(_CLIENT_VERSION_REVISION, 5)
 define(_CLIENT_VERSION_BUILD, 0)
-define(_CLIENT_VERSION_RC, 2)
+define(_CLIENT_VERSION_RC, 0)
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2021)
+define(_COPYRIGHT_YEAR, 2022)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
-define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Raven Core]])
-AC_INIT([Raven Core],m4_join([.], _CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MINOR, _CLIENT_VERSION_REVISION, m4_if(_CLIENT_VERSION_BUILD, [0], [], _CLIENT_VERSION_BUILD))m4_if(_CLIENT_VERSION_RC, [0], [], [test]_CLIENT_VERSION_RC),[https://github.com/RavenProject/Ravencoin/issues],[raven],[https://ravencoin.org/])
+define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Evrmore Core]])
+AC_INIT([Evrmore Core],m4_join([.], _CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MINOR, _CLIENT_VERSION_REVISION, m4_if(_CLIENT_VERSION_BUILD, [0], [], _CLIENT_VERSION_BUILD))m4_if(_CLIENT_VERSION_RC, [0], [], [test]_CLIENT_VERSION_RC),[https://github.com/EvrmoreOrg/Evrmore/issues],[evrmore],[https://evrmorecoin.org/])
 
 AC_CONFIG_SRCDIR([src/validation.cpp])
-AC_CONFIG_HEADERS([src/config/raven-config.h])
+AC_CONFIG_HEADERS([src/config/evrmore-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 
-RAVEN_DAEMON_NAME=ravend
-RAVEN_GUI_NAME=raven-qt
-RAVEN_CLI_NAME=raven-cli
-RAVEN_TX_NAME=raven-tx
+EVRMORE_DAEMON_NAME=evrmored
+EVRMORE_GUI_NAME=evrmore-qt
+EVRMORE_CLI_NAME=evrmore-cli
+EVRMORE_TX_NAME=evrmore-tx
 
 dnl Unless the user specified ARFLAGS, force it to be cr
 AC_ARG_VAR(ARFLAGS, [Flags for the archiver, defaults to <cr> if not set])
@@ -29,9 +29,9 @@ fi
 
 AC_CANONICAL_HOST
 
-AH_TOP([#ifndef RAVEN_CONFIG_H])
-AH_TOP([#define RAVEN_CONFIG_H])
-AH_BOTTOM([#endif //RAVEN_CONFIG_H])
+AH_TOP([#ifndef EVRMORE_CONFIG_H])
+AH_TOP([#define EVRMORE_CONFIG_H])
+AH_BOTTOM([#endif //EVRMORE_CONFIG_H])
 
 dnl faketime breaks configure and is only needed for make. Disable it here.
 unset FAKETIME
@@ -301,27 +301,27 @@ CPPFLAGS="$CPPFLAGS -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS"
 
 AC_ARG_WITH([cli],
   [AS_HELP_STRING([--with-cli],
-  [build raven-cli (default=yes)])],
-  [build_raven_cli=$withval],
-  [build_raven_cli=yes])
+  [build evrmore-cli (default=yes)])],
+  [build_evrmore_cli=$withval],
+  [build_evrmore_cli=yes])
 
 AC_ARG_WITH([tx],
   [AS_HELP_STRING([--with-tx],
-  [build raven-tx (default=no)])],
-  [build_raven_tx=$withval],
-  [build_raven_tx=no])
+  [build evrmore-tx (default=no)])],
+  [build_evrmore_tx=$withval],
+  [build_evrmore_tx=no])
 
 AC_ARG_WITH([libs],
   [AS_HELP_STRING([--with-libs],
   [build libraries (default=yes)])],
-  [build_raven_libs=$withval],
-  [build_raven_libs=yes])
+  [build_evrmore_libs=$withval],
+  [build_evrmore_libs=yes])
 
 AC_ARG_WITH([daemon],
   [AS_HELP_STRING([--with-daemon],
-  [build ravend daemon (default=yes)])],
-  [build_ravend=$withval],
-  [build_ravend=yes])
+  [build evrmored daemon (default=yes)])],
+  [build_evrmored=$withval],
+  [build_evrmored=yes])
 
 use_pkgconfig=yes
 case $host in
@@ -518,7 +518,7 @@ AC_C_BIGENDIAN
 dnl Check for pthread compile/link requirements
 AX_PTHREAD
 
-# The following macro will add the necessary defines to raven-config.h, but
+# The following macro will add the necessary defines to evrmore-config.h, but
 # they also need to be passed down to any subprojects. Pull the results out of
 # the cache and add them to CPPFLAGS.
 AC_SYS_LARGEFILE
@@ -723,7 +723,7 @@ AC_SUBST(LIBMEMENV)
 
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
-    RAVEN_FIND_BDB48
+    EVRMORE_FIND_BDB48
 fi
 
 dnl Check for libminiupnpc (optional)
@@ -755,12 +755,12 @@ if test x$have_miniupnpc != xno; then
 fi
 fi
 
-RAVEN_QT_INIT
+EVRMORE_QT_INIT
 
-dnl sets $raven_enable_qt, $raven_enable_qt_test, $raven_enable_qt_dbus
-RAVEN_QT_CONFIGURE([$use_pkgconfig], [qt5])
+dnl sets $evrmore_enable_qt, $evrmore_enable_qt_test, $evrmore_enable_qt_dbus
+EVRMORE_QT_CONFIGURE([$use_pkgconfig], [qt5])
 
-if test x$build_raven_cli$build_raven_tx$build_ravend$raven_enable_qt$use_tests$use_bench = xnononononono; then
+if test x$build_evrmore_cli$build_evrmore_tx$build_evrmored$evrmore_enable_qt$use_tests$use_bench = xnononononono; then
     use_boost=no
 else
     use_boost=yes
@@ -942,11 +942,11 @@ if test x$use_pkgconfig = xyes; then
     [
       PKG_CHECK_MODULES([SSL], [libssl],, [AC_MSG_ERROR(openssl  not found.)])
       PKG_CHECK_MODULES([CRYPTO], [libcrypto],,[AC_MSG_ERROR(libcrypto  not found.)])
-      RAVEN_QT_CHECK([PKG_CHECK_MODULES([PROTOBUF], [protobuf], [have_protobuf=yes], [RAVEN_QT_FAIL(libprotobuf not found)])])
+      EVRMORE_QT_CHECK([PKG_CHECK_MODULES([PROTOBUF], [protobuf], [have_protobuf=yes], [EVRMORE_QT_FAIL(libprotobuf not found)])])
       if test x$use_qr != xno; then
-        RAVEN_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
+        EVRMORE_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
       fi
-      if test x$build_raven_cli$build_raven_tx$build_ravend$raven_enable_qt$use_tests != xnonononono; then
+      if test x$build_evrmore_cli$build_evrmore_tx$build_evrmored$evrmore_enable_qt$use_tests != xnonononono; then
         PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
         if test x$TARGET_OS != xwindows; then
           PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads],, [AC_MSG_ERROR(libevent_pthreads not found.)])
@@ -971,7 +971,7 @@ else
   AC_CHECK_HEADER([openssl/ssl.h],, AC_MSG_ERROR(libssl headers missing),)
   AC_CHECK_LIB([ssl],         [main],SSL_LIBS=-lssl, AC_MSG_ERROR(libssl missing))
 
-  if test x$build_raven_cli$build_raven_tx$build_ravend$raven_enable_qt$use_tests != xnonononono; then
+  if test x$build_evrmore_cli$build_evrmore_tx$build_evrmored$evrmore_enable_qt$use_tests != xnonononono; then
     AC_CHECK_HEADER([event2/event.h],, AC_MSG_ERROR(libevent headers missing),)
     AC_CHECK_LIB([event],[main],EVENT_LIBS=-levent,AC_MSG_ERROR(libevent missing))
     if test x$TARGET_OS != xwindows; then
@@ -1002,10 +1002,10 @@ else
     esac
   fi
 
-  RAVEN_QT_CHECK(AC_CHECK_LIB([protobuf] ,[main],[PROTOBUF_LIBS=-lprotobuf], RAVEN_QT_FAIL(libprotobuf not found)))
+  EVRMORE_QT_CHECK(AC_CHECK_LIB([protobuf] ,[main],[PROTOBUF_LIBS=-lprotobuf], EVRMORE_QT_FAIL(libprotobuf not found)))
   if test x$use_qr != xno; then
-    RAVEN_QT_CHECK([AC_CHECK_LIB([qrencode], [main],[QR_LIBS=-lqrencode], [have_qrencode=no])])
-    RAVEN_QT_CHECK([AC_CHECK_HEADER([qrencode.h],, have_qrencode=no)])
+    EVRMORE_QT_CHECK([AC_CHECK_LIB([qrencode], [main],[QR_LIBS=-lqrencode], [have_qrencode=no])])
+    EVRMORE_QT_CHECK([AC_CHECK_HEADER([qrencode.h],, have_qrencode=no)])
   fi
 fi
 
@@ -1020,7 +1020,7 @@ dnl univalue check
 
 need_bundled_univalue=yes
 
-if test x$build_raven_cli$build_raven_tx$build_ravend$raven_enable_qt$use_tests$use_bench = xnonononono; then
+if test x$build_evrmore_cli$build_evrmore_tx$build_evrmored$evrmore_enable_qt$use_tests$use_bench = xnonononono; then
   need_bundled_univalue=no
 else
 
@@ -1064,27 +1064,27 @@ AM_CONDITIONAL([EMBEDDED_UNIVALUE],[test x$need_bundled_univalue = xyes])
 AC_SUBST(UNIVALUE_CFLAGS)
 AC_SUBST(UNIVALUE_LIBS)
 
-RAVEN_QT_PATH_PROGS([PROTOC], [protoc],$protoc_bin_path)
+EVRMORE_QT_PATH_PROGS([PROTOC], [protoc],$protoc_bin_path)
 
-AC_MSG_CHECKING([whether to build ravend])
-AM_CONDITIONAL([BUILD_RAVEND], [test x$build_ravend = xyes])
-AC_MSG_RESULT($build_ravend)
+AC_MSG_CHECKING([whether to build evrmored])
+AM_CONDITIONAL([BUILD_EVRMORED], [test x$build_evrmored = xyes])
+AC_MSG_RESULT($build_evrmored)
 
-AC_MSG_CHECKING([whether to build raven-cli])
-AM_CONDITIONAL([BUILD_RAVEN_CLI], [test x$build_raven_cli = xyes])
-AC_MSG_RESULT($build_raven_cli)
+AC_MSG_CHECKING([whether to build evrmore-cli])
+AM_CONDITIONAL([BUILD_EVRMORE_CLI], [test x$build_evrmore_cli = xyes])
+AC_MSG_RESULT($build_evrmore_cli)
 
-AC_MSG_CHECKING([whether to build raven-tx])
-AM_CONDITIONAL([BUILD_RAVEN_TX], [test x$build_raven_tx = xyes])
-AC_MSG_RESULT($build_raven_tx)
+AC_MSG_CHECKING([whether to build evrmore-tx])
+AM_CONDITIONAL([BUILD_EVRMORE_TX], [test x$build_evrmore_tx = xyes])
+AC_MSG_RESULT($build_evrmore_tx)
 
 AC_MSG_CHECKING([whether to build libraries])
-AM_CONDITIONAL([BUILD_RAVEN_LIBS], [test x$build_raven_libs = xyes])
-if test x$build_raven_libs = xyes; then
+AM_CONDITIONAL([BUILD_EVRMORE_LIBS], [test x$build_evrmore_libs = xyes])
+if test x$build_evrmore_libs = xyes; then
   AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
-  AC_CONFIG_FILES([libravenconsensus.pc:libravenconsensus.pc.in])
+  AC_CONFIG_FILES([libevrmoreconsensus.pc:libevrmoreconsensus.pc.in])
 fi
-AC_MSG_RESULT($build_raven_libs)
+AC_MSG_RESULT($build_evrmore_libs)
 
 AC_LANG_POP
 
@@ -1146,13 +1146,13 @@ fi
 
 dnl these are only used when qt is enabled
 BUILD_TEST_QT=""
-if test x$raven_enable_qt != xno; then
+if test x$evrmore_enable_qt != xno; then
   dnl enable dbus support
   AC_MSG_CHECKING([whether to build GUI with support for D-Bus])
-  if test x$raven_enable_qt_dbus != xno; then
+  if test x$evrmore_enable_qt_dbus != xno; then
     AC_DEFINE([USE_DBUS],[1],[Define if dbus support should be compiled in])
   fi
-  AC_MSG_RESULT($raven_enable_qt_dbus)
+  AC_MSG_RESULT($evrmore_enable_qt_dbus)
 
   dnl enable qr support
   AC_MSG_CHECKING([whether to build GUI with support for QR codes])
@@ -1175,8 +1175,8 @@ if test x$raven_enable_qt != xno; then
     AC_MSG_WARN("xgettext is required to update qt translations")
   fi
 
-  AC_MSG_CHECKING([whether to build test_raven-qt])
-  if test x$use_gui_tests$raven_enable_qt_test = xyesyes; then
+  AC_MSG_CHECKING([whether to build test_evrmore-qt])
+  if test x$use_gui_tests$evrmore_enable_qt_test = xyesyes; then
     AC_MSG_RESULT([yes])
     BUILD_TEST_QT="yes"
   else
@@ -1186,7 +1186,7 @@ fi
 
 AM_CONDITIONAL([ENABLE_ZMQ], [test "x$use_zmq" = "xyes"])
 
-AC_MSG_CHECKING([whether to build test_raven])
+AC_MSG_CHECKING([whether to build test_evrmore])
 if test x$use_tests = xyes; then
   AC_MSG_RESULT([yes])
   BUILD_TEST="yes"
@@ -1202,7 +1202,7 @@ else
   AC_MSG_RESULT([no])
 fi
 
-if test x$build_raven_cli$build_raven_tx$build_raven_libs$build_ravend$raven_enable_qt$use_bench$use_tests = xnonononononono; then
+if test x$build_evrmore_cli$build_evrmore_tx$build_evrmore_libs$build_evrmored$evrmore_enable_qt$use_bench$use_tests = xnonononononono; then
   AC_MSG_ERROR([No targets! Please specify at least one of: --with-cli --with-tx --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
@@ -1211,7 +1211,7 @@ AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
-AM_CONDITIONAL([ENABLE_QT],[test x$raven_enable_qt = xyes])
+AM_CONDITIONAL([ENABLE_QT],[test x$evrmore_enable_qt = xyes])
 AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
 AM_CONDITIONAL([ENABLE_BENCH],[test x$use_bench = xyes])
 AM_CONDITIONAL([USE_QRCODE], [test x$use_qr = xyes])
@@ -1240,10 +1240,10 @@ AC_SUBST(COPYRIGHT_YEAR, _COPYRIGHT_YEAR)
 AC_SUBST(COPYRIGHT_HOLDERS, "_COPYRIGHT_HOLDERS")
 AC_SUBST(COPYRIGHT_HOLDERS_SUBSTITUTION, "_COPYRIGHT_HOLDERS_SUBSTITUTION")
 AC_SUBST(COPYRIGHT_HOLDERS_FINAL, "_COPYRIGHT_HOLDERS_FINAL")
-AC_SUBST(RAVEN_DAEMON_NAME)
-AC_SUBST(RAVEN_GUI_NAME)
-AC_SUBST(RAVEN_CLI_NAME)
-AC_SUBST(RAVEN_TX_NAME)
+AC_SUBST(EVRMORE_DAEMON_NAME)
+AC_SUBST(EVRMORE_GUI_NAME)
+AC_SUBST(EVRMORE_CLI_NAME)
+AC_SUBST(EVRMORE_TX_NAME)
 
 AC_SUBST(RELDFLAGS)
 AC_SUBST(COMPAT_LDFLAGS)
@@ -1274,8 +1274,7 @@ AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/spl
 AM_COND_IF([HAVE_DOXYGEN], [AC_CONFIG_FILES([doc/Doxyfile])])
 AC_CONFIG_LINKS([contrib/filter-lcov.py:contrib/filter-lcov.py])
 AC_CONFIG_LINKS([test/functional/test_runner.py:test/functional/test_runner.py])
-AC_CONFIG_LINKS([test/util/raven-util-test.py:test/util/raven-util-test.py])
-AC_CONFIG_LINKS([src/crypto/md_helper.c:src/crypto/md_helper.c])
+AC_CONFIG_LINKS([test/util/evrmore-util-test.py:test/util/evrmore-util-test.py])
 
 dnl boost's m4 checks do something really nasty: they export these vars. As a
 dnl result, they leak into secp256k1's configure and crazy things happen.
@@ -1330,12 +1329,12 @@ esac
 
 echo
 echo "Options used to compile and link:"
-echo "  build raven-cli = $build_raven_cli"
-echo "  build raven-tx  = $build_raven_tx"
+echo "  build evrmore-cli = $build_evrmore_cli"
+echo "  build evrmore-tx  = $build_evrmore_tx"
 echo "  with wallet     = $enable_wallet"
-echo "  with gui / qt   = $raven_enable_qt"
-if test x$raven_enable_qt != xno; then
-    echo "    qt version    = $raven_qt_got_major_vers"
+echo "  with gui / qt   = $evrmore_enable_qt"
+if test x$evrmore_enable_qt != xno; then
+    echo "    qt version    = $evrmore_qt_got_major_vers"
     echo "    with qr       = $use_qr"
 fi
 echo "  with zmq        = $use_zmq"

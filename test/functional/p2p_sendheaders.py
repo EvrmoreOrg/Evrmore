@@ -77,7 +77,7 @@ e. Announce one more that doesn't connect.
 """
 
 from test_framework.mininode import NodeConnCB, mininode_lock, MsgGetdata, MsgGetHeaders, MsgHeaders, NodeConn, NetworkThread, MsgBlock, CInv, MsgInv, CBlockHeader, MsgGetBlocks, MsgSendHeaders
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import wait_until, sync_blocks, p2p_port, assert_equal
 from test_framework.blocktools import create_block, create_coinbase
 
@@ -120,7 +120,7 @@ class TestNode(NodeConnCB):
     def on_headers(self, conn, message):
         if len(message.headers):
             self.block_announced = True
-            message.headers[-1].calc_x16r()
+            message.headers[-1].calc_sha256()
             self.last_blockhash_announced = message.headers[-1].sha256
 
     # Test whether the last announcement we received had the
@@ -176,7 +176,7 @@ class TestNode(NodeConnCB):
         getblocks_message.locator.vHave = locator
         self.send_message(getblocks_message)
 
-class SendHeadersTest(RavenTestFramework):
+class SendHeadersTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2

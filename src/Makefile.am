@@ -19,28 +19,28 @@ else
 LIBUNIVALUE = $(UNIVALUE_LIBS)
 endif
 
-RAVEN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
+EVRMORE_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
-RAVEN_INCLUDES += -I$(srcdir)/secp256k1/include
-RAVEN_INCLUDES += $(UNIVALUE_CFLAGS)
+EVRMORE_INCLUDES += -I$(srcdir)/secp256k1/include
+EVRMORE_INCLUDES += $(UNIVALUE_CFLAGS)
 
-LIBRAVEN_SERVER=libraven_server.a
-LIBRAVEN_COMMON=libraven_common.a
-LIBRAVEN_CONSENSUS=libraven_consensus.a
-LIBRAVEN_CLI=libraven_cli.a
-LIBRAVEN_UTIL=libraven_util.a
-LIBRAVEN_CRYPTO=crypto/libraven_crypto.a
-LIBRAVENQT=qt/libravenqt.a
+LIBEVRMORE_SERVER=libevrmore_server.a
+LIBEVRMORE_COMMON=libevrmore_common.a
+LIBEVRMORE_CONSENSUS=libevrmore_consensus.a
+LIBEVRMORE_CLI=libevrmore_cli.a
+LIBEVRMORE_UTIL=libevrmore_util.a
+LIBEVRMORE_CRYPTO=crypto/libevrmore_crypto.a
+LIBEVRMOREQT=qt/libevrmoreqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 
 if ENABLE_ZMQ
-LIBRAVEN_ZMQ=libraven_zmq.a
+LIBEVRMORE_ZMQ=libevrmore_zmq.a
 endif
-if BUILD_RAVEN_LIBS
-LIBRAVENCONSENSUS=libravenconsensus.la
+if BUILD_EVRMORE_LIBS
+LIBEVRMORECONSENSUS=libevrmoreconsensus.la
 endif
 if ENABLE_WALLET
-LIBRAVEN_WALLET=libraven_wallet.a
+LIBEVRMORE_WALLET=libevrmore_wallet.a
 endif
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
@@ -49,82 +49,39 @@ $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES += \
-  $(LIBRAVEN_CRYPTO) \
-  $(LIBRAVEN_UTIL) \
-  $(LIBRAVEN_COMMON) \
-  $(LIBRAVEN_CONSENSUS) \
-  $(LIBRAVEN_SERVER) \
-  $(LIBRAVEN_CLI) \
-  $(LIBRAVEN_WALLET) \
-  $(LIBRAVEN_ZMQ)
+  $(LIBEVRMORE_CRYPTO) \
+  $(LIBEVRMORE_UTIL) \
+  $(LIBEVRMORE_COMMON) \
+  $(LIBEVRMORE_CONSENSUS) \
+  $(LIBEVRMORE_SERVER) \
+  $(LIBEVRMORE_CLI) \
+  $(LIBEVRMORE_WALLET) \
+  $(LIBEVRMORE_ZMQ)
 
-lib_LTLIBRARIES = $(LIBRAVENCONSENSUS)
+lib_LTLIBRARIES = $(LIBEVRMORECONSENSUS)
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
 TESTS =
 BENCHMARKS =
 
-if BUILD_RAVEND
-  bin_PROGRAMS += ravend
+if BUILD_EVRMORED
+  bin_PROGRAMS += evrmored
 endif
 
-if BUILD_RAVEN_CLI
-  bin_PROGRAMS += raven-cli
+if BUILD_EVRMORE_CLI
+  bin_PROGRAMS += evrmore-cli
 endif
 
-if BUILD_RAVEN_TX
-  bin_PROGRAMS += raven-tx
+if BUILD_EVRMORE_TX
+  bin_PROGRAMS += evrmore-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
-# raven core #
-RAVEN_CORE_H = \
+# evrmore core #
+EVRMORE_CORE_H = \
   addrdb.h \
   addressindex.h \
-  algo/sph_groestl.h \
-  algo/sph_types.h \
-  algo/sph_blake.h \
-  algo/sph_bmw.h \
-  algo/sph_jh.h \
-  algo/sph_keccak.h \
-  algo/sph_skein.h \
-  algo/sph_luffa.h \
-  algo/sph_cubehash.h \
-  algo/sph_simd.h \
-  algo/sph_echo.h \
-  algo/sph_shavite.h \
-  algo/sph_sha2.h \
-  algo/sph_haval.h \
-  algo/sph_tiger.h \
-  algo/lyra2.h \
-  algo/sponge.h \
-  algo/gost_streebog.h \
-  algo/groestl.c \
-  algo/blake.c \
-  algo/bmw.c \
-  algo/cubehash.c \
-  algo/echo.c \
-  algo/jh.c \
-  algo/keccak.c \
-  algo/luffa.c \
-  algo/shavite.c \
-  algo/simd.c \
-  algo/skein.c \
-  algo/hamsi.c \
-  algo/whirlpool.c \
-  algo/shabal.c \
-  algo/fugue.c \
-  algo/sha2.c \
-  algo/extra.c \
-  algo/extra.h \
-  algo/sph_sha2big.c \
-  algo/haval.c \
-  algo/tiger.cpp \
-  algo/lyra2.cpp \
-  algo/sponge.cpp \
-  algo/sph_sha2.c \
-  algo/gost_streebog.c \
   spentindex.h \
   timestampindex.h \
   addrman.h \
@@ -141,6 +98,8 @@ RAVEN_CORE_H = \
   bloom.h \
   blockencodings.h \
   chain.h \
+  airdrop.h \
+  airdropitems.h \
   chainparams.h \
   chainparamsbase.h \
   chainparamsseeds.h \
@@ -170,6 +129,7 @@ RAVEN_CORE_H = \
   memusage.h \
   merkleblock.h \
   miner.h \
+  minerdevfund.h \
   net.h \
   net_processing.h \
   netaddress.h \
@@ -240,12 +200,12 @@ obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh "$(abs_top_builddir)/src/obj/build.h" \
 	  "$(abs_top_srcdir)"
-libraven_util_a-clientversion.$(OBJEXT): obj/build.h
+libevrmore_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between ravend and raven-qt
-libraven_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
-libraven_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_server_a_SOURCES = \
+# server: shared between evrmored and evrmore-qt
+libevrmore_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+libevrmore_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_server_a_SOURCES = \
   addrdb.cpp \
   addrman.cpp \
   bloom.cpp \
@@ -260,6 +220,7 @@ libraven_server_a_SOURCES = \
   dbwrapper.cpp \
   merkleblock.cpp \
   miner.cpp \
+  minerdevfund.cpp \
   net.cpp \
   net_processing.cpp \
   noui.cpp \
@@ -297,23 +258,23 @@ libraven_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-  $(RAVEN_CORE_H)
+  $(EVRMORE_CORE_H)
 
 if ENABLE_ZMQ
-libraven_zmq_a_CPPFLAGS = $(RAVEN_INCLUDES) $(ZMQ_CFLAGS)
-libraven_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_zmq_a_SOURCES = \
+libevrmore_zmq_a_CPPFLAGS = $(EVRMORE_INCLUDES) $(ZMQ_CFLAGS)
+libevrmore_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_zmq_a_SOURCES = \
   zmq/zmqabstractnotifier.cpp \
   zmq/zmqnotificationinterface.cpp \
   zmq/zmqpublishnotifier.cpp
 endif
 
 
-# wallet: shared between ravend and raven-qt, but only linked
+# wallet: shared between evrmored and evrmore-qt, but only linked
 # when wallet enabled
-libraven_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-libraven_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_wallet_a_SOURCES = \
+libevrmore_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+libevrmore_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_wallet_a_SOURCES = \
   wallet/crypter.cpp \
   wallet/db.cpp \
   wallet/feebumper.cpp \
@@ -324,12 +285,12 @@ libraven_wallet_a_SOURCES = \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
   wallet/bip39.cpp \
-  $(RAVEN_CORE_H)
+  $(EVRMORE_CORE_H)
 
 # crypto primitives library
-crypto_libraven_crypto_a_CPPFLAGS = $(AM_CPPFLAGS)
-crypto_libraven_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libraven_crypto_a_SOURCES = \
+crypto_libevrmore_crypto_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libevrmore_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libevrmore_crypto_a_SOURCES = \
   crypto/aes.cpp \
   crypto/aes.h \
   crypto/chacha20.h \
@@ -340,6 +301,7 @@ crypto_libraven_crypto_a_SOURCES = \
   crypto/hmac_sha512.cpp \
   crypto/hmac_sha512.h \
   crypto/ripemd160.cpp \
+  crypto/ripemd160.h \ 
   crypto/sha1.cpp \
   crypto/sha1.h \
   crypto/sha256.cpp \
@@ -372,13 +334,13 @@ crypto_libraven_crypto_a_SOURCES = \
   crypto/ethash/progpow_test_vectors.hpp
 
 if USE_ASM
-crypto_libraven_crypto_a_SOURCES += crypto/sha256_sse4.cpp
+crypto_libevrmore_crypto_a_SOURCES += crypto/sha256_sse4.cpp
 endif
 
 # consensus: shared between all executables that validate any consensus rules.
-libraven_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-libraven_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_consensus_a_SOURCES = \
+libevrmore_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+libevrmore_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
@@ -395,7 +357,7 @@ libraven_consensus_a_SOURCES = \
   primitives/transaction.h \
   pubkey.cpp \
   pubkey.h \
-  script/ravenconsensus.cpp \
+  script/evrmoreconsensus.cpp \
   script/interpreter.cpp \
   script/interpreter.h \
   script/script.cpp \
@@ -413,13 +375,14 @@ libraven_consensus_a_SOURCES = \
   version.h \
   LibBoolEE.cpp \
   LibBoolEE.h \
-  $(RAVEN_CORE_H)
+  $(EVRMORE_CORE_H)
 
-# common: shared between ravend, and raven-qt and non-server tools
-libraven_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-libraven_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_common_a_SOURCES = \
+# common: shared between evrmored, and evrmore-qt and non-server tools
+libevrmore_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+libevrmore_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_common_a_SOURCES = \
   base58.cpp \
+  airdrop.cpp \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
@@ -435,14 +398,14 @@ libraven_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   warnings.cpp \
-  $(RAVEN_CORE_H)
+  $(EVRMORE_CORE_H)
 
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
-libraven_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-libraven_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_util_a_SOURCES = \
+libevrmore_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+libevrmore_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_util_a_SOURCES = \
   support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
@@ -458,102 +421,105 @@ libraven_util_a_SOURCES = \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
   utiltime.cpp \
-  $(RAVEN_CORE_H)
+  $(EVRMORE_CORE_H)
 
 if GLIBC_BACK_COMPAT
-libraven_util_a_SOURCES += compat/glibc_compat.cpp
+libevrmore_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
 endif
 
-# cli: shared between raven-cli and raven-qt
-libraven_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-libraven_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libraven_cli_a_SOURCES = \
+# cli: shared between evrmore-cli and evrmore-qt
+libevrmore_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+libevrmore_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmore_cli_a_SOURCES = \
   rpc/client.cpp \
-  $(RAVEN_CORE_H)
+  $(EVRMORE_CORE_H)
 
-nodist_libraven_util_a_SOURCES = $(srcdir)/obj/build.h
+nodist_libevrmore_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# ravend binary #
-ravend_SOURCES = ravend.cpp
-ravend_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-ravend_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-ravend_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# evrmored binary #
+evrmored_SOURCES = evrmored.cpp
+evrmored_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+evrmored_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+evrmored_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-ravend_SOURCES += ravend-res.rc
+evrmored_SOURCES += evrmored-res.rc
 endif
 
-ravend_LDADD = \
-  $(LIBRAVEN_SERVER) \
-  $(LIBRAVEN_COMMON) \
+evrmored_LDADD = \
+  $(LIBEVRMORE_SERVER) \
+  $(LIBEVRMORE_COMMON) \
   $(LIBUNIVALUE) \
-  $(LIBRAVEN_UTIL) \
-  $(LIBRAVEN_WALLET) \
-  $(LIBRAVEN_ZMQ) \
-  $(LIBRAVEN_CONSENSUS) \
-  $(LIBRAVEN_CRYPTO) \
+  $(LIBEVRMORE_UTIL) \
+  $(LIBEVRMORE_WALLET) \
+  $(LIBEVRMORE_ZMQ) \
+  $(LIBEVRMORE_CONSENSUS) \
+  $(LIBEVRMORE_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-ravend_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+evrmored_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
-# raven-cli binary #
-raven_cli_SOURCES = raven-cli.cpp
-raven_cli_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES) $(EVENT_CFLAGS)
-raven_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-raven_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# evrmore-cli binary #
+evrmore_cli_SOURCES = evrmore-cli.cpp
+evrmore_cli_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES) $(EVENT_CFLAGS)
+evrmore_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+evrmore_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-raven_cli_SOURCES += raven-cli-res.rc
+evrmore_cli_SOURCES += evrmore-cli-res.rc
 endif
 
-raven_cli_LDADD = \
-  $(LIBRAVEN_CLI) \
+evrmore_cli_LDADD = \
+  $(LIBEVRMORE_CLI) \
+  $(LIBEVRMORE_COMMON) \
+  $(LIBEVRMORE_CONSENSUS) \
+  $(LIBSECP256K1) \
   $(LIBUNIVALUE) \
-  $(LIBRAVEN_UTIL) \
-  $(LIBRAVEN_CRYPTO)
+  $(LIBEVRMORE_UTIL) \
+  $(LIBEVRMORE_CRYPTO)
 
-raven_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+evrmore_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# raven-tx binary #
-raven_tx_SOURCES = raven-tx.cpp
-raven_tx_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-raven_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-raven_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# evrmore-tx binary #
+evrmore_tx_SOURCES = evrmore-tx.cpp
+evrmore_tx_CPPFLAGS = $(AM_CPPFLAGS) $(EVRMORE_INCLUDES)
+evrmore_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+evrmore_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-raven_tx_SOURCES += raven-tx-res.rc
+evrmore_tx_SOURCES += evrmore-tx-res.rc
 endif
 
-raven_tx_LDADD = \
+evrmore_tx_LDADD = \
   $(LIBUNIVALUE) \
-  $(LIBRAVEN_COMMON) \
-  $(LIBRAVEN_UTIL) \
-  $(LIBRAVEN_CONSENSUS) \
-  $(LIBRAVEN_CRYPTO) \
+  $(LIBEVRMORE_COMMON) \
+  $(LIBEVRMORE_UTIL) \
+  $(LIBEVRMORE_CONSENSUS) \
+  $(LIBEVRMORE_CRYPTO) \
   $(LIBSECP256K1)
 
-raven_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+evrmore_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
-# ravenconsensus library #
-if BUILD_RAVEN_LIBS
-include_HEADERS = script/ravenconsensus.h
-libravenconsensus_la_SOURCES = $(crypto_libraven_crypto_a_SOURCES) $(libraven_consensus_a_SOURCES)
+# evrmoreconsensus library #
+if BUILD_EVRMORE_LIBS
+include_HEADERS = script/evrmoreconsensus.h
+libevrmoreconsensus_la_SOURCES = $(crypto_libevrmore_crypto_a_SOURCES) $(libevrmore_consensus_a_SOURCES)
 
 if GLIBC_BACK_COMPAT
-  libravenconsensus_la_SOURCES += compat/glibc_compat.cpp
+  libevrmoreconsensus_la_SOURCES += compat/glibc_compat.cpp
 endif
 
-libravenconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libravenconsensus_la_LIBADD = $(LIBSECP256K1) $(BOOST_LIBS)
-libravenconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_RAVEN_INTERNAL
-libravenconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libevrmoreconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
+libevrmoreconsensus_la_LIBADD = $(LIBSECP256K1) $(BOOST_LIBS)
+libevrmoreconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_EVRMORE_INTERNAL
+libevrmoreconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 endif
 #
@@ -583,12 +549,12 @@ CLEANFILES += obj/build.h
 EXTRA_DIST = $(CTAES_DIST)
 
 
-config/raven-config.h: config/stamp-h1
+config/evrmore-config.h: config/stamp-h1
 	@$(MAKE) -C $(top_builddir) $(subdir)/$(@)
-config/stamp-h1: $(top_srcdir)/$(subdir)/config/raven-config.h.in $(top_builddir)/config.status
+config/stamp-h1: $(top_srcdir)/$(subdir)/config/evrmore-config.h.in $(top_builddir)/config.status
 	$(AM_V_at)$(MAKE) -C $(top_builddir) $(subdir)/$(@)
-$(top_srcdir)/$(subdir)/config/raven-config.h.in:  $(am__configure_deps)
-	$(AM_V_at)$(MAKE) -C $(top_srcdir) $(subdir)/config/raven-config.h.in
+$(top_srcdir)/$(subdir)/config/evrmore-config.h.in:  $(am__configure_deps)
+	$(AM_V_at)$(MAKE) -C $(top_srcdir) $(subdir)/config/evrmore-config.h.in
 
 clean-local:
 	-$(MAKE) -C secp256k1 clean

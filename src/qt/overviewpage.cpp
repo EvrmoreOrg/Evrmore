@@ -1,12 +1,13 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "overviewpage.h"
 #include "ui_overviewpage.h"
 
-#include "ravenunits.h"
+#include "evrmoreunits.h"
 #include "clientmodel.h"
 #include "guiconstants.h"
 #include "guiutil.h"
@@ -46,7 +47,7 @@ class TxViewDelegate : public QAbstractItemDelegate
     Q_OBJECT
 public:
     explicit TxViewDelegate(const PlatformStyle *_platformStyle, QObject *parent=nullptr):
-        QAbstractItemDelegate(parent), unit(RavenUnits::RVN),
+        QAbstractItemDelegate(parent), unit(EvrmoreUnits::EVR),
         platformStyle(_platformStyle)
     {
 
@@ -155,7 +156,7 @@ class AssetViewDelegate : public QAbstractItemDelegate
 Q_OBJECT
 public:
     explicit AssetViewDelegate(const PlatformStyle *_platformStyle, QObject *parent=nullptr):
-            QAbstractItemDelegate(parent), unit(RavenUnits::RVN),
+            QAbstractItemDelegate(parent), unit(EvrmoreUnits::EVR),
             platformStyle(_platformStyle)
     {
 
@@ -299,7 +300,7 @@ public:
 
 };
 #include "overviewpage.moc"
-#include "ravengui.h"
+#include "evrmoregui.h"
 #include <QFontDatabase>
 
 OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) :
@@ -368,7 +369,7 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
 
     /** Update the labels colors */
     ui->assetBalanceLabel->setStyleSheet(STRING_LABEL_COLOR);
-    ui->rvnBalancesLabel->setStyleSheet(STRING_LABEL_COLOR);
+    ui->evrBalancesLabel->setStyleSheet(STRING_LABEL_COLOR);
     ui->labelBalanceText->setStyleSheet(STRING_LABEL_COLOR);
     ui->labelPendingText->setStyleSheet(STRING_LABEL_COLOR);
     ui->labelImmatureText->setStyleSheet(STRING_LABEL_COLOR);
@@ -378,7 +379,7 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->recentTransactionsLabel->setStyleSheet(STRING_LABEL_COLOR);
 
     /** Update the labels font */
-    ui->rvnBalancesLabel->setFont(GUIUtil::getTopLabelFont());
+    ui->evrBalancesLabel->setFont(GUIUtil::getTopLabelFont());
     ui->assetBalanceLabel->setFont(GUIUtil::getTopLabelFont());
     ui->recentTransactionsLabel->setFont(GUIUtil::getTopLabelFont());
 
@@ -561,14 +562,14 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     currentWatchOnlyBalance = watchOnlyBalance;
     currentWatchUnconfBalance = watchUnconfBalance;
     currentWatchImmatureBalance = watchImmatureBalance;
-    ui->labelBalance->setText(RavenUnits::formatWithUnit(unit, balance, false, RavenUnits::separatorAlways));
-    ui->labelUnconfirmed->setText(RavenUnits::formatWithUnit(unit, unconfirmedBalance, false, RavenUnits::separatorAlways));
-    ui->labelImmature->setText(RavenUnits::formatWithUnit(unit, immatureBalance, false, RavenUnits::separatorAlways));
-    ui->labelTotal->setText(RavenUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance, false, RavenUnits::separatorAlways));
-    ui->labelWatchAvailable->setText(RavenUnits::formatWithUnit(unit, watchOnlyBalance, false, RavenUnits::separatorAlways));
-    ui->labelWatchPending->setText(RavenUnits::formatWithUnit(unit, watchUnconfBalance, false, RavenUnits::separatorAlways));
-    ui->labelWatchImmature->setText(RavenUnits::formatWithUnit(unit, watchImmatureBalance, false, RavenUnits::separatorAlways));
-    ui->labelWatchTotal->setText(RavenUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, false, RavenUnits::separatorAlways));
+    ui->labelBalance->setText(EvrmoreUnits::formatWithUnit(unit, balance, false, EvrmoreUnits::separatorAlways));
+    ui->labelUnconfirmed->setText(EvrmoreUnits::formatWithUnit(unit, unconfirmedBalance, false, EvrmoreUnits::separatorAlways));
+    ui->labelImmature->setText(EvrmoreUnits::formatWithUnit(unit, immatureBalance, false, EvrmoreUnits::separatorAlways));
+    ui->labelTotal->setText(EvrmoreUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance, false, EvrmoreUnits::separatorAlways));
+    ui->labelWatchAvailable->setText(EvrmoreUnits::formatWithUnit(unit, watchOnlyBalance, false, EvrmoreUnits::separatorAlways));
+    ui->labelWatchPending->setText(EvrmoreUnits::formatWithUnit(unit, watchUnconfBalance, false, EvrmoreUnits::separatorAlways));
+    ui->labelWatchImmature->setText(EvrmoreUnits::formatWithUnit(unit, watchImmatureBalance, false, EvrmoreUnits::separatorAlways));
+    ui->labelWatchTotal->setText(EvrmoreUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, false, EvrmoreUnits::separatorAlways));
 
     // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
     // for the non-mining users
@@ -644,7 +645,7 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
     }
 
-    // update the display unit, to not use the default ("RVN")
+    // update the display unit, to not use the default ("EVR")
     updateDisplayUnit();
 }
 
@@ -693,7 +694,7 @@ void OverviewPage::showAssets()
         ui->assetBalanceLabel->hide();
         ui->labelAssetStatus->hide();
 
-        // This keeps the RVN balance grid from expanding and looking terrible when asset balance is hidden
+        // This keeps the EVR balance grid from expanding and looking terrible when asset balance is hidden
         ui->assetVerticalSpaceWidget->show();
         ui->assetVerticalSpaceWidget2->show();
     }
@@ -703,7 +704,7 @@ void OverviewPage::assetSearchChanged()
 {
     if (!assetFilter)
         return;
-    assetFilter->setAssetNamePrefix(ui->assetSearch->text());
+    assetFilter->setAssetNameContains(ui->assetSearch->text());
 }
 
 void OverviewPage::openIPFSForAsset(const QModelIndex &index)

@@ -7,7 +7,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """
-Raven test framework primitive and message structures.
+Evrmore test framework primitive and message structures.
 
 CBlock, CTransaction, CBlockHeader, CTxIn, CTxOut, etc....:
     data structures that should map to corresponding structures in
@@ -31,17 +31,18 @@ import struct
 import time
 
 from test_framework.siphash import siphash256
-from test_framework.util import hex_str_to_bytes, bytes_to_hex_str, x16_hash_block
+from test_framework.util import hex_str_to_bytes, bytes_to_hex_str
 
 BIP0031_VERSION = 60000
-MY_VERSION = 70025  # This needs to match the ASSETDATA_VERSION in version.h!
+# EVR-TODO: Update MY_VERSION here whenever updating PROTOCOL_VERSION in src/version.h
+MY_VERSION = 70029  # This needs to match the PROTOCOL_VERSION in src/version.h
 MY_SUBVERSION = b"/python-mininode-tester:0.0.3/"
 MY_RELAY = 1  # from version 70001 onwards, fRelay should be appended to version messages (BIP37)
 
 MAX_INV_SZ = 50000
-MAX_BLOCK_BASE_SIZE = 1000000
+MAX_BLOCK_BASE_SIZE = 2000000
 
-COIN = 100000000  # 1 rvn in Corbies
+COIN = 100000000  # 1 EVR in satoshies
 BIP125_SEQUENCE_NUMBER = 0xfffffffd  # Sequence number that is BIP 125 opt-in and BIP 68-opt-out
 
 NODE_NETWORK = (1 << 0)
@@ -212,7 +213,7 @@ def to_hex(obj):
 
 class CAddress:
     """
-    Objects that map to ravend objects, which can be serialized/deserialized
+    Objects that map to evrmored objects, which can be serialized/deserialized
     """
     __slots__ = ("ip", "nServices", "pchReserved", "port", "time")
 
@@ -522,7 +523,7 @@ class CTxWitness:
 
 
 class CTransaction:
-    __slots__ = ("nVersion", "vin", "vout", "wit", "nLockTime", "x16r", "hash")
+    __slots__ = ("nVersion", "vin", "vout", "wit", "nLockTime", "sha256", "hash")
 
     def __init__(self, tx=None):
         if tx is None:
@@ -531,14 +532,14 @@ class CTransaction:
             self.vout = []
             self.wit = CTxWitness()
             self.nLockTime = 0
-            self.x16r = None
+            self.sha256 = None
             self.hash = None
         else:
             self.nVersion = tx.nVersion
             self.vin = copy.deepcopy(tx.vin)
             self.vout = copy.deepcopy(tx.vout)
             self.nLockTime = tx.nLockTime
-            self.x16r = tx.x16r
+            self.sha256 = tx.sha256
             self.hash = tx.hash
             self.wit = copy.deepcopy(tx.wit)
 
@@ -549,7 +550,7 @@ class CTransaction:
         if len(self.vin) == 0:
             flags = struct.unpack("<B", f.read(1))[0]
             # Not sure why flags can't be zero, but this
-            # matches the implementation in ravend
+            # matches the implementation in evrmored
             if flags != 0:
                 self.vin = deser_vector(f, CTxIn)
                 self.vout = deser_vector(f, CTxOut)
@@ -559,7 +560,7 @@ class CTransaction:
             self.wit.vtxinwit = [CTxInWitness() for _ in range(len(self.vin))]
             self.wit.deserialize(f)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
-        self.x16r = None
+        self.sha256 = None
         self.hash = None
 
     def serialize_without_witness(self):
@@ -600,24 +601,24 @@ class CTransaction:
 
     # Recalculate the txid (transaction hash without witness)
     def rehash(self):
-        self.x16r = None
-        self.calc_x16r()
+        self.sha256 = None
+        self.calc_sha256()
         return self.hash
 
 
     # We will only cache the serialization without witness in
-    # self.x16r and self.hash -- those are expected to be the txid.
-    def calc_x16r(self, with_witness=False):
+    # self.sha256 and self.hash -- those are expected to be the txid.
+    def calc_sha256(self, with_witness=False):
         if with_witness:
             # Don't cache the result, just return it
             return uint256_from_str(hash256(self.serialize_with_witness()))
 
-        if self.x16r is None:
-            self.x16r = uint256_from_str(hash256(self.serialize_without_witness()))
+        if self.sha256 is None:
+            self.sha256 = uint256_from_str(hash256(self.serialize_without_witness()))
         self.hash = encode(hash256(self.serialize())[::-1], 'hex_codec').decode('ascii')
 
     def is_valid(self):
-        self.calc_x16r()
+        self.calc_sha256()
         for tout in self.vout:
             if tout.nValue < 0 or tout.nValue > 21000000 * COIN:
                 return False
@@ -629,7 +630,7 @@ class CTransaction:
 
 
 class CBlockHeader:
-    __slots__ = ("nVersion", "hashPrevBlock", "hashMerkleRoot", "nTime", "nBits", "nNonce", "x16r", "hash")
+    __slots__ = ("nVersion", "hashPrevBlock", "hashMerkleRoot", "nTime", "nBits", "nNonce", "sha256", "hash")
 
     def __init__(self, header=None):
         if header is None:
@@ -641,9 +642,9 @@ class CBlockHeader:
             self.nTime = header.nTime
             self.nBits = header.nBits
             self.nNonce = header.nNonce
-            self.x16r = header.x16r
+            self.sha256 = header.sha256
             self.hash = header.hash
-            self.calc_x16r()
+            self.calc_sha256()
 
     def set_null(self):
         self.nVersion = 1
@@ -652,7 +653,7 @@ class CBlockHeader:
         self.nTime = 0
         self.nBits = 0
         self.nNonce = 0
-        self.x16r = None
+        self.sha256 = None
         self.hash = None
 
     def deserialize(self, f):
@@ -662,7 +663,7 @@ class CBlockHeader:
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
         self.nNonce = struct.unpack("<I", f.read(4))[0]
-        self.x16r = None
+        self.sha256 = None
         self.hash = None
 
     def serialize(self):
@@ -675,8 +676,8 @@ class CBlockHeader:
         r += struct.pack("<I", self.nNonce)
         return r
 
-    def calc_x16r(self):
-        if self.x16r is None:
+    def calc_sha256(self):
+        if self.sha256 is None:
             r = b""
             r += struct.pack("<i", self.nVersion)
             r += ser_uint256(self.hashPrevBlock)
@@ -684,13 +685,16 @@ class CBlockHeader:
             r += struct.pack("<I", self.nTime)
             r += struct.pack("<I", self.nBits)
             r += struct.pack("<I", self.nNonce)
-            self.hash = x16_hash_block(encode(r, 'hex_codec').decode('ascii'), "2")
-            self.x16r = int(self.hash, 16)
+            self.sha256 = uint256_from_str(hash256(r))
+            self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
+            # EVR
+			#self.hash = x16_hash_block(encode(r, 'hex_codec').decode('ascii'), "2")
+            #self.sha256 = int(self.hash, 16)
 
     def rehash(self):
-        self.x16r = None
-        self.calc_x16r()
-        return self.x16r
+        self.sha256 = None
+        self.calc_sha256()
+        return self.sha256
 
     def __repr__(self):
         return "CBlockHeader(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x)" \
@@ -732,8 +736,8 @@ class CBlock(CBlockHeader):
     def calc_merkle_root(self):
         hashes = []
         for tx in self.vtx:
-            tx.calc_x16r()
-            hashes.append(ser_uint256(tx.x16r))
+            tx.calc_sha256()
+            hashes.append(ser_uint256(tx.sha256))
         return self.get_merkle_root(hashes)
 
     def calc_witness_merkle_root(self):
@@ -743,14 +747,14 @@ class CBlock(CBlockHeader):
 
         for tx in self.vtx[1:]:
             # Calculate the hashes with witness data
-            hashes.append(ser_uint256(tx.calc_x16r(True)))
+            hashes.append(ser_uint256(tx.calc_sha256(True)))
 
         return self.get_merkle_root(hashes)
 
     def is_valid(self):
-        self.calc_x16r()
+        self.calc_sha256()
         target = uint256_from_compact(self.nBits)
-        if self.x16r > target:
+        if self.sha256 > target:
             return False
         for tx in self.vtx:
             if not tx.is_valid():
@@ -762,7 +766,7 @@ class CBlock(CBlockHeader):
     def solve(self):
         self.rehash()
         target = uint256_from_compact(self.nBits)
-        while self.x16r > target:
+        while self.sha256 > target:
             self.nNonce += 1
             self.rehash()
 
@@ -1000,7 +1004,7 @@ class HeaderAndShortIDs:
             if i not in prefill_list:
                 tx_hash = block.vtx[i].sha256
                 if use_witness:
-                    tx_hash = block.vtx[i].calc_x16r(with_witness=True)
+                    tx_hash = block.vtx[i].calc_sha256(with_witness=True)
                 self.shortids.append(calculate_shortid(k0, k1, tx_hash))
 
     def __repr__(self):
@@ -1493,7 +1497,7 @@ class MsgHeaders:
         self.headers = headers if headers is not None else []
 
     def deserialize(self, f):
-        # comment in ravend indicates these should be deserialized as blocks
+        # comment in evrmored indicates these should be deserialized as blocks
         blocks = deser_vector(f, CBlock)
         for x in blocks:
             self.headers.append(CBlockHeader(x))

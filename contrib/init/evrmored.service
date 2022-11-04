@@ -1,0 +1,22 @@
+[Unit]
+Description=Evrmore's distributed currency daemon
+After=network.target
+
+[Service]
+User=evrmore
+Group=evrmore
+
+Type=forking
+PIDFile=/var/lib/evrmored/evrmored.pid
+ExecStart=/usr/bin/evrmored -daemon -pid=/var/lib/evrmored/evrmored.pid \
+-conf=/etc/evrmore/evrmore.conf -datadir=/var/lib/evrmored -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,5 @@
 // Copyright (c) 2019-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -294,7 +295,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
                 "\nArguments:\n"
                 "1. \"asset_name\"                 (string, required) The reward will be distributed all owners of this asset\n"
                 "2. \"snapshot_height\"            (number, required) The block height of the ownership snapshot\n"
-                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or RVN\n"
+                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or EVR\n"
                 "4. \"gross_distribution_amount\"  (number, required) The amount of the distribution asset that will be split amongst all owners\n"
                 "5. \"exception_addresses\"        (string, optional) Ownership addresses that should be excluded\n"
                 "6. \"change_address\"             (string, optional) If the rewards can't be fully distributed. The change will be sent to this address\n"
@@ -318,10 +319,10 @@ UniValue distributereward(const JSONRPCRequest& request) {
                 "}\n"
 
                 "\nExamples:\n"
-                + HelpExampleCli("distributereward", "\"TRONCO\" 12345 \"RVN\" 1000")
+                + HelpExampleCli("distributereward", "\"TRONCO\" 12345 \"EVR\" 1000")
                 + HelpExampleCli("distributereward", "\"PHATSTACKS\" 12345 \"DIVIDENDS\" 1000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
                 + HelpExampleRpc("distributereward", "\"TRONCO\" 34987 \"DIVIDENDS\" 100000")
-                + HelpExampleRpc("distributereward", "\"PHATSTACKS\" 34987 \"RVN\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
+                + HelpExampleRpc("distributereward", "\"PHATSTACKS\" 34987 \"EVR\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
         );
 
     if (!fAssetIndex) {
@@ -345,7 +346,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
     std::string asset_name(request.params[0].get_str());
     int snapshot_height = request.params[1].get_int();
     std::string distribution_asset_name(request.params[2].get_str());
-    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == "RVN"));
+    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == "EVR"));
     std::string exception_addresses;
     if (request.params.size() > 4) {
         exception_addresses = request.params[4].get_str();
@@ -357,7 +358,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
     if (request.params.size() > 5) {
         change_address = request.params[5].get_str();
         if (!change_address.empty() && !IsValidDestinationString(change_address))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid change address: Use a valid RVN address"));
+            throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid change address: Use a valid EVR address"));
     }
 
     AssetType ownershipAssetType;
@@ -373,7 +374,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid snapshot_height: block height should be less than or equal to the current active chain height"));
     }
 
-    if (distribution_asset_name != "RVN") {
+    if (distribution_asset_name != "EVR") {
         if (!IsAssetNameValid(distribution_asset_name, distributionAssetType))
             throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid distribution_asset_name: Please use a valid asset name"));
 
@@ -427,15 +428,15 @@ UniValue getdistributestatus(const JSONRPCRequest& request) {
                 "\nArguments:\n"
                 "1. \"asset_name\"                 (string, required) The reward will be distributed all owners of this asset\n"
                 "2. \"snapshot_height\"            (number, required) The block height of the ownership snapshot\n"
-                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or RVN\n"
+                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or EVR\n"
                 "4. \"gross_distribution_amount\"  (number, required) The amount of the distribution asset that will be split amongst all owners\n"
                 "5. \"exception_addresses\"        (string, optional) Ownership addresses that should be excluded\n"
 
                 "\nExamples:\n"
-                + HelpExampleCli("getdistributestatus", "\"TRONCO\" 12345 \"RVN\" 1000")
+                + HelpExampleCli("getdistributestatus", "\"TRONCO\" 12345 \"EVR\" 1000")
                 + HelpExampleCli("getdistributestatus", "\"PHATSTACKS\" 12345 \"DIVIDENDS\" 1000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
                 + HelpExampleRpc("getdistributestatus", "\"TRONCO\" 34987 \"DIVIDENDS\" 100000")
-                + HelpExampleRpc("getdistributestatus", "\"PHATSTACKS\" 34987 \"RVN\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
+                + HelpExampleRpc("getdistributestatus", "\"PHATSTACKS\" 34987 \"EVR\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
         );
 
     if (!fAssetIndex) {
@@ -448,7 +449,7 @@ UniValue getdistributestatus(const JSONRPCRequest& request) {
     std::string asset_name(request.params[0].get_str());
     int snapshot_height = request.params[1].get_int();
     std::string distribution_asset_name(request.params[2].get_str());
-    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == "RVN"));
+    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == "EVR"));
     std::string exception_addresses;
     if (request.params.size() > 4) {
         exception_addresses = request.params[4].get_str();

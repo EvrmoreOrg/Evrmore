@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "netbase.h"
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 #include "utilstrencodings.h"
 
 #include <string>
@@ -89,20 +89,21 @@ BOOST_FIXTURE_TEST_SUITE(netbase_tests, BasicTestingSetup)
     {
         BOOST_TEST_MESSAGE("Running NetBase SplitHost Test");
 
-        BOOST_CHECK(TestSplitHost("www.raven.org", "www.raven.org", -1));
-        BOOST_CHECK(TestSplitHost("[www.raven.org]", "www.raven.org", -1));
-        BOOST_CHECK(TestSplitHost("www.raven.org:80", "www.raven.org", 80));
-        BOOST_CHECK(TestSplitHost("[www.raven.org]:80", "www.raven.org", 80));
+        //EVR-TODO: Put Evrmore URLs here
+        BOOST_CHECK(TestSplitHost("www.evrmorecoin.org", "www.evrmorecoin.org", -1));
+        BOOST_CHECK(TestSplitHost("[www.evrmorecoin.org]", "www.evrmorecoin.org", -1));
+        BOOST_CHECK(TestSplitHost("www.evrmorecoin.org:80", "www.evrmorecoin.org", 80));
+        BOOST_CHECK(TestSplitHost("[www.evrmorecoin.org]:80", "www.evrmorecoin.org", 80));
         BOOST_CHECK(TestSplitHost("127.0.0.1", "127.0.0.1", -1));
-        BOOST_CHECK(TestSplitHost("127.0.0.1:8767", "127.0.0.1", 8767));
+        BOOST_CHECK(TestSplitHost("127.0.0.1:8820", "127.0.0.1", 8820));
         BOOST_CHECK(TestSplitHost("[127.0.0.1]", "127.0.0.1", -1));
-        BOOST_CHECK(TestSplitHost("[127.0.0.1]:8767", "127.0.0.1", 8767));
+        BOOST_CHECK(TestSplitHost("[127.0.0.1]:8820", "127.0.0.1", 8820));
         BOOST_CHECK(TestSplitHost("::ffff:127.0.0.1", "::ffff:127.0.0.1", -1));
-        BOOST_CHECK(TestSplitHost("[::ffff:127.0.0.1]:8767", "::ffff:127.0.0.1", 8767));
-        BOOST_CHECK(TestSplitHost("[::]:8767", "::", 8767));
-        BOOST_CHECK(TestSplitHost("::8767", "::8767", -1));
-        BOOST_CHECK(TestSplitHost(":8767", "", 8767));
-        BOOST_CHECK(TestSplitHost("[]:8767", "", 8767));
+        BOOST_CHECK(TestSplitHost("[::ffff:127.0.0.1]:8820", "::ffff:127.0.0.1", 8820));
+        BOOST_CHECK(TestSplitHost("[::]:8820", "::", 8820));
+        BOOST_CHECK(TestSplitHost("::8820", "::8820", -1));
+        BOOST_CHECK(TestSplitHost(":8820", "", 8820));
+        BOOST_CHECK(TestSplitHost("[]:8820", "", 8820));
         BOOST_CHECK(TestSplitHost("", "", -1));
     }
 
@@ -117,10 +118,10 @@ BOOST_FIXTURE_TEST_SUITE(netbase_tests, BasicTestingSetup)
         BOOST_TEST_MESSAGE("Running NetBase LookUpNumeric Test");
 
         BOOST_CHECK(TestParse("127.0.0.1", "127.0.0.1:65535"));
-        BOOST_CHECK(TestParse("127.0.0.1:8767", "127.0.0.1:8767"));
+        BOOST_CHECK(TestParse("127.0.0.1:8820", "127.0.0.1:8820"));
         BOOST_CHECK(TestParse("::ffff:127.0.0.1", "127.0.0.1:65535"));
         BOOST_CHECK(TestParse("::", "[::]:65535"));
-        BOOST_CHECK(TestParse("[::]:8767", "[::]:8767"));
+        BOOST_CHECK(TestParse("[::]:8820", "[::]:8820"));
         BOOST_CHECK(TestParse("[127.0.0.1]", "127.0.0.1:65535"));
         BOOST_CHECK(TestParse(":::", "[::]:0"));
 

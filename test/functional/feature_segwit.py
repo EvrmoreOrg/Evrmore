@@ -7,7 +7,7 @@
 """Test the SegWit changeover logic."""
 
 from io import BytesIO
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import hex_str_to_bytes, connect_nodes, Decimal, assert_equal, sync_blocks, assert_raises_rpc_error, try_rpc
 from test_framework.mininode import sha256, CTransaction, CTxIn, COutPoint, CTxOut, COIN, to_hex, from_hex
 from test_framework.address import script_to_p2sh, key_to_p2pkh
@@ -79,7 +79,7 @@ def find_unspent(node, min_value):
             return utxo
 
 
-class SegWitTest(RavenTestFramework):
+class SegWitTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
@@ -264,7 +264,7 @@ class SegWitTest(RavenTestFramework):
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(int(txid2, 16), 0), b""))
         tx.vout.append(CTxOut(int(49.95 * COIN), CScript([OP_TRUE])))  # Huge fee
-        tx.calc_x16r()
+        tx.calc_sha256()
         txid3 = self.nodes[0].sendrawtransaction(to_hex(tx))
         assert (tx.wit.is_null())
         assert (txid3 in self.nodes[0].getrawmempool())
@@ -285,7 +285,7 @@ class SegWitTest(RavenTestFramework):
         assert (txid3 in template_txids)
 
         # Check that wtxid is properly reported in mempool entry
-        assert_equal(int(self.nodes[0].getmempoolentry(txid3)["wtxid"], 16), tx.calc_x16r(True))
+        assert_equal(int(self.nodes[0].getmempoolentry(txid3)["wtxid"], 16), tx.calc_sha256(True))
 
         # Mine a block to clear the gbt cache again.
         self.nodes[0].generate(1)

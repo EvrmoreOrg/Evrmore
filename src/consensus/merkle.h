@@ -1,10 +1,11 @@
 // Copyright (c) 2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_MERKLE
-#define RAVEN_MERKLE
+#ifndef EVRMORE_MERKLE
+#define EVRMORE_MERKLE
 
 #include <stdint.h>
 #include <vector>

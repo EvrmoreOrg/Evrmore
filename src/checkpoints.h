@@ -1,10 +1,11 @@
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_CHECKPOINTS_H
-#define RAVEN_CHECKPOINTS_H
+#ifndef EVRMORE_CHECKPOINTS_H
+#define EVRMORE_CHECKPOINTS_H
 
 #include "uint256.h"
 
@@ -25,4 +26,4 @@ CBlockIndex* GetLastCheckpoint(const CCheckpointData& data);
 
 } //namespace Checkpoints
 
-#endif // RAVEN_CHECKPOINTS_H
+#endif // EVRMORE_CHECKPOINTS_H

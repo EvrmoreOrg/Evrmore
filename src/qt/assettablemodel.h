@@ -1,10 +1,11 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_QT_ASSETTABLEMODEL_H
-#define RAVEN_QT_ASSETTABLEMODEL_H
+#ifndef EVRMORE_QT_ASSETTABLEMODEL_H
+#define EVRMORE_QT_ASSETTABLEMODEL_H
 
 #include "amount.h"
 
@@ -38,13 +39,13 @@ public:
     enum RoleIndex {
         /** Net amount of transaction */
             AmountRole = 100,
-        /** RVN or name of an asset */
+        /** EVR or name of an asset */
             AssetNameRole = 101,
         /** Formatted amount, without brackets when unconfirmed */
             FormattedAmountRole = 102,
         /** AdministratorRole */
             AdministratorRole = 103,
-        /** RVN or name of an asset */
+        /** EVR or name of an asset */
             AssetIPFSHashRole = 104,
         /** IPFS Decoration Role */
             AssetIPFSHashDecorationRole = 105
@@ -70,4 +71,4 @@ private:
     friend class AssetTablePriv;
 };
 
-#endif // RAVEN_QT_ASSETTABLEMODEL_H
+#endif // EVRMORE_QT_ASSETTABLEMODEL_H

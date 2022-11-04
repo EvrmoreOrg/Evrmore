@@ -15,10 +15,10 @@ Two nodes. Node1 is under test. Node0 is providing transactions and generating b
 - connect node1 to node0. Verify that they sync and node1 receives its funds."""
 
 import shutil
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, connect_nodes_bi, sync_blocks
 
-class KeypoolRestoreTest(RavenTestFramework):
+class KeypoolRestoreTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2

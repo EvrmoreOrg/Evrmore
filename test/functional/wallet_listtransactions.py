@@ -8,7 +8,7 @@
 
 from io import BytesIO
 from decimal import Decimal
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import hex_str_to_bytes, assert_array_result, sync_mempools, assert_equal, bytes_to_hex_str
 from test_framework.mininode import CTransaction, COIN
 
@@ -20,7 +20,7 @@ def from_hex(hexstring):
     return tx
 
 
-class ListTransactionsTest(RavenTestFramework):
+class ListTransactionsTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
         self.enable_mocktime()

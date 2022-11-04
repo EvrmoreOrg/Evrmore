@@ -3,13 +3,13 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install -y curl g++-aarch64-linux-gnu g++-7-aarch64-linux-gnu gcc-7-aarch64-linux-gnu binutils-aarch64-linux-gnu g++-arm-linux-gnueabihf g++-7-arm-linux-gnueabihf gcc-7-arm-linux-gnueabihf binutils-arm-linux-gnueabihf g++-7-multilib gcc-7-multilib binutils-gold git pkg-config autoconf libtool automake bsdmainutils ca-certificates python
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir -p release
-cd ravencoin/depends
+cd evrmore/depends
 make HOST=x86_64-linux-gnu -j4
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/x86_64-linux-gnu/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-gui-tests CFLAGS="-O2 -g" CXXFLAGS="-O2 -g" LDFLAGS="-static-libstdc++"
@@ -22,10 +22,10 @@ cd ~/linux64
 sudo find . -name "lib*.la" -delete
 sudo find . -name "lib*.a" -delete
 sudo rm -rf $DISTNAME/lib/pkgconfig
-sudo find ${DISTNAME}/bin -type f -executable -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
-sudo find ${DISTNAME}/lib -type f -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/bin -type f -executable -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/lib -type f -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
 find $DISTNAME/ -not -name "*.dbg" | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/release/$DISTNAME-x86_64-linux-gnu.tar.gz
-cd ~/ravencoin
+cd ~/evrmore
 sudo rm -rf ~/linux64
 make clean
 export PATH=$PATH_orig
@@ -33,17 +33,17 @@ export PATH=$PATH_orig
 ## Build general sourcecode while we are at it ##
 ```
 export PATH_orig=$PATH
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/x86_64-linux-gnu/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/
 make dist
-SOURCEDIST=`echo raven-*.tar.gz`
+SOURCEDIST=`echo evrmore-*.tar.gz`
 mkdir -p temp
 cd temp
 tar xf ../$SOURCEDIST
-find raven-* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
-cd ~/ravencoin
+find evrmore-* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
+cd ~/evrmore
 mv $SOURCEDIST ~/release
 sudo rm -rf temp
 make clean
@@ -57,9 +57,9 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install -y curl g++-aarch64-linux-gnu g++-7-aarch64-linux-gnu gcc-7-aarch64-linux-gnu binutils-aarch64-linux-gnu g++-arm-linux-gnueabihf g++-7-arm-linux-gnueabihf gcc-7-arm-linux-gnueabihf binutils-arm-linux-gnueabihf g++-7-multilib gcc-7-multilib binutils-gold git pkg-config autoconf libtool automake bsdmainutils ca-certificates python
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir -p release
 mkdir -p ~/wrapped
 mkdir -p ~/wrapped/extra_includes
@@ -90,10 +90,10 @@ done
 
 export PATH=~/wrapped:$PATH
 export HOST_ID_SALT="~/wrapped/extra_includes/i386-linux-gnu"
-cd ravencoin/depends
+cd evrmore/depends
 make HOST=i686-pc-linux-gnu -j4
 unset HOST_ID_SALT
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/i686-pc-linux-gnu/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/i686-pc-linux-gnu/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-gui-tests CFLAGS="-O2 -g" CXXFLAGS="-O2 -g" LDFLAGS="-static-libstdc++"
@@ -105,10 +105,10 @@ cd ~/linux32
 sudo find . -name "lib*.la" -delete
 sudo find . -name "lib*.a" -delete
 sudo rm -rf $DISTNAME/lib/pkgconfig
-sudo find ${DISTNAME}/bin -type f -executable -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
-sudo find ${DISTNAME}/lib -type f -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/bin -type f -executable -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/lib -type f -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
 find $DISTNAME/ -not -name "*.dbg" | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/release/$DISTNAME-i686-pc-linux-gnu.tar.gz
-cd ~/ravencoin
+cd ~/evrmore
 sudo rm -rf ~/linux32
 sudo rm -rf ~/wrapped
 make clean
@@ -122,13 +122,13 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install -y curl g++-aarch64-linux-gnu g++-7-aarch64-linux-gnu gcc-7-aarch64-linux-gnu binutils-aarch64-linux-gnu g++-arm-linux-gnueabihf g++-7-arm-linux-gnueabihf gcc-7-arm-linux-gnueabihf binutils-arm-linux-gnueabihf g++-7-multilib gcc-7-multilib binutils-gold git pkg-config autoconf libtool automake bsdmainutils ca-certificates python
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir -p release
-cd ravencoin/depends
+cd evrmore/depends
 make HOST=arm-linux-gnueabihf -j4
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/arm-linux-gnueabihf/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/arm-linux-gnueabihf/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-gui-tests CFLAGS="-O2 -g" CXXFLAGS="-O2 -g" LDFLAGS="-static-libstdc++"
@@ -140,10 +140,10 @@ cd ~/linuxARM
 sudo find . -name "lib*.la" -delete
 sudo find . -name "lib*.a" -delete
 sudo rm -rf $DISTNAME/lib/pkgconfig
-sudo find ${DISTNAME}/bin -type f -executable -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
-sudo find ${DISTNAME}/lib -type f -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/bin -type f -executable -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/lib -type f -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
 find $DISTNAME/ -not -name "*.dbg" | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/release/$DISTNAME-arm-linux-gnueabihf.tar.gz
-cd ~/ravencoin
+cd ~/evrmore
 sudo rm -rf ~/linuxARM
 make clean
 export PATH=$PATH_orig
@@ -156,13 +156,13 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install -y curl g++-aarch64-linux-gnu g++-7-aarch64-linux-gnu gcc-7-aarch64-linux-gnu binutils-aarch64-linux-gnu g++-arm-linux-gnueabihf g++-7-arm-linux-gnueabihf gcc-7-arm-linux-gnueabihf binutils-arm-linux-gnueabihf g++-7-multilib gcc-7-multilib binutils-gold git pkg-config autoconf libtool automake bsdmainutils ca-certificates python
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir -p release
-cd ravencoin/depends
+cd evrmore/depends
 make HOST=aarch64-linux-gnu -j4
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/aarch64-linux-gnu/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-gui-tests CFLAGS="-O2 -g" CXXFLAGS="-O2 -g" LDFLAGS="-static-libstdc++"
@@ -174,10 +174,10 @@ cd ~/linuxaarch64
 sudo find . -name "lib*.la" -delete
 sudo find . -name "lib*.a" -delete
 sudo rm -rf $DISTNAME/lib/pkgconfig
-sudo find ${DISTNAME}/bin -type f -executable -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
-sudo find ${DISTNAME}/lib -type f -exec ../ravencoin/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/bin -type f -executable -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
+sudo find ${DISTNAME}/lib -type f -exec ../evrmore/contrib/devtools/split-debug.sh {} {} {}.dbg \;
 find $DISTNAME/ -not -name "*.dbg" | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/release/$DISTNAME-aarch64-linux-gnu.tar.gz
-cd ~/ravencoin
+cd ~/evrmore
 sudo rm -rf ~/linuxaarch64
 make clean
 export PATH=$PATH_orig
@@ -190,18 +190,18 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python nsis rename zip
 sudo apt install -y g++-mingw-w64-x86-64
 sudo update-alternatives --config x86_64-w64-mingw32-g++ # Set the default mingw32 g++ compiler option to posix.
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir -p release
 mkdir -p release/unsigned/
 mkdir -p sign/win64
 PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g') # strip out problematic Windows %PATH% imported var
-cd ravencoin/depends
+cd evrmore/depends
 make HOST=x86_64-w64-mingw32 -j4
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/x86_64-w64-mingw32/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests CFLAGS="-O2 -g" CXXFLAGS="-O2 -g"
@@ -209,7 +209,7 @@ make -j4
 make -C src check-security
 make deploy
 rename 's/-setup\.exe$/-setup-unsigned.exe/' *-setup.exe
-cp -f raven-*setup*.exe ~/release/unsigned/
+cp -f evrmore-*setup*.exe ~/release/unsigned/
 mkdir -p ~/win64
 sudo make install DESTDIR=~/win64/$DISTNAME
 cd ~/win64
@@ -222,18 +222,18 @@ find ./$DISTNAME -not -name "*.dbg"  -type f | sort | zip -X@ ./$DISTNAME-x86_64
 mv ./$DISTNAME-x86_64-*.zip ~/release/$DISTNAME-win64.zip
 cd ~/
 sudo rm -rf win64
-cp -rf ravencoin/contrib/windeploy ~/sign/win64
+cp -rf evrmore/contrib/windeploy ~/sign/win64
 cd ~/sign/win64/windeploy
 mkdir unsigned
-mv ~/ravencoin/raven-*setup-unsigned.exe unsigned/
+mv ~/evrmore/evrmore-*setup-unsigned.exe unsigned/
 find . | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/sign/$DISTNAME-win64-unsigned.tar.gz
 cd ~/sign
 sudo rm -rf win64
-cd ~/ravencoin
+cd ~/evrmore
 sudo rm -rf release
 make clean
 export PATH=$PATH_orig
-#transfer ~/sign/raven-*-win*-unsigned.tar.gz to the signing machine
+#transfer ~/sign/evrmore-*-win*-unsigned.tar.gz to the signing machine
 ```
 
 
@@ -243,7 +243,7 @@ From an Ubuntu 16.04 xenial machine !important (openssl 1.0.2 required)
 This process requires core to have a pvk file (kept secret)and a cert in PEM format(from comodo) as a part of the repo at contrib/windeploy
 ```
 cd ~/
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils libcurl4-openssl-dev curl libssl-dev autoconf
 wget https://bitcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
 wget http://downloads.sourceforge.net/project/osslsigncode/osslsigncode/osslsigncode-1.7.1.tar.gz
@@ -255,14 +255,14 @@ make
 sudo make install
 cd ~/
 mkdir win64 && cd win64/
-#transfer raven-*-win*-unsigned.tar.gz to ~/win64/  
+#transfer evrmore-*-win*-unsigned.tar.gz to ~/win64/  
 tar xf $DISTNAME-win*-unsigned.tar.gz
 rm $DISTNAME-win*-unsigned.tar.gz
 ./detached-sig-create.sh -key /path/to/codesign.pvk
 #Enter the passphrase for the key when prompted
 tar xf signature-win.tar.gz 
 osslsigncode attach-signature -in "unsigned/$DISTNAME-win64-setup-unsigned.exe" -out "$DISTNAME-win64-setup.exe" -sigin "win/$DISTNAME-win64-setup-unsigned.exe.pem"
-#transfer raven-*-win*-setup.exe back to the Ubuntu18 build machine to the folder ~/release (to shasum with the rest of the releases)
+#transfer evrmore-*-win*-setup.exe back to the Ubuntu18 build machine to the folder ~/release (to shasum with the rest of the releases)
 ```
 
 
@@ -272,18 +272,18 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git python nsis rename zip
 sudo apt install -y g++-mingw-w64-i686 mingw-w64-i686-dev
 sudo update-alternatives --config i686-w64-mingw32-g++  # Set the default mingw32 g++ compiler option to posix.
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir -p release
 mkdir -p release/unsigned/
 mkdir -p sign/win32
 PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g') # strip out problematic Windows %PATH% imported var
-cd ravencoin/depends
+cd evrmore/depends
 make HOST=i686-w64-mingw32 -j4
-cd ~/ravencoin
+cd ~/evrmore
 export PATH=$PWD/depends/i686-w64-mingw32/native/bin:$PATH
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests CFLAGS="-O2 -g" CXXFLAGS="-O2 -g"
@@ -291,7 +291,7 @@ make -j4
 make -C src check-security
 make deploy
 rename 's/-setup\.exe$/-setup-unsigned.exe/' *-setup.exe
-cp -f raven-*setup*.exe ~/release/unsigned/
+cp -f evrmore-*setup*.exe ~/release/unsigned/
 mkdir -p ~/win32
 sudo make install DESTDIR=~/win32/$DISTNAME
 cd ~/win32
@@ -304,18 +304,18 @@ find ./$DISTNAME -not -name "*.dbg"  -type f | sort | zip -X@ ./$DISTNAME-i686-w
 mv ./$DISTNAME-i686-w64-*.zip ~/release/$DISTNAME-win32.zip
 cd ~/
 sudo rm -rf win32
-cp -rf ravencoin/contrib/windeploy ~/sign/win32
+cp -rf evrmore/contrib/windeploy ~/sign/win32
 cd ~/sign/win32/windeploy
 mkdir unsigned
-mv ~/ravencoin/raven-*setup-unsigned.exe unsigned/
+mv ~/evrmore/evrmore-*setup-unsigned.exe unsigned/
 find . | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/sign/$DISTNAME-win32-unsigned.tar.gz
 cd ~/sign
 sudo rm -rf win32
-cd ~/ravencoin
+cd ~/evrmore
 sudo rm -rf release
 make clean
 export PATH=$PATH_orig
-#transfer ~/sign/raven-*-win*-unsigned.tar.gz to the signing machine
+#transfer ~/sign/evrmore-*-win*-unsigned.tar.gz to the signing machine
 ```
 
 
@@ -325,7 +325,7 @@ From an Ubuntu 16.04 xenial machine !important (openssl 1.0.2 required)
 This process requires core to have a pvk file (kept secret)and a cert in PEM format(from comodo) as a part of the repo at contrib/windeploy
 ```
 cd ~/
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils libcurl4-openssl-dev curl libssl-dev autoconf
 wget https://bitcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
 wget http://downloads.sourceforge.net/project/osslsigncode/osslsigncode/osslsigncode-1.7.1.tar.gz
@@ -337,14 +337,14 @@ make
 sudo make install
 cd ~/
 mkdir win32 && cd win32/
-#transfer raven-*-win*-unsigned.tar.gz to ~/win32/  
+#transfer evrmore-*-win*-unsigned.tar.gz to ~/win32/  
 tar xf $DISTNAME-win*-unsigned.tar.gz
 rm $DISTNAME-win*-unsigned.tar.gz
 ./detached-sig-create.sh -key /path/to/codesign.pvk
 #Enter the passphrase for the key when prompted
 tar xf signature-win.tar.gz 
 osslsigncode attach-signature -in "unsigned/$DISTNAME-win32-setup-unsigned.exe" -out "$DISTNAME-win32-setup.exe" -sigin "win/$DISTNAME-win32-setup-unsigned.exe.pem"
-# Transfer raven-*-win*-setup.exe back to the Ubuntu18 build machine to the folder ~/release (to shasum with the rest of the releases)
+# Transfer evrmore-*-win*-setup.exe back to the Ubuntu18 build machine to the folder ~/release (to shasum with the rest of the releases)
 ```
 
 
@@ -354,11 +354,11 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 sudo apt install git p7zip-full sleuthkit
-git clone https://github.com/ravenproject/ravencoin
+git clone https://github.com/evrmoreorg/evrmore
 mkdir ~/dmg && cd ~/dmg
 #Register for a developer account with Apple, then download the Xcode 7.3.1 dmg from: https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.dmg
 #Transfer Xcode_7.3.1.dmg to the target machine into ~/dmg 
-~/ravencoin/contrib/macdeploy/extract-osx-sdk.sh
+~/evrmore/contrib/macdeploy/extract-osx-sdk.sh
 rm -rf 5.hfs MacOSX10.11.sdk Xcode_7.3.1.dmg
 # Save MacOSX10.11.sdk.tar.gz somewhere safe for future builds
 ```
@@ -370,16 +370,16 @@ From an ubuntu 18 bionic server(required)
 ```
 cd ~/
 export PATH_orig=$PATH
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 sudo apt install ca-certificates curl g++ git pkg-config autoconf librsvg2-bin libtiff-tools libtool automake bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python python-dev python-setuptools fonts-tuffy
-git clone https://github.com/ravenproject/ravencoin
-mkdir ~/ravencoin/depends/SDKs
-#transfer MacOSX10.11.sdk.tar.gz to the folder ravencoin/depends/SDKs
-cd ravencoin/depends/SDKs && tar -xf MacOSX10.11.sdk.tar.gz 
+git clone https://github.com/evrmoreorg/evrmore
+mkdir ~/evrmore/depends/SDKs
+#transfer MacOSX10.11.sdk.tar.gz to the folder evrmore/depends/SDKs
+cd evrmore/depends/SDKs && tar -xf MacOSX10.11.sdk.tar.gz 
 rm MacOSX10.11.sdk.tar.gz 
-cd ~/ravencoin/depends
+cd ~/evrmore/depends
 make -j4 HOST="x86_64-apple-darwin14"
-cd ~/ravencoin
+cd ~/evrmore
 sudo ./autogen.sh
 CONFIG_SITE=$PWD/depends/x86_64-apple-darwin14/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests GENISOIMAGE=$PWD/depends/x86_64-apple-darwin14/native/bin/genisoimage
 make -j4 
@@ -398,20 +398,20 @@ cp $PWD/depends/x86_64-apple-darwin14/native/bin/x86_64-apple-darwin14-pagestuff
 mv dist unsigned-app-$DISTNAME
 cd unsigned-app-$DISTNAME
 find . | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/sign/$DISTNAME-osx-unsigned.tar.gz
-cd ~/ravencoin
+cd ~/evrmore
 make deploy
-$PWD/depends/x86_64-apple-darwin14/native/bin/dmg dmg "Raven-Core.dmg" ~/release/unsigned/$DISTNAME-osx-unsigned.dmg
+$PWD/depends/x86_64-apple-darwin14/native/bin/dmg dmg "Evrmore-Core.dmg" ~/release/unsigned/$DISTNAME-osx-unsigned.dmg
 sudo rm -rf unsigned-app-$DISTNAME dist osx_volname dpi36.background.tiff dpi72.background.tiff
 cd ~/OSX
 find . -name "lib*.la" -delete
 find . -name "lib*.a" -delete
 rm -rf $DISTNAME/lib/pkgconfig
 find $DISTNAME | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ~/release/$DISTNAME-osx64.tar.gz
-cd ~/ravencoin
+cd ~/evrmore
 rm -rf ~/OSX
 make clean
 export PATH=$PATH_orig
-# Transfer ~/sign/raven-*-osx*-unsigned.tar.gz to a MacOS signing machine
+# Transfer ~/sign/evrmore-*-osx*-unsigned.tar.gz to a MacOS signing machine
 ```
 
 
@@ -419,11 +419,11 @@ export PATH=$PATH_orig
 # Signing MacOS builds #
 From a Apple MacOS device: open terminal
 ```
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 xcode-select --install
 cd ~/desktop
 mkdir OSX
-#transfer raven-*-osx-unsigned.tar.gz to ~/desktop/OSX
+#transfer evrmore-*-osx-unsigned.tar.gz to ~/desktop/OSX
 cd OSX
 tar xf $DISTNAME-osx-unsigned.tar.gz
 #acquire a code signing certifacte from apple follwoing the instructions here:
@@ -435,7 +435,7 @@ tar xf $DISTNAME-osx-unsigned.tar.gz
 ```
 From the ubuntu 18 bionic server(required) build machine:
 ```
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 cd ~/sign
 mkdir OSX/
 cp $DISTNAME-osx-unsigned.tar.gz OSX
@@ -456,7 +456,7 @@ rm -rf OSX
 # Checksum all the builds #
 From the ubuntu 18 bionic server(required) build machine
 ```
-DISTNAME=raven-2.0.1
+DISTNAME=evrmore-2.0.1
 #transfer your *-secret-gpg.key and *-ownertrust-gpg.txt to ~/
 #import your PGP keys
 gpg --import *-secret-gpg.key

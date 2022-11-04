@@ -1,5 +1,6 @@
 // Copyright (c) 2017-2017 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -197,7 +198,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
         /** RVN START */
-        // Find and handle all new OP_RVN_ASSET null data transactions
+        // Find and handle all new OP_EVR_ASSET null data transactions
         if (txout.scriptPubKey.IsNullAsset()) {
             CNullAssetTxData data;
             std::string address;
@@ -525,7 +526,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     }
     else {
         // Fail if transaction contains any non-transfer asset scripts and hasn't conformed to one of the
-        // above transaction types.  Also fail if it contains OP_RVN_ASSET opcode but wasn't a valid script.
+        // above transaction types.  Also fail if it contains OP_EVR_ASSET opcode but wasn't a valid script.
         for (auto out : tx.vout) {
             int nType;
             bool _isOwner;
@@ -534,10 +535,10 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
                     return state.DoS(100, false, REJECT_INVALID, "bad-txns-bad-asset-transaction");
                 }
             } else {
-                if (out.scriptPubKey.Find(OP_RVN_ASSET)) {
-                    if (out.scriptPubKey[0] != OP_RVN_ASSET) {
+                if (out.scriptPubKey.Find(OP_EVR_ASSET)) {
+                    if (out.scriptPubKey[0] != OP_EVR_ASSET) {
                         return state.DoS(100, false, REJECT_INVALID,
-                                         "bad-txns-op-rvn-asset-not-in-right-script-location");
+                                         "bad-txns-op-evr-asset-not-in-right-script-location");
                     }
                 }
             }
@@ -578,6 +579,13 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
             return state.Invalid(false,
                 REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                 strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
+        }
+
+        // EVR - If prev is airdrop, check if it's expired airdrop
+        if (coin.IsCoinBase() && coin.nHeight == 0 && nSpendHeight > AIRDROP_EXPIRATION) {
+            return state.Invalid(false,
+                REJECT_INVALID, "bad-txns-spend-of-expired-airdrop",
+                strprintf("tried to spend airdrop at chain height %d", nSpendHeight));
         }
 
         // Check for negative or overflow input values
@@ -844,11 +852,11 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
                         return state.DoS(100, false, REJECT_INVALID, "bad-txns-bad-asset-transaction", false, "", tx.GetHash());
                     }
                 } else {
-                    if (out.scriptPubKey.Find(OP_RVN_ASSET)) {
+                    if (out.scriptPubKey.Find(OP_EVR_ASSET)) {
                         if (AreRestrictedAssetsDeployed()) {
-                            if (out.scriptPubKey[0] != OP_RVN_ASSET) {
+                            if (out.scriptPubKey[0] != OP_EVR_ASSET) {
                                 return state.DoS(100, false, REJECT_INVALID,
-                                                 "bad-txns-op-rvn-asset-not-in-right-script-location", false, "", tx.GetHash());
+                                                 "bad-txns-op-evr-asset-not-in-right-script-location", false, "", tx.GetHash());
                             }
                         } else {
                             return state.DoS(100, false, REJECT_INVALID, "bad-txns-bad-asset-script", false, "", tx.GetHash());

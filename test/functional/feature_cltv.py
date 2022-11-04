@@ -11,7 +11,7 @@ Test that the CHECKLOCKTIMEVERIFY soft-fork activates at (regtest) block height
 """
 
 from io import BytesIO
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import p2p_port, assert_equal
 from test_framework.mininode import to_hex, CTransaction, hex_str_to_bytes, NodeConn, NodeConnCB, NetworkThread, MsgBlock, wait_until, mininode_lock, MsgTx
 from test_framework.blocktools import create_coinbase, create_block
@@ -61,7 +61,7 @@ def create_transaction(node, coinbase, to_address, amount):
     tx.deserialize(BytesIO(hex_str_to_bytes(signresult['hex'])))
     return tx
 
-class BIP65Test(RavenTestFramework):
+class BIP65Test(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.extra_args = [['-promiscuousmempoolflags=1', '-whitelist=127.0.0.1']]

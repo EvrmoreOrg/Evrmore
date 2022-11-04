@@ -7,12 +7,12 @@
 """Test RPC misc output."""
 
 import xml.etree.ElementTree as ElementTree
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_raises_rpc_error, assert_equal, assert_greater_than, assert_greater_than_or_equal
 from test_framework.authproxy import JSONRPCException
 
 
-class RpcMiscTest(RavenTestFramework):
+class RpcMiscTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 

@@ -6,13 +6,13 @@ import subprocess
 import json
 
 
-#Set this to your raven-cli program
-cli = "raven-cli"
+#Set this to your evrmore-cli program
+cli = "evrmore-cli"
 
 mode = "-testnet"
 mode = ""
-rpc_port = 18766
-#Set this information in your raven.conf file (in datadir, not testnet3)
+rpc_port = 18819
+#Set this information in your evrmore.conf file (in datadir, not testnet)
 rpc_user = 'rpcuser'
 rpc_pass = 'rpcpass555'
 
@@ -107,8 +107,8 @@ for i in range(23500,blockheight):
         for vout in tx_detail.get('vout'):
             #print("vout: " + str(vout.get('value')))
             #print(vout.get('scriptPubKey').get('asm'))
-            if (vout.get('scriptPubKey').get('asm')[86:98] == "OP_RVN_ASSET"):
-                #print("Found OP_RVN_ASSET")
+            if (vout.get('scriptPubKey').get('asm')[86:98] == "OP_EVR_ASSET"):
+                #print("Found OP_EVR_ASSET")
                 #print(vout.get('scriptPubKey').get('hex'))
                 asset_script = decode_script(vout.get('scriptPubKey').get('hex'))
                 asset_handler(asset_script)

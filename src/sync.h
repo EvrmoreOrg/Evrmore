@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_SYNC_H
-#define RAVEN_SYNC_H
+#ifndef EVRMORE_SYNC_H
+#define EVRMORE_SYNC_H
 
 #include "threadsafety.h"
 
@@ -287,4 +288,4 @@ public:
     }
 };
 
-#endif // RAVEN_SYNC_H
+#endif // EVRMORE_SYNC_H

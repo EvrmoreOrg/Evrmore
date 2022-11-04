@@ -13,7 +13,7 @@ soft-forks, and test that warning alerts are generated.
 
 from re import compile
 from test_framework.mininode import NodeConn, NodeConnCB, MsgBlock, NetworkThread
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import os, p2p_port
 from test_framework.blocktools import create_block, create_coinbase
 
@@ -30,7 +30,7 @@ class TestNode(NodeConnCB):
     def on_inv(self, conn, message):
         pass
 
-class VersionBitsWarningTest(RavenTestFramework):
+class VersionBitsWarningTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
@@ -57,7 +57,7 @@ class VersionBitsWarningTest(RavenTestFramework):
             peer.send_message(MsgBlock(block))
             block_time += 1
             height += 1
-            tip = block.x16r
+            tip = block.sha256
         peer.sync_with_ping()
 
     def test_versionbits_in_alert_file(self):

@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -53,7 +54,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, txnouttype& script
         // Standard tx, sender provides pubkey, receiver adds signature
         mTemplates.insert(std::make_pair(TX_PUBKEY, CScript() << OP_PUBKEY << OP_CHECKSIG));
 
-        // Raven address tx, sender provides hash of pubkey, receiver provides signature and pubkey
+        // Evrmore address tx, sender provides hash of pubkey, receiver provides signature and pubkey
         mTemplates.insert(std::make_pair(TX_PUBKEYHASH, CScript() << OP_DUP << OP_HASH160 << OP_PUBKEYHASH << OP_EQUALVERIFY << OP_CHECKSIG));
 
         // Sender provides N pubkeys, receivers provides M signatures
@@ -122,7 +123,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, txnouttype& script
     //
     // So long as script passes the IsUnspendable() test and all but the first three
     // byte passes the IsPushOnly()
-    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RVN_ASSET && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
+    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_EVR_ASSET && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
         typeRet = TX_RESTRICTED_ASSET_DATA;
 
         if (scriptPubKey.size() >= 23 && scriptPubKey[1] != OP_RESERVED) {
@@ -349,13 +350,13 @@ namespace
 
         bool operator()(const CKeyID &keyID) const {
             script->clear();
-            *script << OP_RVN_ASSET << ToByteVector(keyID);
+            *script << OP_EVR_ASSET << ToByteVector(keyID);
             return true;
         }
 
         bool operator()(const CScriptID &scriptID) const {
             script->clear();
-            *script << OP_RVN_ASSET << ToByteVector(scriptID);
+            *script << OP_EVR_ASSET << ToByteVector(scriptID);
             return true;
         }
     };

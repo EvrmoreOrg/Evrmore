@@ -1,5 +1,6 @@
 // Copyright (c) 2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,35 +11,15 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
     {
         /*.name =*/ "testdummy",
         /*.gbt_force =*/ true,
-    },
+//  },
 //	{
 //		/*.name =*/ "segwit",
 //		/*.gbt_force =*/ true,
-//	}
-    {
-            /*.name =*/ "assets",
-            /*.gbt_force =*/ true,
-    },
-    {
-            /*.name =*/ "messaging_restricted",
-            /*.gbt_force =*/ true,
-    },
-    {
-            /*.name =*/ "transfer_script",
-            /*.gbt_force =*/ true,
-    },
-    {
-            /*.name =*/ "enforce_value",
-            /*.gbt_force =*/ true,
-    },
-    {
-            /*.name =*/ "coinbase",
-            /*.gbt_force =*/ true,
-    },
-    {
-            /*.name =*/ "p2sh_assets",
-            /*.gbt_force =*/ true,
-    }
+//	},
+//  {
+//      /*.name =*/ "assets",
+//      /*.gbt_force =*/ true,
+     }
 };
 
 ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex* pindexPrev, const Consensus::Params& params, ThresholdConditionCache& cache) const

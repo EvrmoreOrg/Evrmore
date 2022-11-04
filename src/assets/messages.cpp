@@ -1,4 +1,5 @@
 // Copyright (c) 2018-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -198,8 +199,9 @@ bool ScanForMessageChannels(std::string& strError)
         return false;
     }
 
-    CBlockIndex* blockIndex = chainActive[GetParams().GetAssetActivationHeight()];
-
+//    CBlockIndex* blockIndex = chainActive[GetParams().GetAssetActivationHeight()];
+    CBlockIndex* blockIndex = 0;
+    
     while (blockIndex) {
         CBlock block;
         if (!ReadBlockFromDisk(block, blockIndex, GetParams().GetConsensus())) {

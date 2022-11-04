@@ -4,7 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 # These environment variables are set by the build process and read by
-# test/functional/test_runner.py and test/util/raven-util-test.py
+# test/functional/test_runner.py and test/util/evrmore-util-test.py
 
 [environment]
 SRCDIR=@abs_top_srcdir@
@@ -14,6 +14,6 @@ EXEEXT=@EXEEXT@
 [components]
 # Which components are enabled. These are commented out by `configure` if they were disabled when running config.
 @ENABLE_WALLET_TRUE@ENABLE_WALLET=true
-@BUILD_RAVEN_CLI_TRUE@ENABLE_UTILS=true
-@BUILD_RAVEND_TRUE@ENABLE_RAVEND=true
+@BUILD_EVRMORE_CLI_TRUE@ENABLE_UTILS=true
+@BUILD_EVRMORED_TRUE@ENABLE_EVRMORED=true
 @ENABLE_ZMQ_TRUE@ENABLE_ZMQ=true

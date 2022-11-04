@@ -17,7 +17,7 @@ if uploadtarget has been reached.
 from collections import defaultdict
 import time
 from test_framework.mininode import NodeConn, NodeConnCB, NetworkThread, MsgGetdata, CInv
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import p2p_port, mine_large_block, assert_equal
 
 
@@ -30,11 +30,11 @@ class TestNode(NodeConnCB):
         pass
 
     def on_block(self, conn, message):
-        message.block.calc_x16r()
-        self.block_receive_map[message.block.x16r] += 1
+        message.block.calc_sha256()
+        self.block_receive_map[message.block.sha256] += 1
 
 
-class MaxUploadTest(RavenTestFramework):
+class MaxUploadTest(EvrmoreTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True

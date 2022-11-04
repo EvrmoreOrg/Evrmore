@@ -1,10 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Ravencoin
-Source: https://github.com/RavenProject/Ravencoin
+Upstream-Name: Evrmore
+Source: https://github.com/EvrmoreOrg/Evrmore
 
 Files: *
 Copyright: 2009-2017, Bitcoin Core Developers
            2017-2020, Raven Core Developers
+                2022, Evrmore Core Developers
 License: Expat
 Comment: The Bitcoin Core Developers encompasses the current developers listed on bitcoin.org,
          as well as the numerous contributors to the project.
@@ -77,10 +78,10 @@ License: Expat
 Comment: Modifications of Stephan Hutchings Typicons
 
 Files: src/qt/res/icons/about.png
-       src/qt/res/icons/raven.*
-       share/pixmaps/raven*
-       src/qt/res/src/raven.svg
-Copyright: The Raven Core Developers
+       src/qt/res/icons/evrmore.*
+       share/pixmaps/evrmore*
+       src/qt/res/src/evrmore.svg
+Copyright: The Evrmore Core Developers
 License: public-domain
 
 

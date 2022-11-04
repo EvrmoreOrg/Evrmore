@@ -9,11 +9,11 @@ Test re-org scenarios with a mempool that contains transactions
 that spend (directly or indirectly) coinbase transactions.
 """
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import (assert_equal, create_tx, assert_raises_rpc_error)
 
 # Create one-input, one-output, no-fee transaction:
-class MempoolCoinbaseTest(RavenTestFramework):
+class MempoolCoinbaseTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
         self.extra_args = [["-checkmempool"]] * 2

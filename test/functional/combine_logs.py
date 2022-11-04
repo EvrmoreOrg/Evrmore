@@ -5,7 +5,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """
-Combine logs from multiple raven nodes as well as the test_framework log.
+Combine logs from multiple Evrmore nodes as well as the test_framework log.
 
 This streams the combined log output to stdout. Use combine_logs.py > outputfile
 to write to an outputfile.

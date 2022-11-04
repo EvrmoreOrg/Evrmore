@@ -10,7 +10,7 @@
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 
 #include <string>
 #include <vector>
@@ -106,20 +106,20 @@ void RunTest(const TestVector &test)
         pubkey.Encode(data);
 
         // Test private key
-        CRavenExtKey b58key;
+        CEvrmoreExtKey b58key;
         b58key.SetKey(key);
         BOOST_CHECK(b58key.ToString() == derive.prv);
 
-        CRavenExtKey b58keyDecodeCheck(derive.prv);
+        CEvrmoreExtKey b58keyDecodeCheck(derive.prv);
         CExtKey checkKey = b58keyDecodeCheck.GetKey();
         assert(checkKey == key); //ensure a base58 decoded key also matches
 
         // Test public key
-        CRavenExtPubKey b58pubkey;
+        CEvrmoreExtPubKey b58pubkey;
         b58pubkey.SetKey(pubkey);
         BOOST_CHECK(b58pubkey.ToString() == derive.pub);
 
-        CRavenExtPubKey b58PubkeyDecodeCheck(derive.pub);
+        CEvrmoreExtPubKey b58PubkeyDecodeCheck(derive.pub);
         CExtPubKey checkPubKey = b58PubkeyDecodeCheck.GetKey();
         assert(checkPubKey == pubkey); //ensure a base58 decoded pubkey also matches
 

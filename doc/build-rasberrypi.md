@@ -1,6 +1,6 @@
 RASBERRY PI BUILD NOTES
 ====================
-Origin: traysi.org/raven_rpi.php
+Origin: traysi.org/evrmore_rpi.php
 
 # Install necessary packages:
 ```
@@ -33,11 +33,11 @@ make -j4 # If error, remove the -j4
 sudo make install
 ```
 
-# Build Ravencoin
+# Build Evrmore
 ```
 cd ~/build/
-git clone https://github.com/RavenProject/Ravencoin
-cd Ravencoin/
+git clone https://github.com/EvrmoreOrg/Evrmore
+cd Evrmore/
 ./autogen.sh
 ./configure --disable-tests --with-gui=no CPPFLAGS="-I/usr/local/BerkeleyDB.4.8/include -O2" LDFLAGS="-L/usr/local/BerkeleyDB.4.8/lib"
 make

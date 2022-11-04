@@ -6,17 +6,17 @@
 
 """Testing asset reorg use cases"""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, disconnect_all_nodes, connect_all_nodes_bi
 
-class AssetReorgTest(RavenTestFramework):
+class AssetReorgTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
 
 
     def activate_assets(self):
-        self.log.info("Generating RVN and activating assets...")
+        self.log.info("Generating EVR and activating assets...")
         n0, n1 = self.nodes[0], self.nodes[1]
 
         n0.generate(1)
@@ -25,8 +25,8 @@ class AssetReorgTest(RavenTestFramework):
         self.sync_all()
         n1.generate(216)
         self.sync_all()
-        assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['assets']['status'])
-        assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['messaging_restricted']['status'])
+        #assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['assets']['status'])
+        #assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['messaging_restricted']['status'])
 
 
     def issue_reorg_test(self):

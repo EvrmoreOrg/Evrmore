@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -333,7 +334,7 @@ QModelIndex AddressTableModel::index(int row, int column, const QModelIndex &par
 void AddressTableModel::updateEntry(const QString &address,
         const QString &label, bool isMine, const QString &purpose, int status)
 {
-    // Update address book model from Raven core
+    // Update address book model from Evrmore core
     priv->updateEntry(address, label, isMine, purpose, status);
 }
 
@@ -388,11 +389,8 @@ QString AddressTableModel::addRow(const QString &type, const QString &label, con
     }
 
     // Add entry
-    {
-        LOCK(wallet->cs_wallet);
-        wallet->SetAddressBook(DecodeDestination(strAddress), strLabel,
-                               (type == Send ? "send" : "receive"));
-    }
+    wallet->SetAddressBook(DecodeDestination(strAddress), strLabel,
+                           (type == Send ? "send" : "receive"));
     return QString::fromStdString(strAddress);
 }
 
@@ -406,10 +404,7 @@ bool AddressTableModel::removeRows(int row, int count, const QModelIndex &parent
         // Also refuse to remove receiving addresses.
         return false;
     }
-    {
-        LOCK(wallet->cs_wallet);
-        wallet->DelAddressBook(DecodeDestination(rec->address.toStdString()));
-    }
+    wallet->DelAddressBook(DecodeDestination(rec->address.toStdString()));
     return true;
 }
 

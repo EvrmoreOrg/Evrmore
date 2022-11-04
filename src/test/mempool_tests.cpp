@@ -7,7 +7,7 @@
 #include "txmempool.h"
 #include "util.h"
 
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 
 #include <boost/test/unit_test.hpp>
 #include <list>

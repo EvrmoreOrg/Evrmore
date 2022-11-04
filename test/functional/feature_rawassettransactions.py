@@ -10,7 +10,7 @@ Test the rawtransaction RPCs for asset transactions.
 
 import math
 from io import BytesIO
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, assert_is_hash_string, assert_does_not_contain_key, assert_contains_key, assert_contains_pair
 from test_framework.mininode import CTransaction, hex_str_to_bytes, bytes_to_hex_str, CScriptReissue, CScriptOwner, CScriptTransfer, CTxOut, CScriptIssue
 
@@ -56,20 +56,20 @@ def get_tx_issue_hex(self, node, asset_name, asset_quantity, asset_units=0):
 
 
 # noinspection PyTypeChecker
-class RawAssetTransactionsTest(RavenTestFramework):
+class RawAssetTransactionsTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
 
     def activate_assets(self):
-        self.log.info("Generating RVN for node[0] and activating assets...")
+        self.log.info("Generating EVR for node[0] and activating assets...")
         n0 = self.nodes[0]
 
         n0.generate(1)
         self.sync_all()
         n0.generate(431)
         self.sync_all()
-        assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['assets']['status'])
+        #assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['assets']['status'])
 
     def reissue_tampering_test(self):
         self.log.info("Tampering with raw reissues...")
@@ -136,19 +136,19 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_hex))
         tx.deserialize(f)
-        rvnr = '72766e72'  # rvnr
+        evrr = '65767272'  # evrr
         op_drop = '75'
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvnr in bytes_to_hex_str(out.scriptPubKey):
+            if evrr in bytes_to_hex_str(out.scriptPubKey):
                 script_hex = bytes_to_hex_str(out.scriptPubKey)
-                reissue_script_hex = script_hex[script_hex.index(rvnr) + len(rvnr):-len(op_drop)]
+                reissue_script_hex = script_hex[script_hex.index(evrr) + len(evrr):-len(op_drop)]
                 f = BytesIO(hex_str_to_bytes(reissue_script_hex))
                 reissue = CScriptReissue()
                 reissue.deserialize(f)
                 reissue.name = alternate_asset_name.encode()
                 tampered_reissue = bytes_to_hex_str(reissue.serialize())
-                tampered_script = script_hex[:script_hex.index(rvnr)] + rvnr + tampered_reissue + op_drop
+                tampered_script = script_hex[:script_hex.index(evrr)] + evrr + tampered_reissue + op_drop
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tx_hex_bad = bytes_to_hex_str(tx.serialize())
         tx_signed = n0.signrawtransaction(tx_hex_bad)['hex']
@@ -159,9 +159,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         # remove the owner output from vout
-        bad_vout = list(filter(lambda out_script: rvnt not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
+        bad_vout = list(filter(lambda out_script: evrt not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
         tx.vout = bad_vout
         tx_hex_bad = bytes_to_hex_str(tx.serialize())
         tx_signed = n0.signrawtransaction(tx_hex_bad)['hex']
@@ -195,9 +195,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_issue_hex))
         tx.deserialize(f)
-        rvno = '72766e6f'  # rvno
+        evro = '6576726f'  # evro
         # remove the owner output from vout
-        bad_vout = list(filter(lambda out_script: rvno not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
+        bad_vout = list(filter(lambda out_script: evro not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
         tx.vout = bad_vout
         tx_bad_issue = bytes_to_hex_str(tx.serialize())
         tx_bad_issue_signed = n0.signrawtransaction(tx_bad_issue)['hex']
@@ -209,9 +209,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_issue_hex))
         tx.deserialize(f)
-        rvno = '72766e6f'  # rvno
+        evro = '6576726f'  # evro
         # find the owner output from vout and insert a duplicate back in
-        owner_vout = list(filter(lambda out_script: rvno in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))[0]
+        owner_vout = list(filter(lambda out_script: evro in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))[0]
         tx.vout.insert(-1, owner_vout)
         tx_bad_issue = bytes_to_hex_str(tx.serialize())
         tx_bad_issue_signed = n0.signrawtransaction(tx_bad_issue)['hex']
@@ -223,9 +223,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_issue_hex))
         tx.deserialize(f)
-        rvnq = '72766e71'  # rvnq
+        evrq = '65767271'  # evrq
         # remove the owner output from vout
-        bad_vout = list(filter(lambda out_script: rvnq not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
+        bad_vout = list(filter(lambda out_script: evrq not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
         tx.vout = bad_vout
         tx_bad_issue = bytes_to_hex_str(tx.serialize())
         tx_bad_issue_signed = n0.signrawtransaction(tx_bad_issue)['hex']
@@ -237,21 +237,21 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_issue_hex))
         tx.deserialize(f)
-        rvno = '72766e6f'  # rvno
+        evro = '6576726f'  # evro
         op_drop = '75'
         # change the owner name
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvno in bytes_to_hex_str(out.scriptPubKey):
+            if evro in bytes_to_hex_str(out.scriptPubKey):
                 owner_out = out
                 owner_script_hex = bytes_to_hex_str(owner_out.scriptPubKey)
-                asset_script_hex = owner_script_hex[owner_script_hex.index(rvno) + len(rvno):-len(op_drop)]
+                asset_script_hex = owner_script_hex[owner_script_hex.index(evro) + len(evro):-len(op_drop)]
                 f = BytesIO(hex_str_to_bytes(asset_script_hex))
                 owner = CScriptOwner()
                 owner.deserialize(f)
                 owner.name = b"NOT_MY_ASSET!"
                 tampered_owner = bytes_to_hex_str(owner.serialize())
-                tampered_script = owner_script_hex[:owner_script_hex.index(rvno)] + rvno + tampered_owner + op_drop
+                tampered_script = owner_script_hex[:owner_script_hex.index(evro)] + evro + tampered_owner + op_drop
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tx_bad_issue = bytes_to_hex_str(tx.serialize())
         tx_bad_issue_signed = n0.signrawtransaction(tx_bad_issue)['hex']
@@ -263,18 +263,18 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_issue_hex))
         tx.deserialize(f)
-        rvno = '72766e6f'  # rvno
-        RVNO = '52564e4f'  # RVNO
+        evro = '6576726f'  # evro
+        EVRO = '4556524f'  # EVRO
         # change the owner output script type to be invalid
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvno in bytes_to_hex_str(out.scriptPubKey):
+            if evro in bytes_to_hex_str(out.scriptPubKey):
                 owner_script_hex = bytes_to_hex_str(out.scriptPubKey)
-                tampered_script = owner_script_hex.replace(rvno, RVNO)
+                tampered_script = owner_script_hex.replace(evro, EVRO)
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tx_bad_issue = bytes_to_hex_str(tx.serialize())
         tx_bad_issue_signed = n0.signrawtransaction(tx_bad_issue)['hex']
-        assert_raises_rpc_error(-26, "bad-txns-op-rvn-asset-not-in-right-script-location",
+        assert_raises_rpc_error(-26, "bad-txns-op-evr-asset-not-in-right-script-location",
                                 n0.sendrawtransaction, tx_bad_issue_signed)
 
         ########################################
@@ -396,17 +396,17 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         op_drop = '75'
         # change asset outputs from 400,600 to 500,500
         for i in range(1, 3):
             script_hex = bytes_to_hex_str(tx.vout[i].scriptPubKey)
-            f = BytesIO(hex_str_to_bytes(script_hex[script_hex.index(rvnt) + len(rvnt):-len(op_drop)]))
+            f = BytesIO(hex_str_to_bytes(script_hex[script_hex.index(evrt) + len(evrt):-len(op_drop)]))
             transfer = CScriptTransfer()
             transfer.deserialize(f)
             transfer.amount = 50000000000
             tampered_transfer = bytes_to_hex_str(transfer.serialize())
-            tampered_script = script_hex[:script_hex.index(rvnt)] + rvnt + tampered_transfer + op_drop
+            tampered_script = script_hex[:script_hex.index(evrt)] + evrt + tampered_transfer + op_drop
             tx.vout[i].scriptPubKey = hex_str_to_bytes(tampered_script)
         tampered_hex = bytes_to_hex_str(tx.serialize())
         assert_raises_rpc_error(-26, "mandatory-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)", n0.sendrawtransaction, tampered_hex)
@@ -459,19 +459,19 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         op_drop = '75'
         # change asset name
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvnt in bytes_to_hex_str(out.scriptPubKey):
+            if evrt in bytes_to_hex_str(out.scriptPubKey):
                 script_hex = bytes_to_hex_str(out.scriptPubKey)
-                f = BytesIO(hex_str_to_bytes(script_hex[script_hex.index(rvnt) + len(rvnt):-len(op_drop)]))
+                f = BytesIO(hex_str_to_bytes(script_hex[script_hex.index(evrt) + len(evrt):-len(op_drop)]))
                 transfer = CScriptTransfer()
                 transfer.deserialize(f)
                 transfer.name = b"ASSET_DOES_NOT_EXIST"
                 tampered_transfer = bytes_to_hex_str(transfer.serialize())
-                tampered_script = script_hex[:script_hex.index(rvnt)] + rvnt + tampered_transfer + op_drop
+                tampered_script = script_hex[:script_hex.index(evrt)] + evrt + tampered_transfer + op_drop
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tampered_hex = bytes_to_hex_str(tx.serialize())
         assert_raises_rpc_error(-26, "bad-txns-transfer-asset-not-exist",
@@ -485,19 +485,19 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         op_drop = '75'
         # change asset name
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvnt in bytes_to_hex_str(out.scriptPubKey):
+            if evrt in bytes_to_hex_str(out.scriptPubKey):
                 script_hex = bytes_to_hex_str(out.scriptPubKey)
-                f = BytesIO(hex_str_to_bytes(script_hex[script_hex.index(rvnt) + len(rvnt):-len(op_drop)]))
+                f = BytesIO(hex_str_to_bytes(script_hex[script_hex.index(evrt) + len(evrt):-len(op_drop)]))
                 transfer = CScriptTransfer()
                 transfer.deserialize(f)
                 transfer.name = alternate_asset_name.encode()
                 tampered_transfer = bytes_to_hex_str(transfer.serialize())
-                tampered_script = script_hex[:script_hex.index(rvnt)] + rvnt + tampered_transfer + op_drop
+                tampered_script = script_hex[:script_hex.index(evrt)] + evrt + tampered_transfer + op_drop
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tampered_hex = bytes_to_hex_str(tx.serialize())
         assert_raises_rpc_error(-26, "bad-tx-inputs-outputs-mismatch Bad Transaction - " +
@@ -509,9 +509,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         # remove the transfer output from vout
-        bad_vout = list(filter(lambda out_script: rvnt not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
+        bad_vout = list(filter(lambda out_script: evrt not in bytes_to_hex_str(out_script.scriptPubKey), tx.vout))
         tx.vout = bad_vout
         tampered_hex = bytes_to_hex_str(tx.serialize())
         assert_raises_rpc_error(-26, "bad-tx-asset-inputs-size-does-not-match-outputs-size",
@@ -1292,21 +1292,21 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_issue_sub_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         op_drop = '75'
         # change the transfer amount
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvnt in bytes_to_hex_str(out.scriptPubKey):
+            if evrt in bytes_to_hex_str(out.scriptPubKey):
                 transfer_out = out
                 transfer_script_hex = bytes_to_hex_str(transfer_out.scriptPubKey)
-                asset_script_hex = transfer_script_hex[transfer_script_hex.index(rvnt) + len(rvnt):-len(op_drop)]
+                asset_script_hex = transfer_script_hex[transfer_script_hex.index(evrt) + len(evrt):-len(op_drop)]
                 f = BytesIO(hex_str_to_bytes(asset_script_hex))
                 transfer = CScriptTransfer()
                 transfer.deserialize(f)
                 transfer.amount = 0
                 tampered_transfer = bytes_to_hex_str(transfer.serialize())
-                tampered_script = transfer_script_hex[:transfer_script_hex.index(rvnt)] + rvnt + tampered_transfer + op_drop
+                tampered_script = transfer_script_hex[:transfer_script_hex.index(evrt)] + evrt + tampered_transfer + op_drop
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tx_bad_transfer = bytes_to_hex_str(tx.serialize())
         tx_bad_transfer_signed = n0.signrawtransaction(tx_bad_transfer)['hex']
@@ -1368,21 +1368,21 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_transfer_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         op_drop = '75'
         # change the transfer amounts = 0
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvnt in bytes_to_hex_str(out.scriptPubKey):
+            if evrt in bytes_to_hex_str(out.scriptPubKey):
                 transfer_out = out
                 transfer_script_hex = bytes_to_hex_str(transfer_out.scriptPubKey)
-                asset_script_hex = transfer_script_hex[transfer_script_hex.index(rvnt) + len(rvnt):-len(op_drop)]
+                asset_script_hex = transfer_script_hex[transfer_script_hex.index(evrt) + len(evrt):-len(op_drop)]
                 f = BytesIO(hex_str_to_bytes(asset_script_hex))
                 transfer = CScriptTransfer()
                 transfer.deserialize(f)
                 transfer.amount = 0
                 tampered_transfer = bytes_to_hex_str(transfer.serialize())
-                tampered_script = transfer_script_hex[:transfer_script_hex.index(rvnt)] + rvnt + tampered_transfer + op_drop
+                tampered_script = transfer_script_hex[:transfer_script_hex.index(evrt)] + evrt + tampered_transfer + op_drop
                 tx.vout[n].scriptPubKey = hex_str_to_bytes(tampered_script)
         tx_bad_transfer = bytes_to_hex_str(tx.serialize())
         tx_bad_transfer_signed = n0.signrawtransaction(tx_bad_transfer)['hex']
@@ -1434,7 +1434,7 @@ class RawAssetTransactionsTest(RavenTestFramework):
         tx = CTransaction()
         f = BytesIO(hex_str_to_bytes(tx_transfer_hex))
         tx.deserialize(f)
-        rvnt = '72766e74'  # rvnt
+        evrt = '65767274'  # evrt
         op_drop = '75'
 
         # create a new issue CTxOut
@@ -1446,16 +1446,16 @@ class RawAssetTransactionsTest(RavenTestFramework):
         issue_script.name = b'BYTE_ISSUE'
         issue_script.amount = 1
         issue_serialized = bytes_to_hex_str(issue_script.serialize())
-        rvnq = '72766e71'  # rvnq
+        evrq = '65767271'  # evrq
 
         for n in range(0, len(tx.vout)):
             out = tx.vout[n]
-            if rvnt in bytes_to_hex_str(out.scriptPubKey):
+            if evrt in bytes_to_hex_str(out.scriptPubKey):
                 transfer_out = out
                 transfer_script_hex = bytes_to_hex_str(transfer_out.scriptPubKey)
 
-                # Generate a script that has a valid destination address but switch it with rvnq and the issue_serialized data
-                issue_out.scriptPubKey = hex_str_to_bytes(transfer_script_hex[:transfer_script_hex.index(rvnt)] + rvnq + issue_serialized + op_drop)
+                # Generate a script that has a valid destination address but switch it with evrq and the issue_serialized data
+                issue_out.scriptPubKey = hex_str_to_bytes(transfer_script_hex[:transfer_script_hex.index(evrt)] + evrq + issue_serialized + op_drop)
 
         tx.vout.insert(0, issue_out)  # Insert the issue transaction at the begin on the vouts
 
@@ -1496,9 +1496,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         balance2 = float(n2.getwalletinfo()['balance'])
 
         ########################################
-        # rvn for assets
+        # evr for assets
 
-        # n1 buys 400 ANDUIN from n2 for 4000 RVN
+        # n1 buys 400 ANDUIN from n2 for 4000 EVR
         price = 4000
         amount = 400
         fee = 0.01
@@ -1545,9 +1545,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         assert_equal(starting_amount - amount, int(n2.listmyassets()[anduin]))
 
         ########################################
-        # rvn for owner
+        # evr for owner
 
-        # n2 buys JAINA! from n1 for 20000 RVN
+        # n2 buys JAINA! from n1 for 20000 EVR
         price = 20000
         amount = 1
         balance1 = newbalance1
@@ -1740,9 +1740,9 @@ class RawAssetTransactionsTest(RavenTestFramework):
         self.log.info("Testing fundrawtransaction with transfer outputs...")
         n0 = self.nodes[0]
         n2 = self.nodes[2]
-        asset_name = "DONT_FUND_RVN"
+        asset_name = "DONT_FUND_EVR"
         asset_amount = 100
-        rvn_amount = 100
+        evr_amount = 100
 
         n2_address = n2.getnewaddress()
 
@@ -1765,7 +1765,7 @@ class RawAssetTransactionsTest(RavenTestFramework):
         self.sync_all()
 
         for _ in range(0, 5):
-            n0.sendtoaddress(n2_address, rvn_amount / 5)
+            n0.sendtoaddress(n2_address, evr_amount / 5)
         n0.generate(1)
         self.sync_all()
 

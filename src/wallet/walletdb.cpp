@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -268,16 +269,17 @@ bool ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             CWalletTx wtx;
             ssValue >> wtx;
             CValidationState state;
-            if (!(CheckTransaction(wtx, state) && (wtx.GetHash() == hash) && state.IsValid())) {
-                // If a client has a wallet.dat that contains asset transactions, but we are syncing the chain.
-                // we want to make sure that we don't fail to load this wallet transaction just because it is an asset transaction
-                // before asset are active
-                if (state.GetRejectReason() != "bad-txns-is-asset-and-asset-not-active" && state.GetRejectReason() != "bad-txns-transfer-asset-bad-deserialize") {
-                    strErr = state.GetRejectReason();
-                    return false;
+            if (true) {     // EVR-TODO: For performance, add condition to not waste resources checking the genesis transaction
+                if (!(CheckTransaction(wtx, state) && (wtx.GetHash() == hash) && state.IsValid())) {
+                    // If a client has a wallet.dat that contains asset transactions, but we are syncing the chain.
+                    // we want to make sure that we don't fail to load this wallet transaction just because it is an asset transaction
+                    // before asset are active
+                    if (state.GetRejectReason() != "bad-txns-is-asset-and-asset-not-active" && state.GetRejectReason() != "bad-txns-transfer-asset-bad-deserialize") {
+                        strErr = state.GetRejectReason();
+                        return false;
+                    }
                 }
             }
-
             // Undo serialize changes in 31600
             if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
             {

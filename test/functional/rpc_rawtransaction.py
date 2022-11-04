@@ -15,11 +15,11 @@ Test the following RPCs:
    - getrawtransaction
 """
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import connect_nodes_bi, assert_raises_rpc_error, assert_equal, Decimal
 
 # Create one-input, one-output, no-fee transaction:
-class RawTransactionsTest(RavenTestFramework):
+class RawTransactionsTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
@@ -68,7 +68,7 @@ class RawTransactionsTest(RavenTestFramework):
         #use balance deltas instead of absolute values
         bal = self.nodes[2].getbalance()
 
-        # send 1.2 RVN to msig adr
+        # send 1.2 EVR to msig adr
         self.nodes[0].sendtoaddress(mSigObj, 1.2)
         self.sync_all()
         self.nodes[0].generate(1)

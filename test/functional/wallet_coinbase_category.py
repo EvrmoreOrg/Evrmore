@@ -9,10 +9,10 @@ Test coinbase transactions return the correct categories.
 Tests listtransactions, listsinceblock, and gettransaction.
 """
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_array_result
 
-class CoinbaseCategoryTest(RavenTestFramework):
+class CoinbaseCategoryTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 

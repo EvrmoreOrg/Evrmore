@@ -1,16 +1,18 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_CHAINPARAMS_H
-#define RAVEN_CHAINPARAMS_H
+#ifndef EVRMORE_CHAINPARAMS_H
+#define EVRMORE_CHAINPARAMS_H
 
 #include "chainparamsbase.h"
 #include "consensus/params.h"
 #include "primitives/block.h"
 #include "protocol.h"
+#include "airdrop.h"
 
 #include <memory>
 #include <vector>
@@ -40,7 +42,7 @@ struct ChainTxData {
 
 /**
  * CChainParams defines various tweakable parameters of a given instance of the
- * Raven system. There are three: the main network on which people trade goods
+ * Evrmore system. There are three: the main network on which people trade goods
  * and services, the public test network which gets reset from time to time and
  * a regression test mode which is intended for private networks only. It has
  * minimal difficulty to ensure that blocks can be found instantly.
@@ -133,15 +135,10 @@ public:
         return false;
     }
 
-    unsigned int DGWActivationBlock() const { return nDGWActivationBlock; }
-    unsigned int MessagingActivationBlock() const { return nMessagingActivationBlock; }
-    unsigned int RestrictedActivationBlock() const { return nRestrictedActivationBlock; }
-
     int MaxReorganizationDepth() const { return nMaxReorganizationDepth; }
     int MinReorganizationPeers() const { return nMinReorganizationPeers; }
     int MinReorganizationAge() const { return nMinReorganizationAge; }
 
-    int GetAssetActivationHeight() const { return nAssetActivationHeight; }
     /** RVN End **/
 
 protected:
@@ -157,6 +154,7 @@ protected:
     std::string strNetworkID;
     CBlock genesis;
     std::vector<SeedSpec6> vFixedSeeds;
+    std::vector<AirdropScriptItem> vAirdrop;
     bool fDefaultConsistencyChecks;
     bool fRequireStandard;
     bool fMineBlocksOnDemand;
@@ -190,17 +188,10 @@ protected:
     // Global Burn Address
     std::string strGlobalBurnAddress;
 
-    unsigned int nDGWActivationBlock;
-    unsigned int nMessagingActivationBlock;
-    unsigned int nRestrictedActivationBlock;
-
     int nMaxReorganizationDepth;
     int nMinReorganizationPeers;
     int nMinReorganizationAge;
 
-    int nAssetActivationHeight;
-
-    uint32_t nKAAAWWWPOWActivationTime;
     /** RVN End **/
 };
 
@@ -216,6 +207,9 @@ std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain);
  * startup, except for unit tests.
  */
 const CChainParams &GetParams();
+
+// Support for evrmore-cli -addrconvertrvntoevr
+const CChainParams &RvncoinAddressFormatParams();
 
 /**
  * Sets the params returned by Params() to those for the given BIP70 chain name.
@@ -238,4 +232,4 @@ void TurnOffBIP66();
 
 void TurnOffCSV();
 
-#endif // RAVEN_CHAINPARAMS_H
+#endif // EVRMORE_CHAINPARAMS_H

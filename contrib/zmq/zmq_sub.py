@@ -7,12 +7,12 @@
 """
     ZMQ example using python3's asyncio
 
-    Raven should be started with the command line arguments:
-        ravend -testnet -daemon \
-                -zmqpubhashblock=tcp://127.0.0.1:28766 \
-                -zmqpubrawtx=tcp://127.0.0.1:28766 \
-                -zmqpubhashtx=tcp://127.0.0.1:28766 \
-                -zmqpubhashblock=tcp://127.0.0.1:28766
+    Evrmore should be started with the command line arguments:
+        evrmored -testnet -daemon \
+                -zmqpubhashblock=tcp://127.0.0.1:28819 \
+                -zmqpubrawtx=tcp://127.0.0.1:28819 \
+                -zmqpubhashtx=tcp://127.0.0.1:28819 \
+                -zmqpubhashblock=tcp://127.0.0.1:28819
 
     We use the asyncio library here.  `self.handle()` installs itself as a
     future at the end of the function.  Since it never returns with the event
@@ -35,7 +35,7 @@ if not (sys.version_info.major >= 3 and sys.version_info.minor >= 5):
     print("This example only works with Python 3.5 and greater")
     sys.exit(1)
 
-port = 28766
+port = 28819
 
 class ZMQHandler():
     def __init__(self):

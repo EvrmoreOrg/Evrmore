@@ -1,15 +1,16 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/raven-config.h"
+#include "config/evrmore-config.h"
 #endif
 
 #include "optionsmodel.h"
 
-#include "ravenunits.h"
+#include "evrmoreunits.h"
 #include "guiutil.h"
 #include "amount.h"
 #include "init.h"
@@ -76,7 +77,7 @@ void OptionsModel::Init(bool resetSettings)
 
     // Display
     if (!settings.contains("nDisplayUnit"))
-        settings.setValue("nDisplayUnit", RavenUnits::RVN);
+        settings.setValue("nDisplayUnit", EvrmoreUnits::EVR);
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
     
     if (!settings.contains("nDisplayCurrencyIndex"))

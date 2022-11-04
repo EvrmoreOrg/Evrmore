@@ -1,0 +1,33 @@
+# /etc/conf.d/evrmored: config file for /etc/init.d/evrmored
+
+# Config file location
+#EVRMORED_CONFIGFILE="/etc/evrmore/evrmore.conf"
+
+# What directory to write pidfile to?  (created and owned by $EVRMORED_USER)
+#EVRMORED_PIDDIR="/var/run/evrmored"
+
+# What filename to give the pidfile
+#EVRMORED_PIDFILE="${EVRMORED_PIDDIR}/evrmored.pid"
+
+# Where to write evrmored data (be mindful that the blockchain is large)
+#EVRMORED_DATADIR="/var/lib/evrmored"
+
+# User and group to own evrmored process
+#EVRMORED_USER="evrmore"
+#EVRMORED_GROUP="evrmore"
+
+# Path to evrmored executable
+#EVRMORED_BIN="/usr/bin/evrmored"
+
+# Nice value to run evrmored under
+#EVRMORED_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#EVRMORED_OPTS=""
+
+# The timeout in seconds OpenRC will wait for evrmored to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+EVRMORED_SIGTERM_TIMEOUT=60

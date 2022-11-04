@@ -1,7 +1,7 @@
-Contributing to Raven Core
+Contributing to Evrmore Core
 ============================
 
-The Raven Core project operates an open contributor model where anyone is
+The Evrmore Core project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
 and patches. This document explains the practical process and guidelines for
 contributing.
@@ -13,6 +13,13 @@ the developer community. However, some hierarchy is necessary for practical
 purposes. As such there are repository "maintainers" who are responsible for
 merging pull requests as well as a "lead maintainer" who is responsible for the
 release cycle, overall merging, moderation and appointment of maintainers.
+
+In addition, Evrmore provides a built-in mechanism for developer funding by
+reserving 10% of the mining reward from each block in the form of EVR coins,
+which are sent to addresses controlled by the Evrmore Foundation. The foundation
+is responsible for awarding those coins to individuals and other entities 
+for development activites or to burn those coins (thereby giving the value back
+to the existing EVR coin holders) as appropriate.
 
 
 Contributor Workflow
@@ -40,7 +47,7 @@ Commit messages should be verbose by default consisting of a short subject line
 paragraph(s), unless the title alone is self-explanatory (like "Corrected typo
 in init.cpp") in which case a single title line is sufficient. Commit messages should be
 helpful to people reading your code in the future, so explain the reasoning for
-your decisions. Further explanation [here](http://chris.beams.io/posts/git-commit/).
+your decisions.
 
 If a particular commit references another issue, please add the reference, for
 example `refs #1234`, or `fixes #4321`. Using the `fixes` or `closes` keywords
@@ -60,12 +67,12 @@ the pull request affects. Valid areas as:
   - *Consensus* for changes to consensus critical code
   - *Depends* for changes to depends
   - *Docs* for changes to the documentation
-  - *GUI* for changes to raven-qt
+  - *GUI* for changes to evrmore-qt
   - *Mining* for changes to the mining code
   - *Net* or *P2P* for changes to the peer-to-peer network code
   - *RPC/REST/ZMQ* for changes to the RPC, REST or ZMQ APIs
   - *Scripts and tools* for changes to the scripts and tools
-  - *Tests* for changes to the raven unit tests or QA tests
+  - *Tests* for changes to the evrmore unit tests or QA tests
   - *Trivial* should **only** be used for PRs that do not change generated
     executable code. Notably, refactors (change of function arguments and code
     reorganization) and changes in behavior should **not** be marked as trivial.
@@ -85,7 +92,7 @@ Examples:
     Trivial: Fix typo in init.cpp
 
 Note that translations should not be submitted as pull requests, please see
-[Translation Process](https://github.com/RavenProject/Ravencoin/blob/master/doc/translation_process.md) 
+[Translation Process](https://github.com/EvrmoreOrg/Evrmore/blob/master/doc/translation_process.md) 
 for more information on helping with translations.
 
 If a pull request is specifically not to be considered for merging (yet) please
@@ -172,11 +179,11 @@ workload on reviewing.
 "Decision Making" Process
 -------------------------
 
-The following applies to code changes to the Ravencoin project (and related
-projects) and is not to be confused with overall Ravencoin
+The following applies to code changes to the Evrmore project (and related
+projects) and is not to be confused with overall Evrmore
 Network Protocol consensus changes.
 
-Whether a pull request is merged into Ravencoin rests with the project merge
+Whether a pull request is merged into Evrmore rests with the project merge
 maintainers and ultimately the project lead.
 
 Maintainers will take into consideration if a patch is in line with the general
@@ -194,7 +201,7 @@ In general, all pull requests must:
   - Where bugs are fixed, where possible, there should be unit tests
     demonstrating the bug and also proving the fix. This helps prevent regression.
 
-Patches that change Ravencoin consensus rules are considerably more involved than
+Patches that change Evrmore consensus rules are considerably more involved than
 normal because they affect the entire ecosystem and so must be preceded by
 extensive mailing list discussions and have a numbered RIP. While each case will
 be different, one should be prepared to expend more time and effort than for
@@ -235,7 +242,7 @@ higher in terms of discussion and peer review requirements, keeping in mind that
 mistakes could be very costly to the wider community. This includes refactoring
 of consensus critical code.
 
-Where a patch set proposes to change the Ravencoin consensus, it must have been
+Where a patch set proposes to change the Evrmore consensus, it must have been
 discussed extensively, be accompanied by a widely discussed RIP and 
 have a generally widely perceived technical consensus of being
 a worthwhile change based on the judgement of the maintainers.
@@ -275,7 +282,8 @@ about:
 Release Policy
 --------------
 
-The RavenQT-SIG selects a release manager for each Ravencoin release.
+The Evrmore Foundation will select a release manager for each Evrmore release or appoint
+someone to do so.
 
 Copyright
 ---------

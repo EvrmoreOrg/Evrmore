@@ -1,10 +1,11 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_TIMESTAMPINDEX_H
-#define RAVEN_TIMESTAMPINDEX_H
+#ifndef EVRMORE_TIMESTAMPINDEX_H
+#define EVRMORE_TIMESTAMPINDEX_H
 
 #include "uint256.h"
 
@@ -128,4 +129,4 @@ struct CTimestampBlockIndexValue {
     }
 };
 
-#endif // RAVEN_TIMESTAMPINDEX_H
+#endif // EVRMORE_TIMESTAMPINDEX_H

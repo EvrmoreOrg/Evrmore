@@ -1,10 +1,11 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_QT_SENDASSETSENTRY_H
-#define RAVEN_QT_SENDASSETSENTRY_H
+#ifndef EVRMORE_QT_SENDASSETSENTRY_H
+#define EVRMORE_QT_SENDASSETSENTRY_H
 
 #include "walletmodel.h"
 
@@ -21,7 +22,7 @@ namespace Ui {
 }
 
 /**
- * A single entry in the dialog for sending ravens.
+ * A single entry in the dialog for sending EVRs.
  * Stacked widget, with different UIs for payment requests
  * with a strong payee identity.
  */
@@ -92,4 +93,4 @@ private:
     bool updateLabel(const QString &address);
 };
 
-#endif // RAVEN_QT_SENDASSETSENTRY_H
+#endif // EVRMORE_QT_SENDASSETSENTRY_H

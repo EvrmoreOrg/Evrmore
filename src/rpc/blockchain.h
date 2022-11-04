@@ -1,10 +1,11 @@
 // Copyright (c) 2017 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_RPC_BLOCKCHAIN_H
-#define RAVEN_RPC_BLOCKCHAIN_H
+#ifndef EVRMORE_RPC_BLOCKCHAIN_H
+#define EVRMORE_RPC_BLOCKCHAIN_H
 #include <map>
 #include <string>
 
@@ -14,7 +15,7 @@ class UniValue;
 
 
 // To be used by local rpc GPU mining only
-extern std::map<std::string, CBlock> mapRVNKAWBlockTemplates;
+extern std::map<std::string, CBlock> mapEVRMOREPROGPOWBlockTemplates;
 
 /**
  * Get the difficulty of the net wrt to the given block index, or the chain tip if

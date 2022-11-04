@@ -19,10 +19,10 @@ import subprocess
 import sys
 import tempfile
 import urllib
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, wait_until
 
-class LoadblockTest(RavenTestFramework):
+class LoadblockTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
@@ -52,7 +52,7 @@ class LoadblockTest(RavenTestFramework):
             cfg.write("host={}\n".format(node_url.hostname))
             cfg.write("output_file={}\n".format(bootstrap_file))
             cfg.write("max_height=100\n")
-            cfg.write("netmagic=43524f57\n")
+            cfg.write("netmagic=fabfb5da\n")
             cfg.write("input={}\n".format(blocks_dir))
             cfg.write("genesis={}\n".format(genesis_block))
             cfg.write("hashlist={}\n".format(hash_list.name))

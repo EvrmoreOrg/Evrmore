@@ -7,12 +7,12 @@
 """
     ZMQ example using python3's asyncio
 
-    Raven should be started with the command line arguments:
-        ravend -testnet -daemon \
-                -zmqpubhashblock=tcp://127.0.0.1:28766 \
-                -zmqpubrawtx=tcp://127.0.0.1:28766 \
-                -zmqpubhashtx=tcp://127.0.0.1:28766 \
-                -zmqpubhashblock=tcp://127.0.0.1:28766
+    Evrmore should be started with the command line arguments:
+        evrmored -testnet -daemon \
+                -zmqpubhashblock=tcp://127.0.0.1:28819 \
+                -zmqpubrawtx=tcp://127.0.0.1:28819 \
+                -zmqpubhashtx=tcp://127.0.0.1:28819 \
+                -zmqpubhashblock=tcp://127.0.0.1:28819
 """
 
 import sys
@@ -25,8 +25,8 @@ import codecs
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 
-print("Getting Ravencoin msgs")
-socket.connect("tcp://localhost:28766")
+print("Getting Evrmore msgs")
+socket.connect("tcp://localhost:28819")
 
 socket.setsockopt_string(zmq.SUBSCRIBE, "hashtx")
 socket.setsockopt_string(zmq.SUBSCRIBE, "hashblock")
@@ -58,8 +58,8 @@ while True:
 		while(pos != -1):
 			pos = astr.find('72766e', start)
 			if (pos > -1):
-				print("FOUND RVN issuance at " + str(pos))
-				print("After RVN: " + astr[pos+6:pos+8])
+				print("FOUND EVR issuance at " + str(pos))
+				print("After EVR: " + astr[pos+6:pos+8])
 				sizestr = astr[pos+8:pos+10]
 				print("sizestr: " + sizestr)
 				#print(str(astr[pos+8:pos+10]))
@@ -68,7 +68,7 @@ while True:
 				print("Name: " + bytes.fromhex(astr[pos+10:pos+10+size*2]).decode('utf-8'))
 			pos = astr.find('72766e', start)
 			if (pos > -1):
-				print("FOUND RVN something at " + str(pos))
+				print("FOUND EVR something at " + str(pos))
 			start += pos+8
 			print(astr)
 

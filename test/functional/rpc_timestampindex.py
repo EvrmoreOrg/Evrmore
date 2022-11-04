@@ -7,10 +7,10 @@
 """Test timestampindex generation and fetching"""
 
 import time
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import connect_nodes_bi, assert_equal
 
-class TimestampIndexTest(RavenTestFramework):
+class TimestampIndexTest(EvrmoreTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True

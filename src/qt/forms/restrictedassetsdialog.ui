@@ -17,19 +17,19 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="spacing">
-      <number>34</number>
+      <number>20</number>
      </property>
      <property name="leftMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <property name="topMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <property name="rightMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <property name="bottomMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <item>
       <widget class="QFrame" name="frameAssetBalance">
@@ -281,7 +281,7 @@
         <cursorShape>IBeamCursor</cursorShape>
        </property>
        <property name="text">
-        <string notr="true">123.456 RVN</string>
+        <string notr="true">123.456 EVR</string>
        </property>
        <property name="textInteractionFlags">
         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -293,7 +293,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../raven.qrc"/>
+  <include location="../evrmore.qrc"/>
  </resources>
  <connections/>
 </ui>

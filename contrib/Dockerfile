@@ -3,8 +3,8 @@ FROM amd64/ubuntu:20.04 AS base
 #If you found this docker image helpful please donate RVN to the maintainer
 LABEL maintainer="RV9zdNeUTQUToZUcRp9uNF8gwH5LzDFtan"
 
-EXPOSE 8766/tcp
-EXPOSE 8767/tcp
+EXPOSE 8819/tcp
+EXPOSE 8820/tcp
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -31,33 +31,33 @@ RUN apt-get update && \
 	apt-get clean
 
 #Copy source dir
-COPY . /home/raven/build/Ravencoin/
-WORKDIR /home/raven/build/Ravencoin
+COPY . /home/evrmore/build/Evrmore/
+WORKDIR /home/evrmore/build/Evrmore
 
 #build db4 from source
-WORKDIR /home/raven/build/Ravencoin/contrib
+WORKDIR /home/evrmore/build/Evrmore/contrib
 RUN ./install_db4.sh ../../
 
-# build Ravencore
-WORKDIR /home/raven/build/Ravencoin
-RUN ./autogen.sh && ./configure --disable-tests BDB_LIBS="-L/home/raven/build/db4/lib -ldb_cxx-4.8" BDB_CFLAGS="-I/home/raven/build/db4/include" --with-gui=no  && make -j4
+# build Evrmore core
+WORKDIR /home/evrmore/build/Evrmore
+RUN ./autogen.sh && ./configure --disable-tests BDB_LIBS="-L/home/evrmore/build/db4/lib -ldb_cxx-4.8" BDB_CFLAGS="-I/home/evrmore/build/db4/include" --with-gui=no  && make -j4
 
 FROM base AS final
 
 #Add our service account user
-RUN useradd -ms /bin/bash raven && \
-	mkdir /var/lib/raven && \
-	chown raven:raven /var/lib/raven && \
-	ln -s /var/lib/raven /home/raven/.raven && \
-	chown -h raven:raven /home/raven/.raven
+RUN useradd -ms /bin/bash evrmore && \
+	mkdir /var/lib/evrmore && \
+	chown evrmore:evrmore /var/lib/evrmore && \
+	ln -s /var/lib/evrmore /home/evrmore/.evrmore && \
+	chown -h evrmore:evrmore /home/evrmore/.evrmore
 
-VOLUME /var/lib/raven
+VOLUME /var/lib/evrmore
 
 #Copy the compiled binaries from the build
-COPY --from=build /home/raven/build/Ravencoin/src/ravend /usr/local/bin/ravend
-COPY --from=build /home/raven/build/Ravencoin/src/raven-cli /usr/local/bin/raven-cli
+COPY --from=build /home/evrmore/build/Evrmore/src/evrmored /usr/local/bin/evrmored
+COPY --from=build /home/evrmore/build/Evrmore/src/evrmore-cli /usr/local/bin/evrmore-cli
 
-WORKDIR /home/raven
-USER raven
+WORKDIR /home/evrmore
+USER evrmore
 
-CMD /usr/local/bin/ravend -datadir=/var/lib/raven -printtoconsole -onlynet=ipv4
+CMD /usr/local/bin/evrmored -datadir=/var/lib/evrmore -printtoconsole -onlynet=ipv4

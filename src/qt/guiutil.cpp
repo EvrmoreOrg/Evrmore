@@ -1,12 +1,13 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "guiutil.h"
 
-#include "ravenaddressvalidator.h"
-#include "ravenunits.h"
+#include "evrmoreaddressvalidator.h"
+#include "evrmoreunits.h"
 #include "qvalidatedlineedit.h"
 #include "walletmodel.h"
 
@@ -212,11 +213,11 @@ void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
 #if QT_VERSION >= 0x040700
     // We don't want translators to use own addresses in translations
     // and this is the only place, where this address is supplied.
-    widget->setPlaceholderText(QObject::tr("Enter a Raven address (e.g. %1)").arg(
+    widget->setPlaceholderText(QObject::tr("Enter a Evrmore address (e.g. %1)").arg(
         QString::fromStdString(DummyAddress(GetParams()))));
 #endif
-    widget->setValidator(new RavenAddressEntryValidator(parent));
-    widget->setCheckValidator(new RavenAddressCheckValidator(parent));
+    widget->setValidator(new EvrmoreAddressEntryValidator(parent));
+    widget->setCheckValidator(new EvrmoreAddressCheckValidator(parent));
 }
 
 void setupAmountWidget(QLineEdit *widget, QWidget *parent)
@@ -228,10 +229,10 @@ void setupAmountWidget(QLineEdit *widget, QWidget *parent)
     widget->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
 }
 
-bool parseRavenURI(const QUrl &uri, SendCoinsRecipient *out)
+bool parseEvrmoreURI(const QUrl &uri, SendCoinsRecipient *out)
 {
-    // return if URI is not valid or is no raven: URI
-    if(!uri.isValid() || uri.scheme() != QString("raven"))
+    // return if URI is not valid or is no evrmore: URI
+    if(!uri.isValid() || uri.scheme() != QString("evrmore"))
         return false;
 
     SendCoinsRecipient rv;
@@ -271,7 +272,7 @@ bool parseRavenURI(const QUrl &uri, SendCoinsRecipient *out)
         {
             if(!i->second.isEmpty())
             {
-                if(!RavenUnits::parse(RavenUnits::RVN, i->second, &rv.amount))
+                if(!EvrmoreUnits::parse(EvrmoreUnits::EVR, i->second, &rv.amount))
                 {
                     return false;
                 }
@@ -289,28 +290,28 @@ bool parseRavenURI(const QUrl &uri, SendCoinsRecipient *out)
     return true;
 }
 
-bool parseRavenURI(QString uri, SendCoinsRecipient *out)
+bool parseEvrmoreURI(QString uri, SendCoinsRecipient *out)
 {
-    // Convert raven:// to raven:
+    // Convert evrmore:// to evrmore:
     //
-    //    Cannot handle this later, because raven:// will cause Qt to see the part after // as host,
+    //    Cannot handle this later, because evrmore:// will cause Qt to see the part after // as host,
     //    which will lower-case it (and thus invalidate the address).
-    if(uri.startsWith("raven://", Qt::CaseInsensitive))
+    if(uri.startsWith("evrmore://", Qt::CaseInsensitive))
     {
-        uri.replace(0, 10, "raven:");
+        uri.replace(0, 10, "evrmore:");
     }
     QUrl uriInstance(uri);
-    return parseRavenURI(uriInstance, out);
+    return parseEvrmoreURI(uriInstance, out);
 }
 
-QString formatRavenURI(const SendCoinsRecipient &info)
+QString formatEvrmoreURI(const SendCoinsRecipient &info)
 {
-    QString ret = QString("raven:%1").arg(info.address);
+    QString ret = QString("evrmore:%1").arg(info.address);
     int paramCount = 0;
 
     if (info.amount)
     {
-        ret += QString("?amount=%1").arg(RavenUnits::format(RavenUnits::RVN, info.amount, false, RavenUnits::separatorNever));
+        ret += QString("?amount=%1").arg(EvrmoreUnits::format(EvrmoreUnits::EVR, info.amount, false, EvrmoreUnits::separatorNever));
         paramCount++;
     }
 
@@ -500,9 +501,9 @@ void openDebugLogfile()
         QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathDebug)));
 }
 
-bool openRavenConf()
+bool openEvrmoreConf()
 {
-    boost::filesystem::path pathConfig = GetConfigFile(RAVEN_CONF_FILENAME);
+    boost::filesystem::path pathConfig = GetConfigFile(EVRMORE_CONF_FILENAME);
 
     /* Create the file */
     boost::filesystem::ofstream configFile(pathConfig, std::ios_base::app);
@@ -512,7 +513,7 @@ bool openRavenConf()
     
     configFile.close();
     
-    /* Open raven.conf with the associated application */
+    /* Open evrmore.conf with the associated application */
     return QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
 
@@ -602,15 +603,15 @@ fs::path static StartupShortcutPath()
 {
     std::string chain = ChainNameFromCommandLine();
     if (chain == CBaseChainParams::MAIN)
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "Raven.lnk";
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Evrmore.lnk";
     if (chain == CBaseChainParams::TESTNET) // Remove this special case when CBaseChainParams::TESTNET = "testnet4"
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "Raven (testnet).lnk";
-    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Raven (%s).lnk", chain);
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Evrmore (testnet).lnk";
+    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Evrmore (%s).lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
 {
-    // check for Raven*.lnk
+    // check for Evrmore*.lnk
     return fs::exists(StartupShortcutPath());
 }
 
@@ -700,8 +701,8 @@ fs::path static GetAutostartFilePath()
 {
     std::string chain = ChainNameFromCommandLine();
     if (chain == CBaseChainParams::MAIN)
-        return GetAutostartDir() / "raven.desktop";
-    return GetAutostartDir() / strprintf("raven-%s.lnk", chain);
+        return GetAutostartDir() / "evrmore.desktop";
+    return GetAutostartDir() / strprintf("evrmore-%s.lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
@@ -741,13 +742,13 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         if (!optionFile.good())
             return false;
         std::string chain = ChainNameFromCommandLine();
-        // Write a raven.desktop file to the autostart directory:
+        // Write a evrmore.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
         if (chain == CBaseChainParams::MAIN)
-            optionFile << "Name=Raven\n";
+            optionFile << "Name=Evrmore\n";
         else
-            optionFile << strprintf("Name=Raven (%s)\n", chain);
+            optionFile << strprintf("Name=Evrmore (%s)\n", chain);
         optionFile << "Exec=" << pszExePath << strprintf(" -min -testnet=%d -regtest=%d\n", gArgs.GetBoolArg("-testnet", false), gArgs.GetBoolArg("-regtest", false));
         optionFile << "Terminal=false\n";
         optionFile << "Hidden=false\n";
@@ -773,7 +774,7 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
         return nullptr;
     }
     
-    // loop through the list of startup items and try to find the raven app
+    // loop through the list of startup items and try to find the Evrmore app
     for(int i = 0; i < CFArrayGetCount(listSnapshot); i++) {
         LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(listSnapshot, i);
         UInt32 resolutionFlags = kLSSharedFileListNoUserInteraction | kLSSharedFileListDoNotMountVolumes;
@@ -807,38 +808,38 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
 
 bool GetStartOnSystemStartup()
 {
-    CFURLRef ravenAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-    if (ravenAppUrl == nullptr) {
+    CFURLRef evrmoreAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    if (evrmoreAppUrl == nullptr) {
         return false;
     }
     
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
-    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, ravenAppUrl);
+    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, evrmoreAppUrl);
 
-    CFRelease(ravenAppUrl);
+    CFRelease(evrmoreAppUrl);
     return !!foundItem; // return boolified object
 }
 
 bool SetStartOnSystemStartup(bool fAutoStart)
 {
-    CFURLRef ravenAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-    if (ravenAppUrl == nullptr) {
+    CFURLRef evrmoreAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    if (evrmoreAppUrl == nullptr) {
         return false;
     }
     
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
-    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, ravenAppUrl);
+    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, evrmoreAppUrl);
 
     if(fAutoStart && !foundItem) {
-        // add raven app to startup item list
-        LSSharedFileListInsertItemURL(loginItems, kLSSharedFileListItemBeforeFirst, nullptr, nullptr, ravenAppUrl, nullptr, nullptr);
+        // add Evrmore app to startup item list
+        LSSharedFileListInsertItemURL(loginItems, kLSSharedFileListItemBeforeFirst, nullptr, nullptr, evrmoreAppUrl, nullptr, nullptr);
     }
     else if(!fAutoStart && foundItem) {
         // remove item
         LSSharedFileListItemRemove(loginItems, foundItem);
     }
     
-    CFRelease(ravenAppUrl);
+    CFRelease(evrmoreAppUrl);
     return true;
 }
 #pragma GCC diagnostic pop

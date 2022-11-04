@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -47,7 +48,7 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
     const CBlockIndex *pindex = pindexLast;
     arith_uint256 bnPastTargetAvg;
 
-    int nKAWPOWBlocksFound = 0;
+    int nEVRPROGPOWBlocksFound = 0;
     for (unsigned int nCountBlocks = 1; nCountBlocks <= nPastBlocks; nCountBlocks++) {
         arith_uint256 bnTarget = arith_uint256().SetCompact(pindex->nBits);
         if (nCountBlocks == 1) {
@@ -57,9 +58,10 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
             bnPastTargetAvg = (bnPastTargetAvg * nCountBlocks + bnTarget) / (nCountBlocks + 1);
         }
 
-        // Count how blocks are KAWPOW mined in the last 180 blocks
-        if (pindex->nTime >= nKAWPOWActivationTime) {
-            nKAWPOWBlocksFound++;
+        // Count how blocks are EVRPROGPOW mined in the last 180 blocks
+//        if (pindex->nTime >= nEVRPROGPOWActivationTime) {
+        if (fEvrprogpowAsMiningAlgo) {
+            nEVRPROGPOWBlocksFound++;
         }
 
         if(nCountBlocks != nPastBlocks) {
@@ -68,14 +70,15 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
         }
     }
 
-    // If we are mining a KAWPOW block. We check to see if we have mined
-    // 180 KAWPOW blocks already. If we haven't we are going to return our
-    // temp limit. This will allow us to change algos to kawpow without having to
+    // If we are mining a EVRPROGPOW block. We check to see if we have mined
+    // 180 EVRPROGPOW blocks already. If we haven't we are going to return our
+    // temp limit. This will allow us to change algos to evrprogpow without having to
     // change the DGW math.
-    if (pblock->nTime >= nKAWPOWActivationTime) {
-        if (nKAWPOWBlocksFound != nPastBlocks) {
-            const arith_uint256 bnKawPowLimit = UintToArith256(params.kawpowLimit);
-            return bnKawPowLimit.GetCompact();
+//    if (pblock->nTime >= nEVRPROGPOWActivationTime) {
+    if (fEvrprogpowAsMiningAlgo) {
+        if (nEVRPROGPOWBlocksFound != nPastBlocks) {
+            const arith_uint256 bnEvrprogPowLimit = UintToArith256(params.evrprogpowLimit);
+            return bnEvrprogPowLimit.GetCompact();
         }
     }
 

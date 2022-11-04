@@ -1,10 +1,11 @@
 // Copyright (c) 2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#ifndef RAVENCOIN_RESTRICTEDDB_H
-#define RAVENCOIN_RESTRICTEDDB_H
+#ifndef EVRMORECOIN_RESTRICTEDDB_H
+#define EVRMORECOIN_RESTRICTEDDB_H
 
 #include <dbwrapper.h>
 
@@ -56,4 +57,4 @@ public:
 };
 
 
-#endif //RAVENCOIN_RESTRICTEDDB_H
+#endif //EVRMORECOIN_RESTRICTEDDB_H

@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_PRIMITIVES_BLOCK_H
-#define RAVEN_PRIMITIVES_BLOCK_H
+#ifndef EVRMORE_PRIMITIVES_BLOCK_H
+#define EVRMORE_PRIMITIVES_BLOCK_H
 
 #include "primitives/transaction.h"
 #include "serialize.h"
@@ -19,7 +20,11 @@
  * of the block.
  */
 
-extern uint32_t nKAWPOWActivationTime;
+//EVR-TODO: Check if this can be made CONST. Or better yet, eliminate it everywhere
+//      by adding:
+//          const Consensus::Params& consensusParams = GetParams().GetConsensus();
+//      here, in chain.h, and as needed in rpc/mining.cpp. The equivalent is already passed into pow.cpp and validation.cpp functions where needed.
+extern bool fEvrprogpowAsMiningAlgo;    // declared global here but value is set in chainparams.cpp
 
 class BlockNetwork
 {
@@ -64,7 +69,7 @@ public:
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
-        if (nTime < nKAWPOWActivationTime) {
+        if (!fEvrprogpowAsMiningAlgo) {
             READWRITE(nNonce);
         } else {
             READWRITE(nHeight);
@@ -93,11 +98,11 @@ public:
     }
 
     uint256 GetHash() const;
-    uint256 GetX16RHash() const;
-    uint256 GetX16RV2Hash() const;
+    uint256 GetEVRPROGPOWHash_OnlyMix() const;
+    uint256 GetSerializeHash() const;
 
     uint256 GetHashFull(uint256& mix_hash) const;
-    uint256 GetKAWPOWHeaderHash() const;
+    uint256 GetEVRPROGPOWHeaderHash() const;
     std::string ToString() const;
 
     /// Use for testing algo switch
@@ -158,17 +163,12 @@ public:
         block.nBits          = nBits;
         block.nNonce         = nNonce;
 
-        // KAWPOW
+        // EVRPROGPOW
         block.nHeight        = nHeight;
         block.nNonce64       = nNonce64;
         block.mix_hash       = mix_hash;
         return block;
     }
-
-    // void SetPrevBlockHash(uint256 prevHash) 
-    // {
-    //     block.hashPrevBlock = prevHash;
-    // }
 
     std::string ToString() const;
 };
@@ -210,10 +210,10 @@ struct CBlockLocator
  * Custom serializer for CBlockHeader that omits the nNonce and mixHash, for use
  * as input to ProgPow.
  */
-class CKAWPOWInput : private CBlockHeader
+class CEVRPROGPOWInput : private CBlockHeader
 {
 public:
-    CKAWPOWInput(const CBlockHeader &header)
+    CEVRPROGPOWInput(const CBlockHeader &header)
     {
         CBlockHeader::SetNull();
         *((CBlockHeader*)this) = header;
@@ -232,4 +232,4 @@ public:
     }
 };
 
-#endif // RAVEN_PRIMITIVES_BLOCK_H
+#endif // EVRMORE_PRIMITIVES_BLOCK_H

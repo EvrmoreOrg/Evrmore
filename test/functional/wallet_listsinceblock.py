@@ -6,10 +6,10 @@
 
 """Test the listsincelast RPC."""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal
 
-class ListSinceBlockTest (RavenTestFramework):
+class ListSinceBlockTest (EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 4
         self.setup_clean_chain = True
@@ -93,8 +93,8 @@ class ListSinceBlockTest (RavenTestFramework):
 
         Problematic case:
 
-        1. User 1 receives RVN in tx1 from utxo1 in block aa1.
-        2. User 2 receives RVN in tx2 from utxo1 (same) in block bb1
+        1. User 1 receives EVR in tx1 from utxo1 in block aa1.
+        2. User 2 receives EVR in tx2 from utxo1 (same) in block bb1
         3. User 1 sees 2 confirmations at block aa3.
         4. Reorg into bb chain.
         5. User 1 asks `listsinceblock aa3` and does not see that tx1 is now

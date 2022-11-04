@@ -1,10 +1,11 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_QT_CLIENTMODEL_H
-#define RAVEN_QT_CLIENTMODEL_H
+#ifndef EVRMORE_QT_CLIENTMODEL_H
+#define EVRMORE_QT_CLIENTMODEL_H
 
 #include <QObject>
 #include <QDateTime>
@@ -35,7 +36,7 @@ enum NumConnections {
     CONNECTIONS_ALL  = (CONNECTIONS_IN | CONNECTIONS_OUT),
 };
 
-/** Model for Raven network client. */
+/** Model for Evrmore network client. */
 class ClientModel : public QObject
 {
     Q_OBJECT
@@ -117,4 +118,4 @@ public Q_SLOTS:
     void updateBanlist();
 };
 
-#endif // RAVEN_QT_CLIENTMODEL_H
+#endif // EVRMORE_QT_CLIENTMODEL_H

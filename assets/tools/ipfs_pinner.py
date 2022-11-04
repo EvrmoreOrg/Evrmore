@@ -27,13 +27,13 @@ import signal  #Used for timeout
 JSON_ONLY_CHECK = False
 FILESIZE_THRESHOLD = 100000000
 
-#Set this to your raven-cli program
-cli = "raven-cli"
+#Set this to your evrmore-cli program
+cli = "evrmore-cli"
 
 #mode = "-testnet"
 mode = ""
-rpc_port = 8766
-#Set this information in your raven.conf file (in datadir, not testnet3)
+rpc_port = 18819
+#Set this information in your evrmore.conf file (in datadir, not testnet)
 rpc_user = 'rpcuser'
 rpc_pass = 'rpcpass555'
 
@@ -349,8 +349,8 @@ def scan_asset_blocks():
 	        print_debug("txinfo: " + tx_info)
 	        tx_detail = decode_rawtx(tx_info)
 	        for vout in tx_detail.get('vout'):
-	            if (vout.get('scriptPubKey').get('asm')[86:98] == "OP_RVN_ASSET"):
-	                print_debug("Found OP_RVN_ASSET")
+	            if (vout.get('scriptPubKey').get('asm')[86:98] == "OP_EVR_ASSET"):
+	                print_debug("Found OP_EVR_ASSET")
 	                print_debug(vout.get('scriptPubKey').get('hex'))
 	                asset_script = decode_script(vout.get('scriptPubKey').get('hex'))
 	                asset_handler(asset_script)
@@ -363,8 +363,8 @@ def monitor_zmq():
 	context = zmq.Context()
 	socket = context.socket(zmq.SUB)
 
-	print("Getting Ravencoin msgs")
-	socket.connect("tcp://localhost:28766")
+	print("Getting Evrmore msgs")
+	socket.connect("tcp://localhost:28819")
 
 	#socket.setsockopt_string(zmq.SUBSCRIBE, u'hashtx')
 	#socket.setsockopt_string(zmq.SUBSCRIBE, u'hashblock')
@@ -400,8 +400,8 @@ def monitor_zmq():
 			for vout in tx_detail.get('vout'):
 			#print("vout: " + str(vout.get('value')))
 			#print(vout.get('scriptPubKey').get('asm'))
-				if (vout.get('scriptPubKey').get('asm')[86:98] == "OP_RVN_ASSET"):
-					#print("Found OP_RVN_ASSET")
+				if (vout.get('scriptPubKey').get('asm')[86:98] == "OP_EVR_ASSET"):
+					#print("Found OP_EVR_ASSET")
 					#print(vout.get('scriptPubKey').get('hex'))
 					asset_script = decode_script(vout.get('scriptPubKey').get('hex'))
 					asset_handler(asset_script)

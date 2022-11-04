@@ -1,0 +1,92 @@
+#!/sbin/runscript
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/evrmore/.evrmore" ]; then
+	EVRMORED_DEFAULT_DATADIR="/var/lib/evrmore/.evrmore"
+else
+	EVRMORED_DEFAULT_DATADIR="/var/lib/evrmored"
+fi
+
+EVRMORED_CONFIGFILE=${EVRMORED_CONFIGFILE:-/etc/evrmore/evrmore.conf}
+EVRMORED_PIDDIR=${EVRMORED_PIDDIR:-/var/run/evrmored}
+EVRMORED_PIDFILE=${EVRMORED_PIDFILE:-${EVRMORED_PIDDIR}/evrmored.pid}
+EVRMORED_DATADIR=${EVRMORED_DATADIR:-${EVRMORED_DEFAULT_DATADIR}}
+EVRMORED_USER=${EVRMORED_USER:-${EVRMORE_USER:-evrmore}}
+EVRMORED_GROUP=${EVRMORED_GROUP:-evrmore}
+EVRMORED_BIN=${EVRMORED_BIN:-/usr/bin/evrmored}
+EVRMORED_NICE=${EVRMORED_NICE:-${NICELEVEL:-0}}
+EVRMORED_OPTS="${EVRMORED_OPTS:-${EVRMORE_OPTS}}"
+
+name="Evrmore Core Daemon"
+description="Evrmore cryptocurrency P2P network daemon"
+
+command="/usr/bin/evrmored"
+command_args="-pid=\"${EVRMORED_PIDFILE}\" \
+		-conf=\"${EVRMORED_CONFIGFILE}\" \
+		-datadir=\"${EVRMORED_DATADIR}\" \
+		-daemon \
+		${EVRMORED_OPTS}"
+
+required_files="${EVRMORED_CONFIGFILE}"
+start_stop_daemon_args="-u ${EVRMORED_USER} \
+			-N ${EVRMORED_NICE} -w 2000"
+pidfile="${EVRMORED_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${EVRMORED_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${EVRMORED_USER}:${EVRMORED_GROUP}" \
+	"${EVRMORED_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${EVRMORED_USER}:${EVRMORED_GROUP}" \
+	"${EVRMORED_PIDDIR}"
+
+	checkpath -f \
+	-o ${EVRMORED_USER}:${EVRMORED_GROUP} \
+	-m 0660 \
+	${EVRMORED_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${EVRMORED_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run evrmored."
+		eerror "The setting must appear in ${EVRMORED_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Evrmore Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

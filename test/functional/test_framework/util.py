@@ -67,10 +67,10 @@ def assert_fee_amount(fee, tx_size, fee_per_kb):
     """Assert the fee was in range"""
     target_fee = tx_size * fee_per_kb / 1000
     if fee < target_fee:
-        raise AssertionError("Fee of %s RVN too low! (Should be %s RVN)" % (str(fee), str(target_fee)))
+        raise AssertionError("Fee of %s EVR too low! (Should be %s EVR)" % (str(fee), str(target_fee)))
     # allow the wallet's estimation to be at most 2 bytes off
     if fee > (tx_size + 2) * fee_per_kb / 1000:
-        raise AssertionError("Fee of %s RVN too high! (Should be %s RVN)" % (str(fee), str(target_fee)))
+        raise AssertionError("Fee of %s EVR too high! (Should be %s EVR)" % (str(fee), str(target_fee)))
 
 
 def assert_equal(thing1, thing2, *args):
@@ -236,7 +236,7 @@ def assert_happening(date_str, within_secs=120):
 ##########################################################################################
 
 def check_json_precision():
-    """Make sure json library being used does not lose precision converting RVN values"""
+    """Make sure json library being used does not lose precision converting EVR values"""
     n = Decimal("20000000.00000003")
     satoshis = int(json.loads(json.dumps(float(n))) * 1.0e8)
     if satoshis != 2000000000000003:
@@ -259,18 +259,18 @@ def hash256(byte_str):
     return sha256d.digest()[::-1]
 
 
-x16r_hash_cmd = os.path.dirname(os.path.realpath(__file__)) + "/../../../src/test/test_raven_hash"
+#x16r_hash_cmd = os.path.dirname(os.path.realpath(__file__)) + "/../../../src/test/test_evrmore_hash"
 
 
-def x16_hash_block(hex_str, algorithm="2"):
+#def x16_hash_block(hex_str, algorithm="2"):
     """
     :param hex_str:     Blockhash to convert
     :param algorithm:   Which algorithm ~~ "1" = x16r  "2" = x16rv2
     :return:            Converted hash
     """
-    cmd = [x16r_hash_cmd, hex_str, algorithm]
-    blk_hash = subprocess.run(cmd, stdout=subprocess.PIPE, check=True).stdout.decode('ascii')
-    return blk_hash
+#    cmd = [x16r_hash_cmd, hex_str, algorithm]
+#    blk_hash = subprocess.run(cmd, stdout=subprocess.PIPE, check=True).stdout.decode('ascii')
+#    return blk_hash
 
 
 def hex_str_to_bytes(hex_str):
@@ -373,7 +373,7 @@ def get_rpc_proxy(url, node_number, timeout=None, coverage_dir=None):
 
 
 def p2p_port(n):
-    if p2p_ports[n] is -1:
+    if p2p_ports[n] == -1:
         # Port isn't in the list, find one that is available
         p2p_ports[n] = find_free_port()[0]
         return p2p_ports[n]
@@ -382,7 +382,7 @@ def p2p_port(n):
 
 
 def rpc_port(n):
-    if rpc_ports[n] is -1:
+    if rpc_ports[n] == -1:
         # Port isn't in the list, find one that is available
         rpc_ports[n] = find_free_port()[0]
         return rpc_ports[n]
@@ -411,8 +411,9 @@ def initialize_data_dir(dirname, n):
     datadir = os.path.join(dirname, "node" + str(n))
     if not os.path.isdir(datadir):
         os.makedirs(datadir)
-    with open(os.path.join(datadir, "raven.conf"), 'w', encoding='utf8') as f:
+    with open(os.path.join(datadir, "evrmore.conf"), 'w', encoding='utf8') as f:
         f.write("regtest=1\n")
+        f.write("acceptnonstdtxn=1\n")
         f.write("port=" + str(p2p_port(n)) + "\n")
         f.write("rpcport=" + str(rpc_port(n)) + "\n")
         f.write("listenonion=0\n")
@@ -426,8 +427,8 @@ def get_datadir_path(dirname, n):
 def get_auth_cookie(datadir):
     user = None
     password = None
-    if os.path.isfile(os.path.join(datadir, "raven.conf")):
-        with open(os.path.join(datadir, "raven.conf"), 'r', encoding='utf8') as f:
+    if os.path.isfile(os.path.join(datadir, "evrmore.conf")):
+        with open(os.path.join(datadir, "evrmore.conf"), 'r', encoding='utf8') as f:
             for line in f:
                 if line.startswith("rpcuser="):
                     assert user is None  # Ensure that there is only one rpcuser line

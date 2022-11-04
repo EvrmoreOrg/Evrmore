@@ -1,6 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -39,10 +40,10 @@
 
 void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, bool expanded = false)
 {
-    // Call into TxToUniv() in raven-common to decode the transaction hex.
+    // Call into TxToUniv() in evrmore-common to decode the transaction hex.
     //
     // Blockchain contextual information (confirmations and blocktime) is not
-    // available to code in raven-common, so we query them here and push the
+    // available to code in evrmore-common, so we query them here and push the
     // data into the returned UniValue.
     TxToUniv(tx, uint256(), entry, true, RPCSerializationFlags());
 
@@ -62,9 +63,9 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, 
                     in.pushKV("value", ValueFromAmount(spentInfo.satoshis));
                     in.pushKV("valueSat", spentInfo.satoshis);
                     if (spentInfo.addressType == 1) {
-                        in.pushKV("address", CRavenAddress(CKeyID(spentInfo.addressHash)).ToString());
+                        in.pushKV("address", CEvrmoreAddress(CKeyID(spentInfo.addressHash)).ToString());
                     } else if (spentInfo.addressType == 2) {
-                        in.pushKV("address", CRavenAddress(CScriptID(spentInfo.addressHash)).ToString());
+                        in.pushKV("address", CEvrmoreAddress(CScriptID(spentInfo.addressHash)).ToString());
                     }
                 }
                 newVin.push_back(in);
@@ -164,7 +165,7 @@ UniValue getrawtransaction(const JSONRPCRequest& request)
             "         \"reqSigs\" : n,            (numeric) The required sigs\n"
             "         \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
             "         \"addresses\" : [           (json array of string)\n"
-            "           \"address\"        (string) raven address\n"
+            "           \"address\"        (string) Evrmore address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -350,13 +351,13 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":(amount or object),\"data\":\"hex\",...}\n"
             "                     ( locktime ) ( replaceable )\n"
             "\nCreate a transaction spending the given inputs and creating new outputs.\n"
-            "Outputs are addresses (paired with a RVN amount, data or object specifying an asset operation) or data.\n"
+            "Outputs are addresses (paired with a EVR amount, data or object specifying an asset operation) or data.\n"
             "Returns hex-encoded raw transaction.\n"
             "Note that the transaction's inputs are not signed, and\n"
             "it is not stored in the wallet or transmitted to the network.\n"
 
             "\nPaying for Asset Operations:\n"
-            "  Some operations require an amount of RVN to be sent to a burn address:\n"
+            "  Some operations require an amount of EVR to be sent to a burn address:\n"
             "\n"
             "    Operation          Amount + Burn Address\n"
             "    transfer                 0\n"
@@ -412,9 +413,9 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "     ]\n"
             "2. \"outputs\"                               (object, required) a json object with outputs\n"
             "     {\n"
-            "       \"address\":                          (string, required) The destination raven address.\n"
+            "       \"address\":                          (string, required) The destination Evrmore address.\n"
             "                                               Each output must have a different address.\n"
-            "         x.xxx                             (number or string, required) The RVN amount\n"
+            "         x.xxx                             (number or string, required) The EVR amount\n"
             "           or\n"
             "         {                                 (object) A json object of assets to send\n"
             "           \"transfer\":\n"
@@ -672,7 +673,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
         } else {
             CTxDestination destination = DecodeDestination(name_);
             if (!IsValidDestination(destination)) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Raven address: ") + name_);
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Evrmore address: ") + name_);
             }
 
             if (!destinations.insert(destination).second) {
@@ -891,7 +892,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                     }
 
                     if (fHasOwnerChange && !IsValidDestinationString(owner_change_address.get_str()))
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, owner_change_address is not a valid Ravencoin address");
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, owner_change_address is not a valid Evrmore address");
 
                     if (IsAssetNameAnRestricted(asset_name.get_str()))
                         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, asset_name can't be a restricted asset name. Please use reissue_restricted with the correct parameters");
@@ -970,54 +971,52 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                                 "Invalid parameter, the format must follow { \"transferwithmessage\": {\"asset_name\": amount, \"message\": messagehash, \"expire_time\": utc_time} }"));
 
                     UniValue transferData = asset_.getValues()[0].get_obj();
-
                     auto keys = transferData.getKeys();
 
                     if (keys.size() == 0)
                         throw JSONRPCError(RPC_INVALID_PARAMETER, std::string(
                                 "Invalid parameter, the format must follow { \"transferwithmessage\": {\"asset_name\": amount, \"message\": messagehash, \"expire_time\": utc_time} }"));
 
-                    UniValue asset_quantity;
                     std::string asset_name = keys[0];
 
-                    if (!IsAssetNameValid(asset_name)) {
+                    if (!IsAssetNameValid(asset_name)) 
                         throw JSONRPCError(RPC_INVALID_PARAMETER,
                                            "Invalid parameter, missing valid asset name to transferwithmessage");
 
-                        const UniValue &asset_quantity = find_value(transferData, asset_name);
-                        if (!asset_quantity.isNum())
-                            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing or invalid quantity");
+                    const UniValue &asset_quantity = find_value(transferData, asset_name);
+                    if (!asset_quantity.isNum())
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing or invalid quantity");
 
-                        const UniValue &message = find_value(transferData, "message");
-                        if (!message.isStr())
-                            throw JSONRPCError(RPC_INVALID_PARAMETER,
-                                               "Invalid parameter, missing reissue data for key: message");
+                    const UniValue &message = find_value(transferData, "message");
+                    if (!message.isStr())
+                        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                                           "Invalid parameter, missing reissue data for key: message");
 
-                        const UniValue &expire_time = find_value(transferData, "expire_time");
-                        if (!expire_time.isNum())
-                            throw JSONRPCError(RPC_INVALID_PARAMETER,
-                                               "Invalid parameter, missing reissue data for key: expire_time");
+                    const UniValue &expire_time = find_value(transferData, "expire_time");
+                    if (!expire_time.isNum())
+                        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                                           "Invalid parameter, missing reissue data for key: expire_time");
 
-                        CAmount nAmount = AmountFromValue(asset_quantity);
+                    CAmount nAmount = AmountFromValue(asset_quantity);
 
-                        // Create a new transfer
-                        CAssetTransfer transfer(asset_name, nAmount, DecodeAssetData(message.get_str()),
+                    // Create a new transfer
+                    CAssetTransfer transfer(asset_name, nAmount, DecodeAssetData(message.get_str()),
                                                 expire_time.get_int64());
 
-                        // Verify
-                        std::string strError = "";
-                        if (!transfer.IsValid(strError)) {
-                            throw JSONRPCError(RPC_INVALID_PARAMETER, strError);
-                        }
-
-                        // Construct transaction
-                        CScript scriptPubKey = GetScriptForDestination(destination);
-                        transfer.ConstructTransaction(scriptPubKey);
-
-                        // Push into vouts
-                        CTxOut out(0, scriptPubKey);
-                        rawTx.vout.push_back(out);
+                    // Verify
+                    std::string strError = "";
+                    if (!transfer.IsValid(strError)) {
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, strError);
                     }
+
+                    // Construct transaction
+                    CScript scriptPubKey = GetScriptForDestination(destination);
+                    transfer.ConstructTransaction(scriptPubKey);
+
+                    // Push into vouts
+                    CTxOut out(0, scriptPubKey);
+                    rawTx.vout.push_back(out);
+                    
                 } else if (assetKey_ == "issue_restricted") {
                     if (asset_[0].type() != UniValue::VOBJ)
                         throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, the format must follow { \"issue_restricted\": {\"key\": value}, ...}"));
@@ -1060,7 +1059,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                     }
 
                     if (fHasOwnerChange && !IsValidDestinationString(owner_change_address.get_str()))
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, owner_change_address is not a valid Ravencoin address");
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, owner_change_address is not a valid Evrmore address");
 
                     UniValue ipfs_hash = "";
                     if (has_ipfs.get_int() == 1) {
@@ -1186,7 +1185,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
 
                     if (fHasOwnerChange && !IsValidDestinationString(owner_change_address.get_str()))
                         throw JSONRPCError(RPC_INVALID_PARAMETER,
-                                           "Invalid parameter, owner_change_address is not a valid Ravencoin address");
+                                           "Invalid parameter, owner_change_address is not a valid Evrmore address");
 
                     std::string strAssetName = asset_name.get_str();
 
@@ -1297,7 +1296,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                     }
 
                     if (fHasRootChange && !IsValidDestinationString(root_change_address.get_str()))
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, root_change_address is not a valid Ravencoin address");
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, root_change_address is not a valid Evrmore address");
 
                     CAmount nAmount = AmountFromValue(asset_quantity);
                     if (nAmount < QUALIFIER_ASSET_MIN_AMOUNT || nAmount > QUALIFIER_ASSET_MAX_AMOUNT)
@@ -1370,7 +1369,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, value for key address must be an array of size 1 to 10");
                     for (int i = 0; i < (int)addresses.size(); i++) {
                         if (!IsValidDestinationString(addresses[i].get_str()))
-                            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, supplied address is not a valid Ravencoin address");
+                            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, supplied address is not a valid Evrmore address");
                     }
 
                     CAmount changeQty = COIN;
@@ -1415,7 +1414,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, value for key address must be an array of size 1 to 10");
                     for (int i = 0; i < (int)addresses.size(); i++) {
                         if (!IsValidDestinationString(addresses[i].get_str()))
-                            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, supplied address is not a valid Ravencoin address");
+                            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, supplied address is not a valid Evrmore address");
                     }
 
                     // owner change
@@ -1524,7 +1523,7 @@ UniValue decoderawtransaction(const JSONRPCRequest& request)
             "           \"message\" : \"message\", (string optional) the message if one was sent\n"
             "           \"expire_time\" : n,      (numeric optional) the message epoch expiration time if one was set\n"
             "         \"addresses\" : [           (json array of string)\n"
-            "           \"12tvKAXCxZjSmdNbao16dKXC8tRWfcF5oc\"   (string) raven address\n"
+            "           \"12tvKAXCxZjSmdNbao16dKXC8tRWfcF5oc\"   (string) Evrmore address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -1572,7 +1571,7 @@ UniValue decodescript(const JSONRPCRequest& request)
             "     \"expire_time\" : n,      (numeric optional ) the message epoch expiration time if one was set\n"
             "  \"reqSigs\": n,    (numeric) The required signatures\n"
             "  \"addresses\": [   (json array of string)\n"
-            "     \"address\"     (string) raven address\n"
+            "     \"address\"     (string) Evrmore address\n"
             "     ,...\n"
             "  ],\n"
             "  \"p2sh\":\"address\",       (string) address of P2SH script wrapping this redeem script (not returned if the script is already a P2SH).\n"
@@ -1892,7 +1891,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
         UniValue keys = request.params[2].get_array();
         for (unsigned int idx = 0; idx < keys.size(); idx++) {
             UniValue k = keys[idx];
-            CRavenSecret vchSecret;
+            CEvrmoreSecret vchSecret;
             bool fGood = vchSecret.SetString(k.get_str());
             if (!fGood)
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");

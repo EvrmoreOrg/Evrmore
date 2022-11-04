@@ -1,6 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -151,9 +152,9 @@ UniValue blockToDeltasJSON(const CBlock& block, const CBlockIndex* blockindex)
 
                 if (GetSpentIndex(spentKey, spentInfo)) {
                     if (spentInfo.addressType == 1) {
-                        delta.push_back(Pair("address", CRavenAddress(CKeyID(spentInfo.addressHash)).ToString()));
+                        delta.push_back(Pair("address", CEvrmoreAddress(CKeyID(spentInfo.addressHash)).ToString()));
                     } else if (spentInfo.addressType == 2)  {
-                        delta.push_back(Pair("address", CRavenAddress(CScriptID(spentInfo.addressHash)).ToString()));
+                        delta.push_back(Pair("address", CEvrmoreAddress(CScriptID(spentInfo.addressHash)).ToString()));
                     } else {
                         continue;
                     }
@@ -181,11 +182,11 @@ UniValue blockToDeltasJSON(const CBlock& block, const CBlockIndex* blockindex)
 
             if (out.scriptPubKey.IsPayToScriptHash()) {
                 std::vector<unsigned char> hashBytes(out.scriptPubKey.begin()+2, out.scriptPubKey.begin()+22);
-                delta.push_back(Pair("address", CRavenAddress(CScriptID(uint160(hashBytes))).ToString()));
+                delta.push_back(Pair("address", CEvrmoreAddress(CScriptID(uint160(hashBytes))).ToString()));
 
             } else if (out.scriptPubKey.IsPayToPublicKeyHash()) {
                 std::vector<unsigned char> hashBytes(out.scriptPubKey.begin()+3, out.scriptPubKey.begin()+23);
-                delta.push_back(Pair("address", CRavenAddress(CKeyID(uint160(hashBytes))).ToString()));
+                delta.push_back(Pair("address", CEvrmoreAddress(CKeyID(uint160(hashBytes))).ToString()));
             } else {
                 continue;
             }
@@ -251,7 +252,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    result.push_back(Pair("headerhash", block.GetKAWPOWHeaderHash().GetHex()));
+    result.push_back(Pair("headerhash", block.GetEVRPROGPOWHeaderHash().GetHex()));
     result.push_back(Pair("mixhash", block.mix_hash.GetHex()));
     result.push_back(Pair("nonce64", (uint64_t)block.nNonce64));
 
@@ -286,7 +287,7 @@ UniValue decodeblockToJSON(const CBlock& block)
     result.push_back(Pair("time", block.GetBlockTime()));
     result.push_back(Pair("nonce", (uint64_t)block.nNonce));
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
-    result.push_back(Pair("headerhash", block.GetKAWPOWHeaderHash().GetHex()));
+    result.push_back(Pair("headerhash", block.GetEVRPROGPOWHeaderHash().GetHex()));
     result.push_back(Pair("mixhash", block.mix_hash.GetHex()));
     result.push_back(Pair("nonce64", (uint64_t)block.nNonce64));
 
@@ -1242,8 +1243,8 @@ UniValue gettxout(const JSONRPCRequest& request)
             "     \"hex\" : \"hex\",        (string) \n"
             "     \"reqSigs\" : n,          (numeric) Number of required signatures\n"
             "     \"type\" : \"pubkeyhash\", (string) The type, eg pubkeyhash\n"
-            "     \"addresses\" : [          (array of string) array of raven addresses\n"
-            "        \"address\"     (string) raven address\n"
+            "     \"addresses\" : [          (array of string) array of Evrmore addresses\n"
+            "        \"address\"     (string) Evrmore address\n"
             "        ,...\n"
             "     ]\n"
             "  },\n"
@@ -1465,7 +1466,6 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
         obj.push_back(Pair("difficulty_algorithm", "DGW-180"));
     } else {
         obj.push_back(Pair("difficulty_algorithm", "BTC"));
-        obj.push_back(Pair("DGW_activation_height",    (int) GetParams().DGWActivationBlock()));
     }
     obj.push_back(Pair("mediantime",            (int64_t)chainActive.Tip()->GetMedianTimePast()));
     obj.push_back(Pair("verificationprogress",  GuessVerificationProgress(GetParams().TxData(), chainActive.Tip())));
@@ -1489,7 +1489,7 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
         }
     }
 
-    const Consensus::Params& consensusParams = GetParams().GetConsensus();
+    //const Consensus::Params& consensusParams = GetParams().GetConsensus();
     //CBlockIndex* tip = chainActive.Tip();
 
     UniValue softforks(UniValue::VARR);
@@ -1498,13 +1498,9 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     // softforks.push_back(SoftForkDesc("bip66", 3, tip, consensusParams));
     // softforks.push_back(SoftForkDesc("bip65", 4, tip, consensusParams));
     // BIP9SoftForkDescPushBack(bip9_softforks, "csv", consensusParams, Consensus::DEPLOYMENT_CSV);
-    //BIP9SoftForkDescPushBack(bip9_softforks, "segwit", consensusParams, Consensus::DEPLOYMENT_SEGWIT);
-    BIP9SoftForkDescPushBack(bip9_softforks, "assets", consensusParams, Consensus::DEPLOYMENT_ASSETS);
-    BIP9SoftForkDescPushBack(bip9_softforks, "messaging_restricted", consensusParams, Consensus::DEPLOYMENT_MSG_REST_ASSETS);
-    BIP9SoftForkDescPushBack(bip9_softforks, "transfer_script", consensusParams, Consensus::DEPLOYMENT_TRANSFER_SCRIPT_SIZE);
-    BIP9SoftForkDescPushBack(bip9_softforks, "enforce", consensusParams, Consensus::DEPLOYMENT_ENFORCE_VALUE);
-    BIP9SoftForkDescPushBack(bip9_softforks, "coinbase", consensusParams, Consensus::DEPLOYMENT_COINBASE_ASSETS);
-    BIP9SoftForkDescPushBack(bip9_softforks, "p2sh_assets", consensusParams, Consensus::DEPLOYMENT_P2SH_ASSETS);
+    // BIP9SoftForkDescPushBack(bip9_softforks, "segwit", consensusParams, Consensus::DEPLOYMENT_SEGWIT);
+/** When putting a new BIP9 item here, remember to also uncomment the line from above:
+        "const Consensus::Params& consensusParams = GetParams().GetConsensus();" */
     obj.push_back(Pair("softforks",             softforks));
     obj.push_back(Pair("bip9_softforks", bip9_softforks));
 

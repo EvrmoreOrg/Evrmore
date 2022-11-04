@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,7 +8,7 @@
 
 #include "addressbookpage.h"
 #include "askpassphrasedialog.h"
-#include "ravengui.h"
+#include "evrmoregui.h"
 #include "clientmodel.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
@@ -114,7 +115,7 @@ WalletView::~WalletView()
 {
 }
 
-void WalletView::setRavenGUI(RavenGUI *gui)
+void WalletView::setEvrmoreGUI(EvrmoreGUI *gui)
 {
     if (gui)
     {
@@ -186,7 +187,7 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
         updateEncryptionStatus();
 
         // update HD status
-        Q_EMIT hdEnabledStatusChanged(_walletModel->hd44Enabled() ? RavenGUI::HD44_ENABLED : _walletModel->hdEnabled() ? RavenGUI::HD_ENABLED : RavenGUI::HD_DISABLED);
+        Q_EMIT hdEnabledStatusChanged(_walletModel->hd44Enabled() ? EvrmoreGUI::HD44_ENABLED : _walletModel->hdEnabled() ? EvrmoreGUI::HD_ENABLED : EvrmoreGUI::HD_DISABLED);
 
         // Balloon pop-up for new transaction
         connect(_walletModel->getTransactionTableModel(), SIGNAL(rowsInserted(QModelIndex,int,int)),
@@ -356,8 +357,10 @@ void WalletView::getMyWords()
 {
     // Create the box and set the default text.
     QMessageBox box;
-    box.setWindowTitle(tr("Recovery information"));
+    box.setWindowTitle(tr("Recovery information. (Will close after 5 min)"));
     box.setText(tr("No words available."));
+    box.setStandardButtons(QMessageBox::Close);
+    box.button(QMessageBox::Close)->animateClick(300000);
 
     // Check for HD-wallet and set text if not HD-wallet.
     if(!walletModel->hd44Enabled())

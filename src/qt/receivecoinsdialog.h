@@ -1,10 +1,11 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_QT_RECEIVECOINSDIALOG_H
-#define RAVEN_QT_RECEIVECOINSDIALOG_H
+#ifndef EVRMORE_QT_RECEIVECOINSDIALOG_H
+#define EVRMORE_QT_RECEIVECOINSDIALOG_H
 
 #include "guiutil.h"
 
@@ -27,7 +28,7 @@ QT_BEGIN_NAMESPACE
 class QModelIndex;
 QT_END_NAMESPACE
 
-/** Dialog for requesting payment of ravens */
+/** Dialog for requesting payment of EVRs */
 class ReceiveCoinsDialog : public QDialog
 {
     Q_OBJECT
@@ -78,4 +79,4 @@ private Q_SLOTS:
     void copyAmount();
 };
 
-#endif // RAVEN_QT_RECEIVECOINSDIALOG_H
+#endif // EVRMORE_QT_RECEIVECOINSDIALOG_H

@@ -38,7 +38,7 @@ from test_framework.blocktools import create_block, create_coinbase
 from test_framework.key import ECKey
 from test_framework.mininode import CBlockHeader, COutPoint, CTransaction, CTxIn, CTxOut, NetworkThread, NodeConn, NodeConnCB, MsgBlock, MsgHeaders
 from test_framework.script import CScript, OP_TRUE
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import p2p_port, assert_equal
 
 
@@ -49,7 +49,7 @@ class BaseNode(NodeConnCB):
         self.send_message(headers_message)
 
 
-class AssumeValidTest(RavenTestFramework):
+class AssumeValidTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
@@ -120,7 +120,7 @@ class AssumeValidTest(RavenTestFramework):
         block.solve()
         # Save the coinbase for later
         self.block1 = block
-        self.tip = block.x16r
+        self.tip = block.sha256
         height += 1
 
         # Bury the block 100 deep so the coinbase output is spendable
@@ -128,15 +128,15 @@ class AssumeValidTest(RavenTestFramework):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.solve()
             self.blocks.append(block)
-            self.tip = block.x16r
+            self.tip = block.sha256
             self.block_time += 1
             height += 1
 
         # Create a transaction spending the coinbase output with an invalid (null) signature
         tx = CTransaction()
-        tx.vin.append(CTxIn(COutPoint(self.block1.vtx[0].x16r, 0), script_sig=b""))
+        tx.vin.append(CTxIn(COutPoint(self.block1.vtx[0].sha256, 0), script_sig=b""))
         tx.vout.append(CTxOut(49 * 100000000, CScript([OP_TRUE])))
-        tx.calc_x16r()
+        tx.calc_sha256()
 
         block102 = create_block(self.tip, create_coinbase(height), self.block_time)
         self.block_time += 1
@@ -145,7 +145,7 @@ class AssumeValidTest(RavenTestFramework):
         block102.rehash()
         block102.solve()
         self.blocks.append(block102)
-        self.tip = block102.x16r
+        self.tip = block102.sha256
         self.block_time += 1
         height += 1
 
@@ -155,18 +155,18 @@ class AssumeValidTest(RavenTestFramework):
             block.nVersion = 4
             block.solve()
             self.blocks.append(block)
-            self.tip = block.x16r
+            self.tip = block.sha256
             self.block_time += 1
             height += 1
 
         # Start node1 and node2 with assumevalid so they accept a block with a bad signature.
-        self.start_node(1, extra_args=["-assumevalid=" + hex(block102.x16r)])
+        self.start_node(1, extra_args=["-assumevalid=" + hex(block102.sha256)])
         node1 = BaseNode()  # connects to node1
         connections.append(NodeConn('127.0.0.1', p2p_port(1), self.nodes[1], node1))
         node1.add_connection(connections[1])
         node1.wait_for_verack()
 
-        self.start_node(2, extra_args=["-assumevalid=" + hex(block102.x16r)])
+        self.start_node(2, extra_args=["-assumevalid=" + hex(block102.sha256)])
         node2 = BaseNode()  # connects to node2
         connections.append(NodeConn('127.0.0.1', p2p_port(2), self.nodes[2], node2))
         node2.add_connection(connections[2])

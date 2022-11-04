@@ -11,10 +11,10 @@ Tests correspond to code in rpc/net.cpp.
 """
 
 import time
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, connect_nodes_bi, p2p_port
 
-class NetTest(RavenTestFramework):
+class NetTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2

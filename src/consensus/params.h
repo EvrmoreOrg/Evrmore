@@ -1,13 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_CONSENSUS_PARAMS_H
-#define RAVEN_CONSENSUS_PARAMS_H
+#ifndef EVRMORE_CONSENSUS_PARAMS_H
+#define EVRMORE_CONSENSUS_PARAMS_H
 
 #include "uint256.h"
+#include <amount.h>
 #include <map>
 #include <string>
 
@@ -16,16 +18,11 @@ namespace Consensus {
 enum DeploymentPos
 {
     DEPLOYMENT_TESTDUMMY,
-    DEPLOYMENT_ASSETS, // Deployment of RIP2
-    DEPLOYMENT_MSG_REST_ASSETS, // Delpoyment of RIP5 and Restricted assets
-    DEPLOYMENT_TRANSFER_SCRIPT_SIZE,
-    DEPLOYMENT_ENFORCE_VALUE,
-    DEPLOYMENT_COINBASE_ASSETS,
-    DEPLOYMENT_P2SH_ASSETS,
+    // DEPLOYMENT_ASSETS, // Deployment of RIP2
     // DEPLOYMENT_CSV, // Deployment of BIP68, BIP112, and BIP113.
-//    DEPLOYMENT_SEGWIT, // Deployment of BIP141, BIP143, and BIP147.
-    // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
+    // DEPLOYMENT_SEGWIT, // Deployment of BIP141, BIP143, and BIP147.
     MAX_VERSION_BITS_DEPLOYMENTS
+    // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
 };
 
 /**
@@ -49,16 +46,21 @@ struct BIP9Deployment {
  */
 struct Params {
     uint256 hashGenesisBlock;
-    int nSubsidyHalvingInterval;
-    /** Block height and hash at which BIP34 becomes active */
+    int nSubsidyHalvingInterval; // EVR-TODO: eliminate this after adjusting the unit tests
     bool nBIP34Enabled;
     bool nBIP65Enabled;
     bool nBIP66Enabled;
-    // uint256 BIP34Hash;
-    /** Block height at which BIP65 becomes active */
-    // int BIP65Height;
-    /** Block height at which BIP66 becomes active */
-    // int BIP66Height;
+    bool nCSVEnabled;
+    bool nSegwitEnabled;
+
+// EVR-TODO: clean up the mess at the end of src/validation.cpp and specify the following here:        
+//     fAssetsIsActive = true;
+//     fRip5IsActive = true;
+//     fTransferScriptIsActive = true;
+//     fEnforcedValuesIsActive = true;
+//     fCheckCoinbaseAssetsIsActive = true;
+//     fP2Active = true;
+
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -67,9 +69,13 @@ struct Params {
     uint32_t nRuleChangeActivationThreshold;
     uint32_t nMinerConfirmationWindow;
     BIP9Deployment vDeployments[MAX_VERSION_BITS_DEPLOYMENTS];
+
+    // Enable or disable the miner fund by default 
+    bool enableMinerDevFund;
+
     /** Proof of work parameters */
     uint256 powLimit;
-    uint256 kawpowLimit;
+    uint256 evrprogpowLimit;
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
@@ -77,9 +83,10 @@ struct Params {
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
-    bool nSegwitEnabled;
-    bool nCSVEnabled;
+    //double rewardReductionRate;
+    CAmount baseReward;
+    int rewardReductionInterval;
 };
 } // namespace Consensus
 
-#endif // RAVEN_CONSENSUS_PARAMS_H
+#endif // EVRMORE_CONSENSUS_PARAMS_H

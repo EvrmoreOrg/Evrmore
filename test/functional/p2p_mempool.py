@@ -12,10 +12,10 @@ filters are not enabled.
 """
 
 from test_framework.mininode import NodeConn, NodeConnCB, NetworkThread, MsgMempool
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import p2p_port, assert_equal
 
-class P2PMempoolTests(RavenTestFramework):
+class P2PMempoolTests(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1

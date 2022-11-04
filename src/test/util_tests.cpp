@@ -10,7 +10,7 @@
 #include "sync.h"
 #include "utilstrencodings.h"
 #include "utilmoneystr.h"
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 
 #include <stdint.h>
 #include <vector>

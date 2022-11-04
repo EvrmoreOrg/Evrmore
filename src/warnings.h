@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_WARNINGS_H
-#define RAVEN_WARNINGS_H
+#ifndef EVRMORE_WARNINGS_H
+#define EVRMORE_WARNINGS_H
 
 #include <stdlib.h>
 #include <string>
@@ -25,4 +26,4 @@ std::string GetWarnings(const std::string& strFor);
 
 static const bool DEFAULT_TESTSAFEMODE = false;
 
-#endif //  RAVEN_WARNINGS_H
+#endif //  EVRMORE_WARNINGS_H

@@ -62,15 +62,15 @@ work on its chain).
 
 import time
 from test_framework.mininode import NodeConn, NodeConnCB, NetworkThread, MsgBlock, MsgHeaders, CBlockHeader, mininode_lock, MsgInv, CInv
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import os, p2p_port, assert_equal, assert_raises_rpc_error, connect_nodes, sync_blocks
 from test_framework.blocktools import create_block, create_coinbase
 
-class AcceptBlockTest(RavenTestFramework):
+class AcceptBlockTest(EvrmoreTestFramework):
     def add_options(self, parser):
         parser.add_option("--testbinary", dest="testbinary",
-                          default=os.getenv("RAVEND", "ravend"),
-                          help="ravend binary to test")
+                          default=os.getenv("EVRMORED", "evrmored"),
+                          help="evrmored binary to test")
 
     def set_test_params(self):
         self.setup_clean_chain = True

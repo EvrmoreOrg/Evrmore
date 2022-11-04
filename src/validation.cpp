@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,6 +20,7 @@
 #include "fs.h"
 #include "hash.h"
 #include "init.h"
+#include "minerdevfund.h"
 #include "policy/fees.h"
 #include "policy/policy.h"
 #include "policy/rbf.h"
@@ -65,7 +67,7 @@
 using namespace boost::placeholders;
 
 #if defined(NDEBUG)
-# error "Raven cannot be compiled without assertions."
+# error "Evrmore cannot be compiled without assertions."
 #endif
 
 #define MICRO 0.000001
@@ -126,7 +128,7 @@ static void CheckBlockIndex(const Consensus::Params& consensusParams);
 /** Constant stuff for coinbase transactions we create: */
 CScript COINBASE_FLAGS;
 
-const std::string strMessageMagic = "Raven Signed Message:\n";
+const std::string strMessageMagic = "Evrmore Signed Message:\n";
 
 // Internal stuff
 namespace {
@@ -944,7 +946,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // Remove conflicting transactions from the mempool
         for (const CTxMemPool::txiter it : allConflicting)
         {
-            LogPrint(BCLog::MEMPOOL, "replacing tx %s with %s for %s RVN additional fees, %d delta bytes\n",
+            LogPrint(BCLog::MEMPOOL, "replacing tx %s with %s for %s EVR additional fees, %d delta bytes\n",
                     it->GetTx().GetHash().ToString(),
                     hash.ToString(),
                     FormatMoney(nModifiedFees - nConflictingFees),
@@ -1321,13 +1323,13 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
-    int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
+    int halvings = nHeight / consensusParams.rewardReductionInterval;
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64)
         return 0;
 
-    CAmount nSubsidy = 5000 * COIN;
-    // Subsidy is cut in half every 2,100,000 blocks which will occur approximately every 4 years.
+    CAmount nSubsidy = consensusParams.baseReward;
+    // Subsidy is cut in half periodically
     nSubsidy >>= halvings;
     return nSubsidy;
 }
@@ -2304,7 +2306,7 @@ static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, 
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("raven-scriptch");
+    RenameThread("evrmore-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -2415,23 +2417,28 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
            (*pindex->phashBlock == block.GetHash()));
     int64_t nTimeStart = GetTimeMicros();
 
-    // Check it again in case a previous version let a bad block in
-    if (!CheckBlock(block, state, chainparams.GetConsensus(), !fJustCheck, !fJustCheck)) // Force the check of asset duplicates when connecting the block
-        return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
+    if (block.GetHash() != chainparams.GetConsensus().hashGenesisBlock) {  // EVR new line
+        // Check it again in case a previous version let a bad block in
+        if (!CheckBlock(block, state, chainparams.GetConsensus(), !fJustCheck, !fJustCheck)) { // Force the check of asset duplicates when connecting the block
+            if (state.CorruptionPossible()) {
+                // We don't write down blocks to disk if they may have been
+                // corrupted, so this should be impossible unless we're having hardware
+                // problems.
+                return AbortNode(state, "Corrupt block found indicating potential hardware failure; shutting down");
+            }
+            return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
+        }
+
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
     assert(hashPrevBlock == view.GetBestBlock());
 
-    // Special case for the genesis block, skipping connection of its transactions
-    // (its coinbase is unspendable)
-    if (block.GetHash() == chainparams.GetConsensus().hashGenesisBlock) {
-        if (!fJustCheck)
-            view.SetBestBlock(pindex->GetBlockHash());
-        return true;
-    }
-
+    // EVR - changes made here so that Genesis block is processed as a normal block with spendable UTXOs
     nBlocksTotal++;
+    if (!fJustCheck)
+        view.SetBestBlock(pindex->GetBlockHash());
+    }
 
     bool fScriptChecks = true;
     if (!hashAssumeValid.IsNull()) {
@@ -2545,6 +2552,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         {
             CAmount txfee = 0;
             if (!Consensus::CheckTxInputs(tx, state, view, pindex->nHeight, txfee)) {
+                state.SetFailedTransaction(tx.GetHash());
                 return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), FormatStateMessage(state));
             }
             nFees += txfee;
@@ -2664,7 +2672,8 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         // * p2sh (when P2SH enabled in flags and excludes coinbase)
         // * witness (when witness enabled in flags and excludes coinbase)
         nSigOpsCost += GetTransactionSigOpCost(tx, view, flags);
-        if (nSigOpsCost > MAX_BLOCK_SIGOPS_COST)
+        // EVR - make an exception for Genesis block to accomodate airdrop
+        if (nSigOpsCost > MAX_BLOCK_SIGOPS_COST && (block.GetHash() != chainparams.GetConsensus().hashGenesisBlock))
             return state.DoS(100, error("ConnectBlock(): too many sigops"),
                              REJECT_INVALID, "bad-blk-sigops");
 
@@ -2771,11 +2780,46 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
 
     CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
-    if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward)
+    // EVR - add exception for the Genesis block to support the funds for the airdrop
+    if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward && block.GetHash() != chainparams.GetConsensus().hashGenesisBlock)
         return state.DoS(100,
                          error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
                                block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()), blockReward),
                                REJECT_INVALID, "bad-cb-amount");
+
+    // EVR start minerdevfund-1
+    //    note that we actually did this in ContextualCheckBlock but without checking the amount
+    if (block.GetHash() != chainparams.GetConsensus().hashGenesisBlock) {
+        const std::vector<CTxDestination> whitelist = GetMinerDevFundWhitelist(chainparams.GetConsensus());
+        bool devfundfound = false;       
+        if (!whitelist.empty()) {
+            const CAmount required = GetMinerDevFundAmount(blockReward);
+
+            for (auto &o : block.vtx[0]->vout) {
+                if (o.nValue < required) {
+                    // This output doesn't qualify because its amount is too low.
+                    continue;
+                }
+
+                CTxDestination address;
+                if (!ExtractDestination(o.scriptPubKey, address)) {
+                    // Cannot decode address.
+                    continue;
+                }
+
+                if (std::find(whitelist.begin(), whitelist.end(), address) != whitelist.end()) {
+                    devfundfound = true;
+                    break;
+                }
+            }
+            
+            if (!devfundfound) {
+				// We did not find an output using an approved minerdevfund address or the amount was too low.
+				return state.DoS(100, false, REJECT_INVALID, "bad-cb-minerdevfund-1");
+			}
+        }
+    }
+    // EVR end minerdevfund-1
 
     if (!control.Wait())
         return state.DoS(100, error("%s: CheckQueue failed", __func__), REJECT_INVALID, "block-validation-failed");
@@ -2785,28 +2829,36 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (fJustCheck)
         return true;
 
-    // Write undo information to disk
-    if (pindex->GetUndoPos().IsNull() || !pindex->IsValid(BLOCK_VALID_SCRIPTS))
-    {
-        if (pindex->GetUndoPos().IsNull()) {
-            CDiskBlockPos _pos;
-            if (!FindUndoPos(state, pindex->nFile, _pos, ::GetSerializeSize(blockundo, SER_DISK, CLIENT_VERSION) + 40))
-                return error("ConnectBlock(): FindUndoPos failed");
-            if (!UndoWriteToDisk(blockundo, _pos, pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
-                return AbortNode(state, "Failed to write undo data");
+    //EVR Genesis block exception
+    if (block.GetHash() != chainparams.GetConsensus().hashGenesisBlock) {
+        // Write undo information to disk
+        if (pindex->GetUndoPos().IsNull() || !pindex->IsValid(BLOCK_VALID_SCRIPTS))
+        {
+            if (pindex->GetUndoPos().IsNull()) {
+                CDiskBlockPos _pos;
+                if (!FindUndoPos(state, pindex->nFile, _pos, ::GetSerializeSize(blockundo, SER_DISK, CLIENT_VERSION) + 40))
+                    return error("ConnectBlock(): FindUndoPos failed");
+                if (!UndoWriteToDisk(blockundo, _pos, pindex->pprev->GetBlockHash(), chainparams.MessageStart()))
+                    return AbortNode(state, "Failed to write undo data");
 
-            // update nUndoPos in block index
-            pindex->nUndoPos = _pos.nPos;
-            pindex->nStatus |= BLOCK_HAVE_UNDO;
+                // update nUndoPos in block index
+                pindex->nUndoPos = _pos.nPos;
+                pindex->nStatus |= BLOCK_HAVE_UNDO;
+            }
+
+            if (vUndoAssetData.size()) {
+                if (!passetsdb->WriteBlockUndoAssetData(block.GetHash(), vUndoAssetData))
+                    return AbortNode(state, "Failed to write asset undo data");
+            }
+
+            pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
+            setDirtyBlockIndex.insert(pindex);
         }
-
-        if (vUndoAssetData.size()) {
-            if (!passetsdb->WriteBlockUndoAssetData(block.GetHash(), vUndoAssetData))
-                return AbortNode(state, "Failed to write asset undo data");
+    } else {
+        if (!pindex->IsValid(BLOCK_VALID_SCRIPTS)) {
+            pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
+            setDirtyBlockIndex.insert(pindex);
         }
-
-        pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
-        setDirtyBlockIndex.insert(pindex);
     }
 
     if (fTxIndex)
@@ -3168,7 +3220,7 @@ bool static DisconnectTip(CValidationState& state, const CChainParams& chainpara
     std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
     CBlock& block = *pblock;
     if (!ReadBlockFromDisk(block, pindexDelete, chainparams.GetConsensus()))
-        return AbortNode(state, "Failed to read block");
+        return error("DisconnectTip() : Failed to read block");
     // Apply the block atomically to the chain state.
     int64_t nStart = GetTimeMicros();
     {
@@ -3361,7 +3413,7 @@ bool static ConnectTip(CValidationState& state, const CChainParams& chainparams,
         bool flushed = view.Flush();
         assert(flushed);
         nTime4 = GetTimeMicros(); nTimeFlush += nTime4 - nTime3;
-        LogPrint(BCLog::BENCH, "  - Flush RVN: %.2fms [%.2fs (%.2fms/blk)]\n", (nTime4 - nTime3) * MILLI, nTimeFlush * MICRO, nTimeFlush * MILLI / nBlocksTotal);
+        LogPrint(BCLog::BENCH, "  - Flush EVR: %.2fms [%.2fs (%.2fms/blk)]\n", (nTime4 - nTime3) * MILLI, nTimeFlush * MICRO, nTimeFlush * MILLI / nBlocksTotal);
 
         /** RVN START */
         nTimeAssetsFlush = GetTimeMicros();
@@ -3509,6 +3561,12 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
             // This is likely a fatal error, but keep the mempool consistent,
             // just in case. Only remove from the mempool in this case.
             UpdateMempoolForReorg(disconnectpool, false);
+
+            // If we're unable to disconnect a block during normal operation,
+            // then that is a failure of our local system -- we should abort
+            // rather than stay on a less work chain.
+            AbortNode(state, "Failed to disconnect block; see debug.log for details");
+
             return false;
         }
         fBlocksDisconnected = true;
@@ -3971,8 +4029,8 @@ static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, 
 
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
-    // If we are checking a KAWPOW block below a know checkpoint height. We can validate the proof of work using the mix_hash
-    if (fCheckPOW && block.nTime >= nKAWPOWActivationTime) {
+    // If we are checking a EVRPROGPOW block below a know checkpoint height. We can validate the proof of work using the mix_hash
+    if (fCheckPOW && fEvrprogpowAsMiningAlgo) {
         CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(GetParams().Checkpoints());
         if (fCheckPOW && pcheckpoint && block.nHeight <= (uint32_t)pcheckpoint->nHeight) {
            if (!CheckProofOfWork(block.GetHash(), block.nBits, consensusParams)) {
@@ -3989,7 +4047,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
     }
 
-    if (fCheckPOW && block.nTime >= nKAWPOWActivationTime) {
+    if (fCheckPOW && fEvrprogpowAsMiningAlgo) {
         if (mix_hash != block.mix_hash) {
             return state.DoS(50, false, REJECT_INVALID, "invalid-mix-hash", false, "mix_hash validity failed");
         }
@@ -4030,9 +4088,12 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // Note that witness malleability is checked in ContextualCheckBlock, so no
     // checks that use witness data may be performed here.
 
-    // Size limits
-    if (block.vtx.empty() || block.vtx.size() * WITNESS_SCALE_FACTOR > GetMaxBlockWeight() || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > GetMaxBlockWeight())
-        return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
+    // EVR - Genesis block exception
+    if (block.GetHash() != consensusParams.hashGenesisBlock) {
+        // Size limits
+        if (block.vtx.empty() || block.vtx.size() * WITNESS_SCALE_FACTOR > GetMaxBlockWeight() || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > GetMaxBlockWeight())
+            return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
+    }
 
     // First transaction must be coinbase, the rest must not be
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase())
@@ -4042,23 +4103,28 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         if (block.vtx[i]->IsCoinBase())
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-multiple", false, "more than one coinbase");
 
-    // Check transactions
-    bool fCheckBlock = CHECK_BLOCK_TRANSACTION_TRUE;
-    bool fCheckDuplicates = CHECK_DUPLICATE_TRANSACTION_TRUE;
-    bool fCheckMempool = CHECK_MEMPOOL_TRANSACTION_FALSE;
-    for (const auto& tx : block.vtx) {
-        // We only want to check the blocks when they are added to our chain
-        // We want to make sure when nodes shutdown and restart that they still
-        // verify the blocks in the database correctly even if Enforce Value BIP is active
-        fCheckBlock = CHECK_BLOCK_TRANSACTION_TRUE;
-        if (fDBCheck){
-            fCheckBlock = CHECK_BLOCK_TRANSACTION_FALSE;
-        }
+    // EVR - Genesis block exception
+    if (block.GetHash() != consensusParams.hashGenesisBlock) {
+        // Check transactions
+        bool fCheckBlock = CHECK_BLOCK_TRANSACTION_TRUE;
+        bool fCheckDuplicates = CHECK_DUPLICATE_TRANSACTION_TRUE;
+        bool fCheckMempool = CHECK_MEMPOOL_TRANSACTION_FALSE;
+        for (const auto& tx : block.vtx) {
+            // We only want to check the blocks when they are added to our chain
+            // We want to make sure when nodes shutdown and restart that they still
+            // verify the blocks in the database correctly even if Enforce Value BIP is active
+            fCheckBlock = CHECK_BLOCK_TRANSACTION_TRUE;
+            if (fDBCheck){
+                fCheckBlock = CHECK_BLOCK_TRANSACTION_FALSE;
+            }
 
-        if (!CheckTransaction(*tx, state, fCheckDuplicates, fCheckMempool, fCheckBlock))
-            return state.Invalid(false, state.GetRejectCode(), state.GetRejectReason(),
-                                 strprintf("Transaction check failed (tx hash %s) %s %s", tx->GetHash().ToString(),
-                                           state.GetDebugMessage(), state.GetRejectReason()));
+            if (!CheckTransaction(*tx, state, fCheckDuplicates, fCheckMempool, fCheckBlock)) {
+                state.SetFailedTransaction(tx->GetHash());
+                return state.Invalid(false, state.GetRejectCode(), state.GetRejectReason(),
+                                    strprintf("Transaction check failed (tx hash %s) %s %s", tx->GetHash().ToString(),
+                                            state.GetDebugMessage(), state.GetRejectReason()));
+            }
+        }
     }
 
     unsigned int nSigOps = 0;
@@ -4066,7 +4132,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     {
         nSigOps += GetLegacySigOpCount(*tx);
     }
-    if (nSigOps * WITNESS_SCALE_FACTOR > MAX_BLOCK_SIGOPS_COST)
+//  EVR - Make exception for the genesis block to accomodate the airdrop
+    if ((nSigOps * WITNESS_SCALE_FACTOR > MAX_BLOCK_SIGOPS_COST) && (block.GetHash() != consensusParams.hashGenesisBlock))
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-sigops", false, "out-of-bounds SigOpCount");
 
     if (fCheckPOW && fCheckMerkleRoot)
@@ -4230,15 +4297,47 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     }
 
     // Enforce rule that the coinbase starts with serialized block height
+    // CScript expect = CScript() << CScriptNum(nHeight); // This causes problems for various 3rd party software
     CScript expect = CScript() << nHeight;
 
-    if (consensusParams.nBIP34Enabled)
+    //We won't enforce for very low heights because of a problem in the definition of << in the CScript class definition.
+    //    The definition of push_int64(int64_t n) interprets n as an opcode for low values.
+    //    For instance CScript() << nHeight returns 0x51 when nHeight=1. Bip34 didn't exist back then.
+    if (nHeight >= 20 && consensusParams.nBIP34Enabled)
     {
 		if (block.vtx[0]->vin[0].scriptSig.size() < expect.size() ||
 			!std::equal(expect.begin(), expect.end(), block.vtx[0]->vin[0].scriptSig.begin())) {
 			return state.DoS(100, false, REJECT_INVALID, "bad-cb-height", false, "block height mismatch in coinbase");
 		}
     }
+
+    // EVR start minerdevfund-2
+    //    note that we also do this in ConnectBlock but also check the amount
+    if (block.GetHash() != consensusParams.hashGenesisBlock) {
+        const std::vector<CTxDestination> whitelist = GetMinerDevFundWhitelist(consensusParams);
+        bool devfundfound = false;
+        if (!whitelist.empty()) {
+
+            for (auto &o : block.vtx[0]->vout) {
+                CTxDestination address;
+                if (!ExtractDestination(o.scriptPubKey, address)) {
+                    // Cannot decode address.
+                    continue;
+                }
+
+                if (std::find(whitelist.begin(), whitelist.end(), address) != whitelist.end()) {
+                    devfundfound = true;
+                    break;
+                }
+            }
+            if (!devfundfound) {
+				// We did not find an output using an approved minerdevfund address.
+				return state.DoS(100, false, REJECT_INVALID, "bad-cb-minerdevfund-2");
+			}
+        }
+    }   
+    // EVR end minerdevfund-2
+
     // Validation for witness commitments.
     // * We compute the witness hash (which is the hash including witnesses) of all the block's transactions, except the
     //   coinbase (where 0x0000....0000 is used instead).
@@ -4275,14 +4374,17 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
         }
     }
 
-    // After the coinbase witness nonce and commitment are verified,
-    // we can check if the block weight passes (before we've checked the
-    // coinbase witness, it would be possible for the weight to be too
-    // large by filling up the coinbase witness, which doesn't change
-    // the block hash, so we couldn't mark the block as permanently
-    // failed).
-    if (GetBlockWeight(block) > GetMaxBlockWeight()) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-blk-weight", false, strprintf("%s : weight limit failed", __func__));
+    // EVR - Coinbase block exception
+    if (block.GetHash() != consensusParams.hashGenesisBlock) {
+        // After the coinbase witness nonce and commitment are verified,
+        // we can check if the block weight passes (before we've checked the
+        // coinbase witness, it would be possible for the weight to be too
+        // large by filling up the coinbase witness, which doesn't change
+        // the block hash, so we couldn't mark the block as permanently
+        // failed).
+        if (GetBlockWeight(block) > GetMaxBlockWeight()) {
+            return state.DoS(100, false, REJECT_INVALID, "bad-blk-weight", false, strprintf("%s : weight limit failed", __func__));
+        }
     }
 
     return true;
@@ -5772,114 +5874,61 @@ void SetEnforcedValues(bool value) {
     fEnforcedValuesIsActive = value;
 }
 
-void SetEnforcedCoinbase(bool value)
-{
+// Only used by test framework
+void SetEnforcedCoinbase(bool value) {
     fCheckCoinbaseAssetsIsActive = value;
 }
 
-bool AreEnforcedValuesDeployed()
-{
-    if (fEnforcedValuesIsActive)
-        return true;
-
-    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_ENFORCE_VALUE);
-    if (thresholdState == THRESHOLD_ACTIVE || thresholdState == THRESHOLD_LOCKED_IN)
-        fEnforcedValuesIsActive = true;
-
+bool AreEnforcedValuesDeployed() {
+    fEnforcedValuesIsActive = true;
     return fEnforcedValuesIsActive;
 }
 
-bool AreCoinbaseCheckAssetsDeployed()
-{
-    if (fCheckCoinbaseAssetsIsActive)
-        return true;
-
-    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_COINBASE_ASSETS);
-    if (thresholdState == THRESHOLD_ACTIVE)
-        fCheckCoinbaseAssetsIsActive = true;
-
+bool AreCoinbaseCheckAssetsDeployed() {
+    fCheckCoinbaseAssetsIsActive = true;
     return fCheckCoinbaseAssetsIsActive;
 }
 
-bool AreAssetsDeployed()
-{
-
-    if (fAssetsIsActive)
-        return true;
-
-    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_ASSETS);
-    if (thresholdState == THRESHOLD_ACTIVE)
-        fAssetsIsActive = true;
-
+bool AreAssetsDeployed() {
+    fAssetsIsActive = true;
     return fAssetsIsActive;
 }
 
-bool IsRip5Active()
-{
-    if (fRip5IsActive)
-        return true;
-
-    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_MSG_REST_ASSETS);
-    if (thresholdState == THRESHOLD_ACTIVE)
-        fRip5IsActive = true;
-
+bool IsRip5Active() {
+    fRip5IsActive = true;
     return fRip5IsActive;
 }
 
 bool AreMessagesDeployed() {
-
     return IsRip5Active();
 }
 
 bool AreTransferScriptsSizeDeployed() {
-
-    if (fTransferScriptIsActive)
-        return true;
-
-    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_TRANSFER_SCRIPT_SIZE);
-    if (thresholdState == THRESHOLD_ACTIVE)
-        fTransferScriptIsActive = true;
-
+    fTransferScriptIsActive = true;
     return fTransferScriptIsActive;
 }
 
 bool AreRestrictedAssetsDeployed() {
-
     return IsRip5Active();
 }
 
 bool IsDGWActive(unsigned int nBlockNumber) {
-    return nBlockNumber >= GetParams().DGWActivationBlock();
+    return true;
 }
 
 bool IsMessagingActive(unsigned int nBlockNumber) {
-    if (GetParams().MessagingActivationBlock()) {
-        return nBlockNumber > GetParams().MessagingActivationBlock();
-    } else {
-        return AreMessagesDeployed();
-    }
+    return AreMessagesDeployed();
 }
 
-bool IsRestrictedActive(unsigned int nBlockNumber)
-{
-    if (GetParams().RestrictedActivationBlock()) {
-        return nBlockNumber > GetParams().RestrictedActivationBlock();
-    } else {
-        return AreRestrictedAssetsDeployed();
-    }
+bool IsRestrictedActive(unsigned int nBlockNumber) {
+    return AreRestrictedAssetsDeployed();
 }
 
-bool AreP2SHAssetsAllowed()
-{
-    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_P2SH_ASSETS);
-    if (thresholdState == THRESHOLD_ACTIVE)
-        return true;
-
-    return false;
+bool AreP2SHAssetsAllowed() {
+    return true;
 }
 
-CAssetsCache* GetCurrentAssetCache()
-{
+CAssetsCache* GetCurrentAssetCache() {
     return passets;
 }
 /** RVN END */

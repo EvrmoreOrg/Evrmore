@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Evrmore Core
+Comment=Connect to the Evrmore P2P Network
+Comment[de]=Verbinde mit dem Evrmore peer-to-peer Netzwerk
+Comment[fr]=Evrmore, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Evrmore, eşten eşe kriptografik sanal para birimi
+Exec=evrmore-qt %u
+Terminal=false
+Type=Application
+Icon=evrmore128
+MimeType=x-scheme-handler/evrmore;
+Categories=Office;Finance;

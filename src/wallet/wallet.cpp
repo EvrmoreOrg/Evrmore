@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -1450,7 +1451,20 @@ bool CWallet::IsMine(const CTransaction& tx) const
 
 bool CWallet::IsFromMe(const CTransaction& tx) const
 {
-    return (GetDebit(tx, ISMINE_ALL) > 0);
+    return (GetDebit(tx, ISMINE_ALL) > 0 || HasMyAssets(tx));
+}
+
+CAmount CWallet::HasMyAssets(const CTransaction& tx) const
+{
+    for (const CTxIn& txin : tx.vin)
+    {
+        CAssetOutputEntry assetData;
+        GetDebit(txin, ISMINE_ALL, assetData);
+        if (assetData.nAmount > 0)
+            return true;
+    }
+
+    return false;
 }
 
 CAmount CWallet::GetDebit(const CTransaction& tx, const isminefilter& filter) const
@@ -1622,45 +1636,6 @@ int64_t CWalletTx::GetTxTime() const
 {
     int64_t n = nTimeSmart;
     return n ? n : nTimeReceived;
-}
-
-int CWalletTx::GetRequestCount() const
-{
-    // Returns -1 if it wasn't being tracked
-    int nRequests = -1;
-    {
-        LOCK(pwallet->cs_wallet);
-        if (IsCoinBase())
-        {
-            // Generated block
-            if (!hashUnset())
-            {
-                std::map<uint256, int>::const_iterator mi = pwallet->mapRequestCount.find(hashBlock);
-                if (mi != pwallet->mapRequestCount.end())
-                    nRequests = (*mi).second;
-            }
-        }
-        else
-        {
-            // Did anyone request this transaction?
-            std::map<uint256, int>::const_iterator mi = pwallet->mapRequestCount.find(GetHash());
-            if (mi != pwallet->mapRequestCount.end())
-            {
-                nRequests = (*mi).second;
-
-                // How about the block it's in?
-                if (nRequests == 0 && !hashUnset())
-                {
-                    std::map<uint256, int>::const_iterator _mi = pwallet->mapRequestCount.find(hashBlock);
-                    if (_mi != pwallet->mapRequestCount.end())
-                        nRequests = (*_mi).second;
-                    else
-                        nRequests = 1; // If it's in someone else's block it must have got out
-                }
-            }
-        }
-    }
-    return nRequests;
 }
 
 void CWalletTx::GetAmounts(std::list<COutputEntry>& listReceived,
@@ -2346,7 +2321,7 @@ void CWallet::AvailableCoinsWithAssets(std::vector<COutput> &vCoins, std::map<st
     AvailableCoinsAll(vCoins, mapAssetCoins, true, AreAssetsDeployed(), fOnlySafe, coinControl, nMinimumAmount, nMaximumAmount, nMinimumSumAmount, nMaximumCount, nMinDepth, nMaxDepth);
 }
 
-void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::string, std::vector<COutput> >& mapAssetCoins, bool fGetRVN, bool fGetAssets, bool fOnlySafe, const CCoinControl *coinControl, const CAmount& nMinimumAmount, const CAmount& nMaximumAmount, const CAmount& nMinimumSumAmount, const uint64_t& nMaximumCount, const int& nMinDepth, const int& nMaxDepth) const {
+void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::string, std::vector<COutput> >& mapAssetCoins, bool fGetEVR, bool fGetAssets, bool fOnlySafe, const CCoinControl *coinControl, const CAmount& nMinimumAmount, const CAmount& nMaximumAmount, const CAmount& nMinimumSumAmount, const uint64_t& nMaximumCount, const int& nMinDepth, const int& nMaxDepth) const {
     vCoins.clear();
 
     {
@@ -2355,7 +2330,7 @@ void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::stri
         CAmount nTotal = 0;
 
         /** RVN START */
-        bool fRVNLimitHit = false;
+        bool fEVRLimitHit = false;
         // A set of the hashes that have already been used
         std::set<uint256> usedMempoolHashes;
 
@@ -2501,11 +2476,11 @@ void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::stri
                     }
                 }
 
-                if (fGetRVN) { // Looking for RVN Tx OutPoints Only
-                    if (fRVNLimitHit) // We hit our limit
+                if (fGetEVR) { // Looking for EVR Tx OutPoints Only
+                    if (fEVRLimitHit) // We hit our limit
                         continue;
 
-                    // We only want RVN OutPoints. Don't include Asset OutPoints
+                    // We only want EVR OutPoints. Don't include Asset OutPoints
                     if (isAssetScript)
                         continue;
 
@@ -2516,13 +2491,13 @@ void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::stri
                         nTotal += pcoin->tx->vout[i].nValue;
 
                         if (nTotal >= nMinimumSumAmount) {
-                            fRVNLimitHit = true;
+                            fEVRLimitHit = true;
                         }
                     }
 
                     // Checks the maximum number of UTXO's.
                     if (nMaximumCount > 0 && vCoins.size() >= nMaximumCount) {
-                        fRVNLimitHit = true;
+                        fEVRLimitHit = true;
                     }
                     continue;
                 }
@@ -3177,9 +3152,8 @@ bool CWallet::FundTransaction(CMutableTransaction& tx, CAmount& nFeeRet, int& nC
 {
     std::vector<CRecipient> vecSend;
 
-    // Turn the txout set into a CRecipient vector
-    for (size_t idx = 0; idx < tx.vout.size(); idx++)
-    {
+    // Turn the txout set into a CRecipient vector.
+    for (size_t idx = 0; idx < tx.vout.size(); idx++) {
         const CTxOut& txOut = tx.vout[idx];
         CRecipient recipient = {txOut.scriptPubKey, txOut.nValue, setSubtractFeeFromOutputs.count(idx) == 1};
         vecSend.push_back(recipient);
@@ -3187,8 +3161,13 @@ bool CWallet::FundTransaction(CMutableTransaction& tx, CAmount& nFeeRet, int& nC
 
     coinControl.fAllowOtherInputs = true;
 
-    for (const CTxIn& txin : tx.vin)
+    for (const CTxIn& txin : tx.vin) {
         coinControl.Select(txin.prevout);
+    }
+
+    // Acquire the locks to prevent races to the new locked unspents between the
+    // CreateTransaction call and LockCoin calls (when lockUnspents is true).
+    LOCK2(cs_main, cs_wallet);
 
     CReserveKey reservekey(this);
     CWalletTx wtx;
@@ -3198,30 +3177,27 @@ bool CWallet::FundTransaction(CMutableTransaction& tx, CAmount& nFeeRet, int& nC
 
     if (nChangePosInOut != -1) {
         tx.vout.insert(tx.vout.begin() + nChangePosInOut, wtx.tx->vout[nChangePosInOut]);
-        // we don't have the normal Create/Commit cycle, and don't want to risk reusing change,
-        // so just remove the key from the keypool here.
+        // We don't have the normal Create/Commit cycle, and don't want to risk
+        // reusing change, so just remove the key from the keypool here.
         reservekey.KeepKey();
     }
 
-    // Copy output sizes from new transaction; they may have had the fee subtracted from them
-    for (unsigned int idx = 0; idx < tx.vout.size(); idx++)
+    // Copy output sizes from new transaction; they may have had the fee
+    // subtracted from them.
+    for (unsigned int idx = 0; idx < tx.vout.size(); idx++) {
         tx.vout[idx].nValue = wtx.tx->vout[idx].nValue;
+    }
 
-    // Add new txins (keeping original txin scriptSig/order)
-    for (const CTxIn& txin : wtx.tx->vin)
-    {
-        if (!coinControl.IsSelected(txin.prevout))
-        {
+    // Add new txins while keeping original txin scriptSig/order.
+    for (const CTxIn& txin : wtx.tx->vin) {
+        if (!coinControl.IsSelected(txin.prevout)) {
             tx.vin.push_back(txin);
 
-            if (lockUnspents)
-            {
-              LOCK2(cs_main, cs_wallet);
-              LockCoin(txin.prevout);
+            if (lockUnspents) {
+                LockCoin(txin.prevout);
             }
         }
     }
-
 
     return true;
 }
@@ -3390,7 +3366,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
             /** RVN END */
             // Create change script that will be used if we need change
             // TODO: pass in scriptChange instead of reservekey so
-            // change transaction isn't always pay-to-raven-address
+            // change transaction isn't always pay-to-evrmore-address
             CScript scriptChange;
             CScript assetScriptChange;
 
@@ -3444,7 +3420,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
                     CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
 
                     /** RVN START */
-                    // Check to see if you need to make an asset data outpoint OP_RVN_ASSET data
+                    // Check to see if you need to make an asset data outpoint OP_EVR_ASSET data
                     if (recipient.scriptPubKey.IsNullAssetTxDataScript()) {
                         assert(txout.nValue == 0);
                         txNew.vout.push_back(txout);
@@ -3875,9 +3851,6 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, CCon
                 NotifyTransactionChanged(this, coin.GetHash(), CT_UPDATED);
             }
         }
-
-        // Track how many getdata requests our transaction gets
-        mapRequestCount[wtxNew.GetHash()] = 0;
 
         if (fBroadcastTransactions)
         {

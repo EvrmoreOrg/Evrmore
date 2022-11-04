@@ -5,13 +5,13 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """
-Test ravend with different proxy configuration.
+Test evrmored with different proxy configuration.
 
 Test plan:
-- Start ravend's with different proxy configurations
+- Start evrmored's with different proxy configurations
 - Use addnode to initiate connections
 - Verify that proxies are connected to, and the right connection command is given
-- Proxy configurations to test on ravend side:
+- Proxy configurations to test on evrmored side:
     - `-proxy` (proxy everything)
     - `-onion` (proxy just onions)
     - `-proxyrandomize` Circuit randomization
@@ -21,8 +21,8 @@ Test plan:
     - proxy on IPv6
 
 - Create various proxies (as threads)
-- Create ravends that connect to them
-- Manipulate the ravends using addnode (onetry) an observe effects
+- Create evrmoreds that connect to them
+- Manipulate the evrmoreds using addnode (onetry) an observe effects
 
 addnode connect to IPv4
 addnode connect to IPv6
@@ -33,13 +33,13 @@ addnode connect to generic DNS name
 import socket
 import os
 from test_framework.socks5 import Socks5Configuration, Socks5Command, Socks5Server, AddressType
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import PORT_MIN, PORT_RANGE, assert_equal
 from test_framework.netutil import test_ipv6_local
 
 RANGE_BEGIN = PORT_MIN + 2 * PORT_RANGE  # Start after p2p and rpc ports
 
-class ProxyTest(RavenTestFramework):
+class ProxyTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 4
 
@@ -93,7 +93,7 @@ class ProxyTest(RavenTestFramework):
         node.addnode("15.61.23.23:1234", "onetry")
         cmd = proxies[0].queue.get()
         assert(isinstance(cmd, Socks5Command))
-        # Note: ravend's SOCKS5 implementation only sends atyp DOMAINNAME, even if connecting directly to IPv4/IPv6
+        # Note: evrmored's SOCKS5 implementation only sends atyp DOMAINNAME, even if connecting directly to IPv4/IPv6
         assert_equal(cmd.atyp, AddressType.DOMAINNAME)
         assert_equal(cmd.addr, b"15.61.23.23")
         assert_equal(cmd.port, 1234)
@@ -107,7 +107,7 @@ class ProxyTest(RavenTestFramework):
             node.addnode("[1233:3432:2434:2343:3234:2345:6546:4534]:5443", "onetry")
             cmd = proxies[1].queue.get()
             assert(isinstance(cmd, Socks5Command))
-            # Note: ravend's SOCKS5 implementation only sends atyp DOMAINNAME, even if connecting directly to IPv4/IPv6
+            # Note: evrmored's SOCKS5 implementation only sends atyp DOMAINNAME, even if connecting directly to IPv4/IPv6
             assert_equal(cmd.atyp, AddressType.DOMAINNAME)
             assert_equal(cmd.addr, b"1233:3432:2434:2343:3234:2345:6546:4534")
             assert_equal(cmd.port, 5443)
@@ -130,12 +130,12 @@ class ProxyTest(RavenTestFramework):
             rv.append(cmd)
 
         # Test: outgoing DNS name connection through node
-        node.addnode("node.noumenon:8767", "onetry")
+        node.addnode("node.noumenon:8820", "onetry")
         cmd = proxies[3].queue.get()
         assert(isinstance(cmd, Socks5Command))
         assert_equal(cmd.atyp, AddressType.DOMAINNAME)
         assert_equal(cmd.addr, b"node.noumenon")
-        assert_equal(cmd.port, 8767)
+        assert_equal(cmd.port, 8820)
         if not auth:
             assert_equal(cmd.username, None)
             assert_equal(cmd.password, None)

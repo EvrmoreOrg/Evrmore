@@ -32,19 +32,19 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_5">
      <property name="spacing">
-      <number>34</number>
+      <number>20</number>
      </property>
      <property name="leftMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <property name="topMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <property name="rightMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <property name="bottomMargin">
-      <number>40</number>
+      <number>20</number>
      </property>
      <item>
       <widget class="QFrame" name="frameCoinControl">
@@ -335,7 +335,7 @@
                     <enum>Qt::ActionsContextMenu</enum>
                    </property>
                    <property name="text">
-                    <string notr="true">0.00 RVN</string>
+                    <string notr="true">0.00 EVR</string>
                    </property>
                    <property name="textInteractionFlags">
                     <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -415,7 +415,7 @@
                     <enum>Qt::ActionsContextMenu</enum>
                    </property>
                    <property name="text">
-                    <string notr="true">0.00 RVN</string>
+                    <string notr="true">0.00 EVR</string>
                    </property>
                    <property name="textInteractionFlags">
                     <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -466,7 +466,7 @@
                     <enum>Qt::ActionsContextMenu</enum>
                    </property>
                    <property name="text">
-                    <string notr="true">0.00 RVN</string>
+                    <string notr="true">0.00 EVR</string>
                    </property>
                    <property name="textInteractionFlags">
                     <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -495,7 +495,7 @@
                     <enum>Qt::ActionsContextMenu</enum>
                    </property>
                    <property name="text">
-                    <string notr="true">0.00 RVN</string>
+                    <string notr="true">0.00 EVR</string>
                    </property>
                    <property name="textInteractionFlags">
                     <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -593,6 +593,12 @@
      </item>
      <item>
       <widget class="QFrame" name="frameAssetData">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>220</height>
+        </size>
+       </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
@@ -688,7 +694,7 @@
                <string/>
               </property>
               <property name="placeholderText">
-               <string>The RVN address that will hold this asset (You must own this address). Leave blank to create a new address.</string>
+               <string>The EVR address that will hold this asset (You must own this address). Leave blank to create a new address.</string>
               </property>
              </widget>
             </item>
@@ -826,6 +832,13 @@
               </property>
               <property name="placeholderText">
                <string>The ipfs/txid hash that is associated with the asset being created (e.g. QmU4h365LYMHx...)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="openIpfsButton">
+              <property name="text">
+               <string>Browse IPFS</string>
               </property>
              </widget>
             </item>
@@ -1081,7 +1094,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="RavenAmountField" name="customFee"/>
+                    <widget class="EvrmoreAmountField" name="customFee"/>
                    </item>
                    <item>
                     <spacer name="horizontalSpacer_6">
@@ -1103,7 +1116,7 @@
                    <item>
                     <widget class="QCheckBox" name="checkBoxMinimumFee">
                      <property name="toolTip">
-                      <string>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for raven transactions than the network can process.</string>
+                      <string>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for evrmore transactions than the network can process.</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -1116,7 +1129,7 @@
                       <bool>true</bool>
                      </property>
                      <property name="toolTip">
-                      <string>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for raven transactions than the network can process.</string>
+                      <string>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for evrmore transactions than the network can process.</string>
                      </property>
                      <property name="text">
                       <string>(read the tooltip)</string>
@@ -1420,7 +1433,7 @@
             <enum>Qt::RightToLeft</enum>
            </property>
            <property name="text">
-            <string>123.456 RVN</string>
+            <string>123.456 EVR</string>
            </property>
           </widget>
          </item>
@@ -1439,9 +1452,9 @@
    <header>qvalidatedlineedit.h</header>
   </customwidget>
   <customwidget>
-   <class>RavenAmountField</class>
+   <class>EvrmoreAmountField</class>
    <extends>QLineEdit</extends>
-   <header>ravenamountfield.h</header>
+   <header>evrmoreamountfield.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

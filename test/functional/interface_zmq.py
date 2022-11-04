@@ -10,8 +10,8 @@
 import configparser
 import os
 import struct
-from test_framework.test_framework import RavenTestFramework, SkipTest
-from test_framework.util import assert_equal, hash256, x16_hash_block
+from test_framework.test_framework import EvrmoreTestFramework, SkipTest
+from test_framework.util import assert_equal, hash256, bytes_to_hex_str
 
 
 # noinspection PyUnresolvedReferences
@@ -35,7 +35,7 @@ class ZMQSubscriber:
 
 
 # noinspection PyUnresolvedReferences
-class ZMQTest(RavenTestFramework):
+class ZMQTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
 
@@ -46,21 +46,21 @@ class ZMQTest(RavenTestFramework):
         except ImportError:
             raise SkipTest("python3-zmq module not available.")
 
-        # Check that raven has been built with ZMQ enabled.
+        # Check that Evrmore has been built with ZMQ enabled.
         config = configparser.ConfigParser()
         if not self.options.configfile:
             self.options.configfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "../config.ini"))
         config.read_file(open(self.options.configfile))
 
         if not config["components"].getboolean("ENABLE_ZMQ"):
-            raise SkipTest("ravend has not been built with zmq enabled.")
+            raise SkipTest("evrmored has not been built with zmq enabled.")
 
         # Initialize ZMQ context and socket.
         # All messages are received in the same socket which means
         # that this test fails if the publishing order changes.
         # Note that the publishing order is not defined in the documentation and
         # is subject to change.
-        address = "tcp://127.0.0.1:28766"
+        address = "tcp://127.0.0.1:28819"
         self.zmq_context = zmq.Context()
         socket = self.zmq_context.socket(zmq.SUB)
         socket.set(zmq.RCVTIMEO, 60000)
@@ -106,7 +106,7 @@ class ZMQTest(RavenTestFramework):
 
             # Should receive the generated raw block.
             block = self.rawblock.receive()
-            assert_equal(genhashes[x], x16_hash_block(block[:80].hex(), "2"))
+            assert_equal(genhashes[x], bytes_to_hex_str(hash256(block[:80])))
 
         self.log.info("Wait for tx from second node")
         payment_txid = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), 1.0)

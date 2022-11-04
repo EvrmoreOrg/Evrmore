@@ -13,10 +13,10 @@ Test the getchaintips RPC.
 - verify that getchaintips now returns two chain tips.
 """
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal
 
-class GetChainTipsTest (RavenTestFramework):
+class GetChainTipsTest (EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 4
         self.extra_args = [["-maxreorg=10000"], ["-maxreorg=10000"], ["-maxreorg=10000"], ["-maxreorg=10000"]]

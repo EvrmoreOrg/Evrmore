@@ -1,10 +1,11 @@
 // Copyright (c) 2018-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#ifndef RAVENCOIN_MESSAGES_H
-#define RAVENCOIN_MESSAGES_H
+#ifndef EVRMORECOIN_MESSAGES_H
+#define EVRMORECOIN_MESSAGES_H
 
 #include <uint256.h>
 #include <serialize.h>
@@ -140,4 +141,4 @@ public:
     std::string createJsonString();
 };
 
-#endif //RAVENCOIN_MESSAGES_H
+#endif //EVRMORECOIN_MESSAGES_H

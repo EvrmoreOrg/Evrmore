@@ -1,5 +1,6 @@
 // Copyright (c) 2015-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -110,7 +111,7 @@ public:
     bool Enqueue(WorkItem* item)
     {
         std::unique_lock<std::mutex> lock(cs);
-        if (queue.size() >= maxDepth) {
+        if (!running || queue.size() >= maxDepth) {
             return false;
         }
         queue.emplace_back(std::unique_ptr<WorkItem>(item));
@@ -127,7 +128,7 @@ public:
                 std::unique_lock<std::mutex> lock(cs);
                 while (running && queue.empty())
                     cond.wait(lock);
-                if (!running)
+                if (!running && queue.empty())
                     break;
                 i = std::move(queue.front());
                 queue.pop_front();
@@ -300,7 +301,7 @@ static void http_reject_request_cb(struct evhttp_request* req, void*)
 /** Event dispatcher thread */
 static bool ThreadHTTP(struct event_base* base, struct evhttp* http)
 {
-    RenameThread("raven-http");
+    RenameThread("evrmore-http");
     LogPrint(BCLog::HTTP, "Entering http event loop\n");
     event_base_dispatch(base);
     // Event loop will be interrupted by InterruptHTTPServer()
@@ -349,7 +350,7 @@ static bool HTTPBindAddresses(struct evhttp* http)
 /** Simple wrapper to set thread name and run work queue */
 static void HTTPWorkQueueRun(WorkQueue<HTTPClosure>* queue)
 {
-    RenameThread("raven-httpworker");
+    RenameThread("evrmore-httpworker");
     queue->Run();
 }
 
@@ -478,8 +479,6 @@ void StopHTTPServer()
     if (workQueue) {
         LogPrint(BCLog::HTTP, "Waiting for HTTP worker threads to exit\n");
         workQueue->WaitExit();
-        delete workQueue;
-        workQueue = nullptr;
     }
     if (eventBase) {
         LogPrint(BCLog::HTTP, "Waiting for HTTP event thread to exit\n");
@@ -504,6 +503,10 @@ void StopHTTPServer()
     if (eventBase) {
         event_base_free(eventBase);
         eventBase = nullptr;
+    }
+    if (workQueue) {
+        delete workQueue;
+        workQueue = nullptr;
     }
     LogPrint(BCLog::HTTP, "Stopped HTTP server\n");
 }

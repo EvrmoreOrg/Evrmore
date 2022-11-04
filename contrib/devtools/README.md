@@ -23,7 +23,7 @@ git diff -U0 HEAD~1.. | ./contrib/devtools/clang-format-diff.py -p1 -i -v
 copyright\_header.py
 ====================
 
-Provides utilities for managing copyright headers of `The Raven Core
+Provides utilities for managing copyright headers of `The Evrmore Core
 developers` in repository source files. It has three subcommands:
 
 ```
@@ -45,32 +45,36 @@ copyright\_header.py update \<base\_directory\> [verbose]
 Updates all the copyright headers of `The Raven Core developers` which were
 changed in a year more recent than is listed. For example:
 ```
-// Copyright (c) <firstYear>-<lastYear> The Bitcoin Core developers
-// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) <firstYear1>-<lastYear1> The Bitcoin Core developers
+// Copyright (c) <firstYear2>-<lastYear2> The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 ```
 will be updated to:
 ```
-// Copyright (c) <firstYear>-<lastModifiedYear> The Bitcoin Core developers
-// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) <firstYear1>-<lastYear1> The Bitcoin Core developers
+// Copyright (c) <firstYear2>-<lastModifiedYear> The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 ```
 where `<lastModifiedYear>` is obtained from the `git log` history.
 
 This subcommand also handles copyright headers that have only a single year. In
 those cases:
 ```
-// Copyright (c) <year> The Bitcoin Core developers
-// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) <firstYear1>-<lastYear1> The Bitcoin Core developers
+// Copyright (c) <year> The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 ```
 will be updated to:
 ```
-// Copyright (c) <year>-<lastModifiedYear> The Bitcoin Core developers
-// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) <firstYear1>-<lastYear1> The Bitcoin Core developers
+// Copyright (c) <year>-<lastModifiedYear> The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 ```
 where the update is appropriate.
 
 copyright\_header.py insert \<file\>
 ------------------------------------
-Inserts a copyright header for `The Raven Core developers` at the top of the
+Inserts a copyright header for `The Evrmore Core developers` at the top of the
 file in either Python or C++ style as determined by the file extension. If the
 file is a Python file and it has  `#!` starting the first line, the header is
 inserted in the line below it.
@@ -80,7 +84,7 @@ The copyright dates will be set to be `<year_introduced>-<current_year>` where
 `<year_introduced>` is equal to `<current_year>`, it will be set as a single
 year rather than two hyphenated years.
 
-If the file already has a copyright for `The Raven Core developers`, the
+If the file already has a copyright for `The Evrmore Core developers`, the
 script will exit.
 
 gen-manpages.sh
@@ -98,7 +102,7 @@ the commit it claims to have been updated to.
 To use, make sure that you have fetched the upstream repository branch in which the subtree is
 maintained:
 * for `src/secp256k1`: https://github.com/bitcoin-core/secp256k1.git (branch master)
-* for `src/leveldb`: https://github.com/bitcoin-core/leveldb.git (branch raven-fork)
+* for `src/leveldb`: https://github.com/bitcoin-core/leveldb.git (branch evrmore-fork)
 * for `src/univalue`: https://github.com/bitcoin-core/univalue.git (branch master)
 * for `src/crypto/ctaes`: https://github.com/bitcoin-core/ctaes.git (branch master)
 
@@ -116,7 +120,7 @@ For example:
   ./github-merge.py 3077
 
 (in any git repository) will help you merge pull request #3077 for the
-raven/raven repository.
+evrmore/evrmore repository.
 
 What it does:
 * Fetch master and the pull request.
@@ -134,16 +138,16 @@ couldn't mess with the sources.
 
 Setup
 ---------
-Configuring the github-merge tool for the raven repository is done in the following way:
+Configuring the github-merge tool for the evrmore repository is done in the following way:
 
-    git config githubmerge.repository raven/raven
+    git config githubmerge.repository evrmore/evrmore
     git config githubmerge.testcmd "make -j4 check" (adapt to whatever you want to use for testing)
     git config --global user.signingkey mykeyid (if you want to GPG sign)
 
 optimize-pngs.py
 ================
 
-A script to optimize png files in the raven
+A script to optimize png files in the evrmore
 repository (requires pngcrush).
 
 security-check.py and test-security-check.py
@@ -166,10 +170,10 @@ If only supported symbols are used the return value will be 0 and the output wil
 
 If there are 'unsupported' symbols, the return value will be 1 a list like this will be printed:
 
-    .../64/test_raven: symbol memcpy from unsupported version GLIBC_2.14
-    .../64/test_raven: symbol __fdelt_chk from unsupported version GLIBC_2.15
-    .../64/test_raven: symbol std::out_of_range::~out_of_range() from unsupported version GLIBCXX_3.4.15
-    .../64/test_raven: symbol _ZNSt8__detail15_List_nod from unsupported version GLIBCXX_3.4.15
+    .../64/test_evrmore: symbol memcpy from unsupported version GLIBC_2.14
+    .../64/test_evrmore: symbol __fdelt_chk from unsupported version GLIBC_2.15
+    .../64/test_evrmore: symbol std::out_of_range::~out_of_range() from unsupported version GLIBCXX_3.4.15
+    .../64/test_evrmore: symbol _ZNSt8__detail15_List_nod from unsupported version GLIBCXX_3.4.15
 
 update-translations.py
 ======================

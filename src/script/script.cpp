@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "streams.h"
@@ -144,7 +145,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_NOP10                  : return "OP_NOP10";
 
     /** RVN START */
-    case OP_RVN_ASSET              : return "OP_RVN_ASSET";
+    case OP_EVR_ASSET              : return "OP_EVR_ASSET";
     /** RVN END */
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
@@ -270,31 +271,31 @@ bool CScript::IsAssetScript(int& nType, int& nScriptType, bool& fIsOwner, int& n
         // Initialize the index
         int index = -1;
 
-        // OP_RVN_ASSET is always in the 23 index of the P2SH script if it exists
-        if (nScriptType == TX_SCRIPTHASH && (*this)[23] == OP_RVN_ASSET) {
+        // OP_EVR_ASSET is always in the 23 index of the P2SH script if it exists
+        if (nScriptType == TX_SCRIPTHASH && (*this)[23] == OP_EVR_ASSET) {
             // We have a potential asset interacting with a P2SH
-            index = SearchForRVN(*this, 25);
+            index = SearchForEVR(*this, 25);
 
         }
-        else if ((*this)[25] == OP_RVN_ASSET) { // OP_RVN_ASSET is always in the 25 index of the P2PKH script if it exists
+        else if ((*this)[25] == OP_EVR_ASSET) { // OP_EVR_ASSET is always in the 25 index of the P2PKH script if it exists
             // We have a potential asset interacting with a P2PKH
-            index = SearchForRVN(*this, 27);
+            index = SearchForEVR(*this, 27);
         }
 
         if (index > 0) {
             nStartingIndex = index + 1; // Set the index where the asset data begins. Use to serialize the asset data into asset objects
-            if ((*this)[index] == RVN_T) { // Transfer first anticipating more transfers than other assets operations
+            if ((*this)[index] == EVR_T) { // Transfer first anticipating more transfers than other assets operations
                 nType = TX_TRANSFER_ASSET;
                 return true;
-            } else if ((*this)[index] == RVN_Q && this->size() > 39) {
+            } else if ((*this)[index] == EVR_Q && this->size() > 39) {
                 nType = TX_NEW_ASSET;
                 fIsOwner = false;
                 return true;
-            } else if ((*this)[index] == RVN_O) {
+            } else if ((*this)[index] == EVR_O) {
                 nType = TX_NEW_ASSET;
                 fIsOwner = true;
                 return true;
-            } else if ((*this)[index] == RVN_R) {
+            } else if ((*this)[index] == EVR_R) {
                 nType = TX_REISSUE_ASSET;
                 return true;
             }
@@ -363,15 +364,15 @@ bool CScript::IsNullAsset() const
 bool CScript::IsNullAssetTxDataScript() const
 {
     return (this->size() > 23 &&
-            (*this)[0] == OP_RVN_ASSET &&
+            (*this)[0] == OP_EVR_ASSET &&
             (*this)[1] == 0x14);
 }
 
 bool CScript::IsNullGlobalRestrictionAssetTxDataScript() const
 {
-    // 1 OP_RVN_ASSET followed by two OP_RESERVED + atleast 4 characters for the restricted name $ABC
+    // 1 OP_EVR_ASSET followed by two OP_RESERVED + atleast 4 characters for the restricted name $ABC
     return (this->size() > 6 &&
-            (*this)[0] == OP_RVN_ASSET &&
+            (*this)[0] == OP_EVR_ASSET &&
             (*this)[1] == OP_RESERVED &&
             (*this)[2] == OP_RESERVED);
 }
@@ -379,9 +380,9 @@ bool CScript::IsNullGlobalRestrictionAssetTxDataScript() const
 
 bool CScript::IsNullAssetVerifierTxDataScript() const
 {
-    // 1 OP_RVN_ASSET followed by one OP_RESERVED
+    // 1 OP_EVR_ASSET followed by one OP_RESERVED
     return (this->size() > 3 &&
-            (*this)[0] == OP_RVN_ASSET &&
+            (*this)[0] == OP_EVR_ASSET &&
             (*this)[1] == OP_RESERVED &&
             (*this)[2] != OP_RESERVED);
 }
@@ -481,7 +482,7 @@ bool CScript::HasValidOps() const
 bool CScript::IsUnspendable() const
 {
     CAmount nAmount;
-    return (size() > 0 && *begin() == OP_RETURN) || (size() > 0 && *begin() == OP_RVN_ASSET) || (size() > MAX_SCRIPT_SIZE) || (GetAssetAmountFromScript(*this, nAmount) && nAmount == 0);
+    return (size() > 0 && *begin() == OP_RETURN) || (size() > 0 && *begin() == OP_EVR_ASSET) || (size() > MAX_SCRIPT_SIZE) || (GetAssetAmountFromScript(*this, nAmount) && nAmount == 0);
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------!//
@@ -629,20 +630,20 @@ bool AmountFromReissueScript(const CScript& scriptPubKey, CAmount& nAmount)
     return true;
 }
 
-int SearchForRVN(const CScript& script, const int startingValue) {
+int SearchForEVR(const CScript& script, const int startingValue) {
 
     // Initialize the start value
     int index = -1;
 
-    // Search for RVN at the two places in the script it can be depending on the size of the script
-    if (script[startingValue] == RVN_R) { // Check to see if RVN starts at the starting value ( this->size() < 105)
-        if (script[startingValue + 1] == RVN_V)
-            if (script[startingValue + 2] == RVN_N)
+    // Search for EVR at the two places in the script it can be depending on the size of the script
+    if (script[startingValue] == EVR_E) { // Check to see if EVR starts at the starting value ( this->size() < 105)
+        if (script[startingValue + 1] == EVR_V)
+            if (script[startingValue + 2] == EVR_R)
                 index = startingValue + 3;
     } else {
-        if (script[startingValue + 1] == RVN_R) // Check to see if RVN starts at starting value + 1 ( this->size() >= 105)
-            if (script[startingValue + 2] == RVN_V)
-                if (script[startingValue + 3] == RVN_N)
+        if (script[startingValue + 1] == EVR_E) // Check to see if EVR starts at starting value + 1 ( this->size() >= 105)
+            if (script[startingValue + 2] == EVR_V)
+                if (script[startingValue + 3] == EVR_R)
                     index = startingValue + 4;
     }
 

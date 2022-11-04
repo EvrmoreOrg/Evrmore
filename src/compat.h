@@ -4,11 +4,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_COMPAT_H
-#define RAVEN_COMPAT_H
+#ifndef EVRMORE_COMPAT_H
+#define EVRMORE_COMPAT_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/raven-config.h"
+#include "config/evrmore-config.h"
 #endif
 
 #ifdef WIN32
@@ -101,4 +101,4 @@ bool static inline IsSelectableSocket(const SOCKET& s) {
 #endif
 }
 
-#endif // RAVEN_COMPAT_H
+#endif // EVRMORE_COMPAT_H

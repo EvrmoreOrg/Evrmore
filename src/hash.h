@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_HASH_H
-#define RAVEN_HASH_H
+#ifndef EVRMORE_HASH_H
+#define EVRMORE_HASH_H
 #include <iostream>
 #include <chrono>
 #include "crypto/ripemd160.h"
@@ -14,28 +15,6 @@
 #include "serialize.h"
 #include "uint256.h"
 #include "version.h"
-
-#include "algo/sph_blake.h"
-#include "algo/sph_bmw.h"
-#include "algo/sph_groestl.h"
-#include "algo/sph_jh.h"
-#include "algo/sph_keccak.h"
-#include "algo/sph_skein.h"
-#include "algo/sph_luffa.h"
-#include "algo/sph_cubehash.h"
-#include "algo/sph_shavite.h"
-#include "algo/sph_simd.h"
-#include "algo/sph_echo.h"
-#include "algo/sph_hamsi.h"
-#include "algo/sph_fugue.h"
-#include "algo/sph_shabal.h"
-#include "algo/sph_whirlpool.h"
-#include "algo/sph_sha2.h"
-#include "algo/sph_haval.h"
-
-#include "algo/sph_tiger.h"
-#include "algo/lyra2.h"
-#include "algo/gost_streebog.h"
 
 #include <crypto/ethash/helpers.hpp>
 
@@ -326,11 +305,11 @@ inline int GetHashSelection(const uint256 PrevBlockHash, int index) {
     return(hashSelection);
 }
 
-extern double algoHashTotal[16];
-extern int algoHashHits[16];
+//extern double algoHashTotal[16];
+//extern int algoHashHits[16];
 
 
-
+/**
 template<typename T1>
 inline uint256 HashX16R(const T1 pbegin, const T1 pend, const uint256 PrevBlockHash)
 {
@@ -604,10 +583,11 @@ inline uint256 HashX16RV2(const T1 pbegin, const T1 pend, const uint256 PrevBloc
 
     return hash[15].trim256();
 }
+*/
 
-uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash);
-uint256 KAWPOWHash_OnlyMix(const CBlockHeader& blockHeader);
+uint256 EVRPROGPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash);
+uint256 EVRPROGPOWHash_OnlyMix(const CBlockHeader& blockHeader);
 
 
-#endif // RAVEN_HASH_H
+#endif // EVRMORE_HASH_H
 

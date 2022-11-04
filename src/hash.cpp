@@ -1,5 +1,6 @@
 // Copyright (c) 2013-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,10 +12,6 @@
 #include "util.h"
 
 #include <crypto/ethash/include/ethash/progpow.hpp>
-
-//TODO remove these
-double algoHashTotal[16];
-int algoHashHits[16];
 
 inline uint32_t ROTL32(uint32_t x, int8_t r)
 {
@@ -255,7 +252,7 @@ uint64_t SipHashUint256Extra(uint64_t k0, uint64_t k1, const uint256& val, uint3
     return v0 ^ v1 ^ v2 ^ v3;
 }
 
-uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash)
+uint256 EVRPROGPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash)
 {
     static ethash::epoch_context_ptr context{nullptr, nullptr};
 
@@ -266,7 +263,7 @@ uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash)
         context = ethash::create_epoch_context(epoch_number);
 
     // Build the header_hash
-    uint256 nHeaderHash = blockHeader.GetKAWPOWHeaderHash();
+    uint256 nHeaderHash = blockHeader.GetEVRPROGPOWHeaderHash();
     const auto header_hash = to_hash256(nHeaderHash.GetHex());
 
     // ProgPow hash
@@ -277,10 +274,10 @@ uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash)
 }
 
 
-uint256 KAWPOWHash_OnlyMix(const CBlockHeader& blockHeader)
+uint256 EVRPROGPOWHash_OnlyMix(const CBlockHeader& blockHeader)
 {
     // Build the header_hash
-    uint256 nHeaderHash = blockHeader.GetKAWPOWHeaderHash();
+    uint256 nHeaderHash = blockHeader.GetEVRPROGPOWHeaderHash();
     const auto header_hash = to_hash256(nHeaderHash.GetHex());
 
     // ProgPow hash

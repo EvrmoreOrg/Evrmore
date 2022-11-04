@@ -6,7 +6,7 @@
 #include "random.h"
 #include "scheduler.h"
 
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 
 // Fixing Boost 1.73 compile errors
 #include <boost/bind/bind.hpp>

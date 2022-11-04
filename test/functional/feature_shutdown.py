@@ -4,17 +4,17 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-"""Test ravend shutdown."""
+"""Test evrmored shutdown."""
 
 from threading import Thread
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, get_rpc_proxy, wait_until
 
 def test_long_call(node):
     block = node.waitfornewblock(5000)
     assert_equal(block['height'], 0)
 
-class ShutdownTest(RavenTestFramework):
+class ShutdownTest(EvrmoreTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True

@@ -6,7 +6,7 @@
 
 """Test fee estimation code."""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import satoshi_round, Decimal, connect_nodes, random, sync_mempools, sync_blocks
 from test_framework.script import CScript, OP_1, OP_DROP, OP_2, OP_HASH160, OP_EQUAL, hash160, OP_TRUE
 from test_framework.mininode import CTransaction, CTxIn, CTxOut, COutPoint, to_hex, COIN
@@ -143,7 +143,7 @@ def check_estimates(node, fees_seen, max_invalid, print_estimates = True):
     return all_estimates
 
 
-class EstimateFeeTest(RavenTestFramework):
+class EstimateFeeTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 3
 

@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_SCRIPT_SCRIPT_ERROR_H
-#define RAVEN_SCRIPT_SCRIPT_ERROR_H
+#ifndef EVRMORE_SCRIPT_SCRIPT_ERROR_H
+#define EVRMORE_SCRIPT_SCRIPT_ERROR_H
 
 typedef enum ScriptError_t
 {
@@ -72,4 +73,4 @@ typedef enum ScriptError_t
 
 const char* ScriptErrorString(const ScriptError error);
 
-#endif // RAVEN_SCRIPT_SCRIPT_ERROR_H
+#endif // EVRMORE_SCRIPT_SCRIPT_ERROR_H

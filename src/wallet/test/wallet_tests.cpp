@@ -1,5 +1,6 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +14,7 @@
 
 #include "consensus/validation.h"
 #include "rpc/server.h"
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 #include "validation.h"
 #include "wallet/coincontrol.h"
 #include "wallet/test/wallet_test_fixture.h"
@@ -197,11 +198,11 @@ BOOST_FIXTURE_TEST_SUITE(wallet_tests, WalletTestingSetup)
             add_coin(3 * COIN);
             add_coin(4 * COIN); // now we have 5+6+7+8+18+20+30+100+200+300+400 = 1094 cents
             BOOST_CHECK(testWallet.SelectCoinsMinConf(95 * CENT, 1, 1, 0, vCoins, setCoinsRet, nValueRet));
-            BOOST_CHECK_EQUAL(nValueRet, 1 * COIN);  // we should get 1 RVN in 1 coin
+            BOOST_CHECK_EQUAL(nValueRet, 1 * COIN);  // we should get 1 EVR in 1 coin
             BOOST_CHECK_EQUAL(setCoinsRet.size(), 1U);
 
             BOOST_CHECK(testWallet.SelectCoinsMinConf(195 * CENT, 1, 1, 0, vCoins, setCoinsRet, nValueRet));
-            BOOST_CHECK_EQUAL(nValueRet, 2 * COIN);  // we should get 2 RVN in 1 coin
+            BOOST_CHECK_EQUAL(nValueRet, 2 * COIN);  // we should get 2 EVR in 1 coin
             BOOST_CHECK_EQUAL(setCoinsRet.size(), 1U);
 
             // empty the wallet and start again, now with fractions of a cent, to test small change avoidance
@@ -451,7 +452,7 @@ BOOST_FIXTURE_TEST_SUITE(wallet_tests, WalletTestingSetup)
                                         "timestamp %d. There was an error reading a block from time %d, which is after or within %d "
                                         "seconds of key creation, and could contain transactions pertaining to the key. As a result, "
                                         "transactions and coins using this key may not appear in the wallet. This error could be caused "
-                                        "by pruning or data corruption (see ravend log for details) and could be dealt with by "
+                                        "by pruning or data corruption (see evrmored log for details) and could be dealt with by "
                                         "downloading and rescanning the relevant blocks (see -reindex and -rescan "
                                         "options).\"}},{\"success\":true}]",
                                         0, oldTip->GetBlockTimeMax(), TIMESTAMP_WINDOW));

@@ -12,10 +12,10 @@ with or without a label and then its private key is imported with importprivkey
 with and without a label.
 """
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.wallet_util import test_address
 
-class ImportWithLabel(RavenTestFramework):
+class ImportWithLabel(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
         self.setup_clean_chain = True

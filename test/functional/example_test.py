@@ -20,7 +20,7 @@ from collections import defaultdict
 
 # Avoid wildcard * imports if possible
 from test_framework.mininode import CInv, NetworkThread, NodeConn, NodeConnCB, mininode_lock, MsgGetdata
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, connect_nodes, p2p_port
 
 # NodeConnCB is a class containing callbacks to be executed when a P2P
@@ -46,8 +46,8 @@ class BaseNode(NodeConnCB):
         """Override the standard on_block callback
 
         Store the hash of a received block in the dictionary."""
-        message.block.calc_x16r()
-        self.block_receive_map[message.block.calc_x16r] += 1
+        message.block.calc_sha256()
+        self.block_receive_map[message.block.sha256] += 1
 
     def on_inv(self, conn, message):
         """Override the standard on_inv callback"""
@@ -58,11 +58,11 @@ def custom_function():
 
     If this function is more generally useful for other tests, consider
     moving it to a module in test_framework."""
-    # self.log.info("running custom_function")  # Oops! Can't run self.log outside the RavenTestFramework
+    # self.log.info("running custom_function")  # Oops! Can't run self.log outside the EvrmoreTestFramework
     pass
 
-class ExampleTest(RavenTestFramework):
-    # Each functional test is a subclass of the RavenTestFramework class.
+class ExampleTest(EvrmoreTestFramework):
+    # Each functional test is a subclass of the EvrmoreTestFramework class.
 
     # Override the set_test_params(), add_options(), setup_chain(), setup_network()
     # and setup_nodes() methods to customize the test setup as required.
@@ -117,7 +117,7 @@ class ExampleTest(RavenTestFramework):
 
         Define it in a method here because you're going to use it repeatedly.
         If you think it's useful in general, consider moving it to the base
-        RavenTestFramework class so other tests can use it."""
+        EvrmoreTestFramework class so other tests can use it."""
 
         self.log.info("Running custom_method")
 

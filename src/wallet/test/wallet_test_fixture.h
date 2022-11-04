@@ -1,12 +1,13 @@
 // Copyright (c) 2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_WALLET_TEST_FIXTURE_H
-#define RAVEN_WALLET_TEST_FIXTURE_H
+#ifndef EVRMORE_WALLET_TEST_FIXTURE_H
+#define EVRMORE_WALLET_TEST_FIXTURE_H
 
-#include "test/test_raven.h"
+#include "test/test_evrmore.h"
 
 /** Testing setup and teardown for wallet.
  */

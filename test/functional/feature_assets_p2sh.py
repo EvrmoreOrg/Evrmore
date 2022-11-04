@@ -6,27 +6,27 @@
 
 """Testing asset use cases"""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import assert_equal, assert_is_hash_string, assert_does_not_contain_key, assert_raises_rpc_error, JSONRPCException, Decimal
 
 import string
 
 
-class AssetTest(RavenTestFramework):
+class AssetTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
         self.extra_args = [['-assetindex'], ['-assetindex'], ['-assetindex']]
 
     def activate_p2sh_assets(self):
-        self.log.info("Generating RVN for node[0] and activating assets...")
+        self.log.info("Generating EVR for node[0] and activating assets...")
         n0 = self.nodes[0]
 
         n0.generate(1)
         self.sync_all()
         n0.generate(431)
         self.sync_all()
-        assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['p2sh_assets']['status'])
+        #assert_equal("active", n0.getblockchaininfo()['bip9_softforks']['p2sh_assets']['status'])
 
     def p2sh_issue_asset_test(self):
         self.log.info("Running p2sh_issue_asset_test")
@@ -97,18 +97,18 @@ class AssetTest(RavenTestFramework):
         issued_scriptPubKey = tx_data['vout'][tx_index]['scriptPubKey']['hex']
 
         # Building createrawtransaction data
-        rvn_destination_address = n0.getnewaddress()
+        evr_destination_address = n0.getnewaddress()
 
-        self.log.info("Get RVN for tx fee()...")
-        unspent_rvn_inputs = n0.listunspent(100)[0]
+        self.log.info("Get EVR for tx fee()...")
+        unspent_evr_inputs = n0.listunspent(100)[0]
 
         self.log.info("Get private key for unspent input")
-        unspent_rvn_private_key = n0.dumpprivkey(unspent_rvn_inputs['address'])
+        unspent_evr_private_key = n0.dumpprivkey(unspent_evr_inputs['address'])
 
-        self.log.info("Building rvn tx input...")
-        rvn_tx_input = {
-            'txid' : unspent_rvn_inputs['txid'],
-            'vout' : unspent_rvn_inputs['vout']
+        self.log.info("Building evr tx input...")
+        evr_tx_input = {
+            'txid' : unspent_evr_inputs['txid'],
+            'vout' : unspent_evr_inputs['vout']
         }
 
         self.log.info("Building asset tx input...")
@@ -119,7 +119,7 @@ class AssetTest(RavenTestFramework):
 
         self.log.info("Building destination tx input...")
         destination_tx_data = {
-            rvn_destination_address : unspent_rvn_inputs['amount'] - 1,
+            evr_destination_address : unspent_evr_inputs['amount'] - 1,
             first_address : {
                 'transfer' : {
                     asset_name : 1000
@@ -129,15 +129,15 @@ class AssetTest(RavenTestFramework):
 
         # Create data for signrawtransaction()
         self.log.info("Calling createrawtransaction()...")
-        create_raw_hex = n0.createrawtransaction([rvn_tx_input, asset_tx_input], destination_tx_data)
+        create_raw_hex = n0.createrawtransaction([evr_tx_input, asset_tx_input], destination_tx_data)
 
         prev_tx_data = [
             {
-                'txid' : rvn_tx_input['txid'],
-                'vout' : rvn_tx_input['vout'],
-                'scriptPubKey' : unspent_rvn_inputs['scriptPubKey'],
+                'txid' : evr_tx_input['txid'],
+                'vout' : evr_tx_input['vout'],
+                'scriptPubKey' : unspent_evr_inputs['scriptPubKey'],
                 'redeemScript' : '',
-                'amount' : unspent_rvn_inputs['amount']
+                'amount' : unspent_evr_inputs['amount']
             },
             {
                 'txid' : asset_tx_input['txid'],
@@ -149,12 +149,12 @@ class AssetTest(RavenTestFramework):
         ]
 
         self.log.info("Calling signrawtransaction on first node with one private key...")
-        private_keys = [first_address_priv, unspent_rvn_private_key]
+        private_keys = [first_address_priv, unspent_evr_private_key]
         signed_data = n0.signrawtransaction(create_raw_hex, prev_tx_data, private_keys)
         assert_equal(signed_data['complete'], True)
 
         self.log.info("Calling signrawtransaction on first node with second private key...")
-        private_keys = [second_address_priv, unspent_rvn_private_key]
+        private_keys = [second_address_priv, unspent_evr_private_key]
         signed_data = n0.signrawtransaction(create_raw_hex, prev_tx_data, private_keys)
         assert_equal(signed_data['complete'], True)
 
@@ -212,18 +212,18 @@ class AssetTest(RavenTestFramework):
         issued_scriptPubKey = tx_data['vout'][tx_index]['scriptPubKey']['hex']
 
         # Building createrawtransaction data
-        rvn_destination_address = n0.getnewaddress()
+        evr_destination_address = n0.getnewaddress()
 
-        self.log.info("Get RVN for tx fee()...")
-        unspent_rvn_inputs = n0.listunspent(100)[0]
+        self.log.info("Get EVR for tx fee()...")
+        unspent_evr_inputs = n0.listunspent(100)[0]
 
         self.log.info("Get private key for unspent input")
-        unspent_rvn_private_key = n0.dumpprivkey(unspent_rvn_inputs['address'])
+        unspent_evr_private_key = n0.dumpprivkey(unspent_evr_inputs['address'])
 
-        self.log.info("Building rvn tx input...")
-        rvn_tx_input = {
-            'txid' : unspent_rvn_inputs['txid'],
-            'vout' : unspent_rvn_inputs['vout']
+        self.log.info("Building evr tx input...")
+        evr_tx_input = {
+            'txid' : unspent_evr_inputs['txid'],
+            'vout' : unspent_evr_inputs['vout']
         }
 
         self.log.info("Building asset tx input...")
@@ -234,7 +234,7 @@ class AssetTest(RavenTestFramework):
 
         self.log.info("Building destination tx input...")
         destination_tx_data = {
-            rvn_destination_address : unspent_rvn_inputs['amount'] - 1,
+            evr_destination_address : unspent_evr_inputs['amount'] - 1,
             first_address : {
                 'transfer' : {
                     asset_name : 1000
@@ -244,15 +244,15 @@ class AssetTest(RavenTestFramework):
 
         # Create data for signrawtransaction()
         self.log.info("Calling createrawtransaction()...")
-        create_raw_hex = n0.createrawtransaction([rvn_tx_input, asset_tx_input], destination_tx_data)
+        create_raw_hex = n0.createrawtransaction([evr_tx_input, asset_tx_input], destination_tx_data)
 
         prev_tx_data = [
             {
-                'txid' : rvn_tx_input['txid'],
-                'vout' : rvn_tx_input['vout'],
-                'scriptPubKey' : unspent_rvn_inputs['scriptPubKey'],
+                'txid' : evr_tx_input['txid'],
+                'vout' : evr_tx_input['vout'],
+                'scriptPubKey' : unspent_evr_inputs['scriptPubKey'],
                 'redeemScript' : '',
-                'amount' : unspent_rvn_inputs['amount']
+                'amount' : unspent_evr_inputs['amount']
             },
             {
                 'txid' : asset_tx_input['txid'],
@@ -264,7 +264,7 @@ class AssetTest(RavenTestFramework):
         ]
 
         self.log.info("Calling signrawtransaction on first node...")
-        private_keys = [first_address_priv, unspent_rvn_private_key]
+        private_keys = [first_address_priv, unspent_evr_private_key]
         signed_data = n0.signrawtransaction(create_raw_hex, prev_tx_data, private_keys)
         assert_equal(signed_data['complete'], False)
         partial_signed_hex = signed_data['hex']
@@ -280,8 +280,8 @@ class AssetTest(RavenTestFramework):
 
         assert_equal(len(txid), 64)
 
-    def p2sh_2of3_multi_nodes_rvn_send_test(self):
-        self.log.info("Running p2sh_2of3_multi_nodes_rvn_send_test")
+    def p2sh_2of3_multi_nodes_evr_send_test(self):
+        self.log.info("Running p2sh_2of3_multi_nodes_evr_send_test")
         n0, n1 = self.nodes[0], self.nodes[1]
 
         # Create new address
@@ -324,21 +324,21 @@ class AssetTest(RavenTestFramework):
         issued_scriptPubKey = tx_data['vout'][tx_index]['scriptPubKey']['hex']
 
         # Building createrawtransaction data
-        rvn_destination_address = n0.getnewaddress()
+        evr_destination_address = n0.getnewaddress()
 
-        self.log.info("Building rvn tx input...")
-        rvn_tx_input = {
+        self.log.info("Building evr tx input...")
+        evr_tx_input = {
             'txid' : txid,
             'vout' : tx_index
         }
 
         self.log.info("Building destination tx input...")
         destination_tx_data = {
-            rvn_destination_address : 4999
+            evr_destination_address : 4999
         }
 
         self.log.info("Calling createrawtransaction()...")
-        create_raw_hex = n0.createrawtransaction([rvn_tx_input], destination_tx_data)
+        create_raw_hex = n0.createrawtransaction([evr_tx_input], destination_tx_data)
 
         # Create data for signrawtransaction()
         self.log.info("Building prevTx Data...")
@@ -454,18 +454,18 @@ class AssetTest(RavenTestFramework):
         issued_scriptPubKey = tx_data['vout'][tx_index]['scriptPubKey']['hex']
 
         # Building createrawtransaction data
-        rvn_destination_address = n0.getnewaddress()
+        evr_destination_address = n0.getnewaddress()
 
-        self.log.info("Get RVN for tx fee()...")
-        unspent_rvn_inputs = n0.listunspent(100)[0]
+        self.log.info("Get EVR for tx fee()...")
+        unspent_evr_inputs = n0.listunspent(100)[0]
 
         self.log.info("Get private key for unspent input")
-        unspent_rvn_private_key = n0.dumpprivkey(unspent_rvn_inputs['address'])
+        unspent_evr_private_key = n0.dumpprivkey(unspent_evr_inputs['address'])
 
-        self.log.info("Building rvn tx input...")
-        rvn_tx_input = {
-            'txid' : unspent_rvn_inputs['txid'],
-            'vout' : unspent_rvn_inputs['vout']
+        self.log.info("Building evr tx input...")
+        evr_tx_input = {
+            'txid' : unspent_evr_inputs['txid'],
+            'vout' : unspent_evr_inputs['vout']
         }
 
         self.log.info("Building asset tx input...")
@@ -476,7 +476,7 @@ class AssetTest(RavenTestFramework):
 
         self.log.info("Building destination tx input...")
         destination_tx_data = {
-            rvn_destination_address : unspent_rvn_inputs['amount'] - 1,
+            evr_destination_address : unspent_evr_inputs['amount'] - 1,
             first_address : {
                 'transfer' : {
                     asset_name : 1000
@@ -486,15 +486,15 @@ class AssetTest(RavenTestFramework):
 
         # Create data for signrawtransaction()
         self.log.info("Calling createrawtransaction()...")
-        create_raw_hex = n0.createrawtransaction([rvn_tx_input, asset_tx_input], destination_tx_data)
+        create_raw_hex = n0.createrawtransaction([evr_tx_input, asset_tx_input], destination_tx_data)
 
         prev_tx_data = [
             {
-                'txid' : rvn_tx_input['txid'],
-                'vout' : rvn_tx_input['vout'],
-                'scriptPubKey' : unspent_rvn_inputs['scriptPubKey'],
+                'txid' : evr_tx_input['txid'],
+                'vout' : evr_tx_input['vout'],
+                'scriptPubKey' : unspent_evr_inputs['scriptPubKey'],
                 'redeemScript' : '',
-                'amount' : unspent_rvn_inputs['amount']
+                'amount' : unspent_evr_inputs['amount']
             },
             {
                 'txid' : asset_tx_input['txid'],
@@ -506,7 +506,7 @@ class AssetTest(RavenTestFramework):
         ]
 
         self.log.info("Calling signrawtransaction on first node with one private key...")
-        private_keys = [first_address_priv, unspent_rvn_private_key]
+        private_keys = [first_address_priv, unspent_evr_private_key]
         signed_data = n0.signrawtransaction(create_raw_hex, prev_tx_data, private_keys)
         assert_equal(signed_data['complete'], True)
 
@@ -517,7 +517,7 @@ class AssetTest(RavenTestFramework):
 
         # Change the signature by changing a single hex character at index 25
         signature_list = list(asset_signature_hex)
-        if signature_list[mutate_location] is '0':
+        if signature_list[mutate_location] == '0':
             signature_list[mutate_location] = '1'
         else:
             signature_list[mutate_location] = '0'
@@ -533,7 +533,7 @@ class AssetTest(RavenTestFramework):
         self.activate_p2sh_assets()
         self.p2sh_issue_asset_test()
         self.p2sh_1of2_single_node_asset_transfer_test()
-        self.p2sh_2of3_multi_nodes_rvn_send_test()
+        self.p2sh_2of3_multi_nodes_evr_send_test()
         self.p2sh_2of3_multi_nodes_asset_transfer_test()
         self.p2sh_using_rpc_console_test()
         self.p2sh_1of2_single_node_signatue_mutated_attack_test()

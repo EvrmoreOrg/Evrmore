@@ -1,10 +1,11 @@
 // Copyright (c) 2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_THREADINTERRUPT_H
-#define RAVEN_THREADINTERRUPT_H
+#ifndef EVRMORE_THREADINTERRUPT_H
+#define EVRMORE_THREADINTERRUPT_H
 
 #include <atomic>
 #include <chrono>
@@ -32,4 +33,4 @@ private:
     std::atomic<bool> flag;
 };
 
-#endif //RAVEN_THREADINTERRUPT_H
+#endif //EVRMORE_THREADINTERRUPT_H

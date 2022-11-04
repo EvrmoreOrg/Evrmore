@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,12 +12,7 @@
 #include "utilstrencodings.h"
 #include "crypto/common.h"
 
-
-static const uint32_t MAINNET_X16RV2ACTIVATIONTIME = 1569945600;
-static const uint32_t TESTNET_X16RV2ACTIVATIONTIME = 1567533600;
-static const uint32_t REGTEST_X16RV2ACTIVATIONTIME = 1569931200;
-
-uint32_t nKAWPOWActivationTime;
+bool fEvrprogpowAsMiningAlgo;
 
 BlockNetwork bNetwork = BlockNetwork();
 
@@ -37,53 +33,32 @@ void BlockNetwork::SetNetwork(const std::string& net)
 
 uint256 CBlockHeader::GetHash() const
 {
-    if (nTime < nKAWPOWActivationTime) {
-        uint32_t nTimeToUse = MAINNET_X16RV2ACTIVATIONTIME;
-        if (bNetwork.fOnTestnet) {
-            nTimeToUse = TESTNET_X16RV2ACTIVATIONTIME;
-        } else if (bNetwork.fOnRegtest) {
-            nTimeToUse = REGTEST_X16RV2ACTIVATIONTIME;
+        if (fEvrprogpowAsMiningAlgo) {
+            return EVRPROGPOWHash_OnlyMix(*this);
+        } else {
+            return SerializeHash(*this);        // Use standard SHA256 mining
         }
-        if (nTime >= nTimeToUse) {
-            return HashX16RV2(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-        }
-
-        return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-    } else {
-        return KAWPOWHash_OnlyMix(*this);
-    }
 }
+
 
 uint256 CBlockHeader::GetHashFull(uint256& mix_hash) const
 {
-    if (nTime < nKAWPOWActivationTime) {
-        uint32_t nTimeToUse = MAINNET_X16RV2ACTIVATIONTIME;
-        if (bNetwork.fOnTestnet) {
-            nTimeToUse = TESTNET_X16RV2ACTIVATIONTIME;
-        } else if (bNetwork.fOnRegtest) {
-            nTimeToUse = REGTEST_X16RV2ACTIVATIONTIME;
+        if (fEvrprogpowAsMiningAlgo) {
+            return EVRPROGPOWHash(*this, mix_hash);
+        } else {
+            return SerializeHash(*this);        // Use standard SHA256 mining
         }
-        if (nTime >= nTimeToUse) {
-            return HashX16RV2(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-        }
-
-        return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-    } else {
-        return KAWPOWHash(*this, mix_hash);
-    }
 }
 
 
-
-
-uint256 CBlockHeader::GetX16RHash() const
+uint256 CBlockHeader::GetEVRPROGPOWHash_OnlyMix() const
 {
-    return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
+    return EVRPROGPOWHash_OnlyMix(*this);
 }
 
-uint256 CBlockHeader::GetX16RV2Hash() const
+uint256 CBlockHeader::GetSerializeHash() const
 {
-    return HashX16RV2(BEGIN(nVersion), END(nNonce), hashPrevBlock);
+    return SerializeHash(*this);        // Use standard SHA256 mining
 }
 
 /**
@@ -91,9 +66,9 @@ uint256 CBlockHeader::GetX16RV2Hash() const
  * This will be used as the input to the KAAAWWWPOW hashing function
  * @note Only to be called and used on KAAAWWWPOW block headers
  */
-uint256 CBlockHeader::GetKAWPOWHeaderHash() const
+uint256 CBlockHeader::GetEVRPROGPOWHeaderHash() const
 {
-    CKAWPOWInput input{*this};
+    CEVRPROGPOWInput input{*this};
 
     return SerializeHash(input);
 }
@@ -108,8 +83,6 @@ std::string CBlockHeader::ToString() const
                    nTime, nBits, nNonce, nNonce64, nHeight);
     return s.str();
 }
-
-
 
 std::string CBlock::ToString() const
 {
@@ -126,36 +99,3 @@ std::string CBlock::ToString() const
     }
     return s.str();
 }
-
-/// Used to test algo switching between X16R and X16RV2
-
-//uint256 CBlockHeader::TestTiger() const
-//{
-//    return HashTestTiger(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-//}
-//
-//uint256 CBlockHeader::TestSha512() const
-//{
-//    return HashTestSha512(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-//}
-//
-//uint256 CBlockHeader::TestGost512() const
-//{
-//    return HashTestGost512(BEGIN(nVersion), END(nNonce), hashPrevBlock);
-//}
-
-//CBlock block = GetParams().GenesisBlock();
-//int64_t nStart = GetTimeMillis();
-//LogPrintf("Starting Tiger %dms\n", nStart);
-//block.TestTiger();
-//LogPrintf("Tiger Finished %dms\n", GetTimeMillis() - nStart);
-//
-//nStart = GetTimeMillis();
-//LogPrintf("Starting Sha512 %dms\n", nStart);
-//block.TestSha512();
-//LogPrintf("Sha512 Finished %dms\n", GetTimeMillis() - nStart);
-//
-//nStart = GetTimeMillis();
-//LogPrintf("Starting Gost512 %dms\n", nStart);
-//block.TestGost512();
-//LogPrintf("Gost512 Finished %dms\n", GetTimeMillis() - nStart);

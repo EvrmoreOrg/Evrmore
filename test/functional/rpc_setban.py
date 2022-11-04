@@ -7,10 +7,10 @@
 """Test the setban rpc call."""
 
 import time
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import connect_nodes, p2p_port, assert_equal
 
-class SetBanTests(RavenTestFramework):
+class SetBanTests(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
         self.setup_clean_chain = True

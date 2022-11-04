@@ -1,0 +1,6 @@
+
+The "evrmore.icns" file which resides at "src/qt/res/icons/evrmore.icns" will be used for installation on Mac-OS computers. It is currently just a copy of the "evrmore_1024x1024x32.icns" file which resides here, and which was generated from the file "evrmore_1024x1024x32.png". 
+
+The icns icon file format (which is an Apple proprietary standard) supports multiple png graphics files in the icns at the same time. We actually want all the files here (evrmore_1024x1024x32.png, evrmore_1024x1024x32.png, and evrmore_1024x1024x32.png) in the "evrmore.icns". 
+
+But in usual Apple style, having created another incompatible standard, there is no way to create the icns file unless you have the "iconutil" utility which is part of the Apple Developer Tools suite. The current single-png icns file was generated from a web-based conversion tool as a temporary solution.

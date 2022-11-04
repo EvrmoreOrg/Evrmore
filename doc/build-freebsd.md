@@ -1,4 +1,4 @@
-Build instructions for Ravencoin 
+Build instructions for Evrmore 
 =================================
 FreeBSD 13.0
 ---------------------------------
@@ -25,12 +25,12 @@ libqrencode for QR Code support.
 
 Directory structure
 ------------------
-Ravencoin sources in `$HOME/src`
+Evrmore sources in `$HOME/src`
 
 Berkeley DB will be installed to `$HOME/src/db4`
 
 
-Ravencoin
+Evrmore
 ------------------
 
 Start in $HOME
@@ -41,11 +41,11 @@ Make the directory for sources and go into it.
 
 `cd src`
 
-__Download Ravencoin source.__
+__Download Evrmore source.__
 
-`git clone https://github.com/RavenProject/Ravencoin`
+`git clone https://github.com/EvrmoreOrg/Evrmore`
 
-`cd Ravencoin`
+`cd Evrmore`
 
 `git checkout develop` # this checks out the develop branch.
 
@@ -68,11 +68,11 @@ _Adjust to own needs. `--prefix=/usr/local` will install the binaries to `/usr/l
 
 `gmake -j8`  # 8 for 8 build threads, adjust to fit your setup.
 
-You can now start raven-qt from the build directory.
+You can now start evrmore-qt from the build directory.
 
-`src/qt/raven-qt`
+`src/qt/evrmore-qt`
 
-ravend and raven-cli are in `src/`
+evrmored and evrmore-cli are in `src/`
 
 
 __Optional:__

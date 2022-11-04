@@ -1,5 +1,6 @@
+// Copyright (c) 2022 The Evrmore Core developers
 //
-// Simple Raven Payment Protocol messages
+// Simple Evrmore Payment Protocol messages
 //
 // Use fields 100+ for extensions;
 // to avoid conflicts, register extensions at:
@@ -9,10 +10,10 @@
 syntax = "proto2";
 
 package payments;
-option java_package = "org.raven.protocols.payments";
+option java_package = "org.evrmore.protocols.payments";
 option java_outer_classname = "Protos";
 
-// Generalized form of "send payment to this/these raven addresses"
+// Generalized form of "send payment to this/these evrmore addresses"
 message Output {
 	optional uint64 amount = 1 [default = 0]; // amount is integer-number-of-satoshis
 	required bytes script = 2; // usually one of the standard Script forms

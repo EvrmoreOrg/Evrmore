@@ -36,10 +36,10 @@ and confirm again balances are correct.
 
 from random import randint
 import shutil
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import connect_nodes, Decimal, sync_mempools, sync_blocks, os, assert_equal
 
-class WalletBackupTest(RavenTestFramework):
+class WalletBackupTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 4
         self.setup_clean_chain = True

@@ -7,12 +7,12 @@
 """Test RPC addressindex generation and fetching"""
 
 import binascii
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import connect_nodes_bi, assert_equal
 from test_framework.script import CScript, OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG
 from test_framework.mininode import CTransaction, CTxIn, COutPoint, CTxOut
 
-class SpentIndexTest(RavenTestFramework):
+class SpentIndexTest(EvrmoreTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True

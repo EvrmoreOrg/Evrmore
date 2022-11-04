@@ -13,7 +13,8 @@ import struct
 import re
 import os
 import os.path
-import subprocess
+#import subprocess
+import hashlib
 import sys
 import datetime
 import time
@@ -49,11 +50,29 @@ def wordreverse(in_buf):
 	out_words.reverse()
 	return b''.join(out_words)
 
+def calc_hdr_hash(blk_hdr):
+    hash1 = hashlib.sha256()
+    hash1.update(blk_hdr)
+    hash1_o = hash1.digest()
+
+    hash2 = hashlib.sha256()
+    hash2.update(hash1_o)
+    hash2_o = hash2.digest()
+
+    return hash2_o
+
 def calc_hash_str(blk_hdr):
-	x16r_hash_cmd = os.path.dirname(os.path.realpath(__file__)) + "/../../src/test/test_raven_hash"
-	cmd = [x16r_hash_cmd, hexlify(blk_hdr).decode('utf-8'), "2"]
-	blk_hash = subprocess.run(cmd, stdout=subprocess.PIPE, check=True).stdout.decode('ascii')
-	return blk_hash
+    hash = calc_hdr_hash(blk_hdr)
+    hash = bufreverse(hash)
+    hash = wordreverse(hash)
+    hash_str = hash.hex()
+    return hash_str
+
+#def calc_hash_str(blk_hdr):
+	#x16r_hash_cmd = os.path.dirname(os.path.realpath(__file__)) + "/../../src/test/test_evrmore_hash"
+	#cmd = [x16r_hash_cmd, hexlify(blk_hdr).decode('utf-8'), "2"]
+	#blk_hash = subprocess.run(cmd, stdout=subprocess.PIPE, check=True).stdout.decode('ascii')
+#	return blk_hash
 
 def get_blk_dt(blk_hdr):
 	members = struct.unpack("<I", blk_hdr[68:68+4])

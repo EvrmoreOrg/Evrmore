@@ -1,5 +1,6 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -214,13 +215,13 @@ int CBase58Data::CompareTo(const CBase58Data& b58) const
 namespace
 {
 
-class CRavenAddressVisitor : public boost::static_visitor<bool>
+class CEvrmoreAddressVisitor : public boost::static_visitor<bool>
 {
 private:
-    CRavenAddress* addr;
+    CEvrmoreAddress* addr;
 
 public:
-    explicit CRavenAddressVisitor(CRavenAddress* addrIn) : addr(addrIn) {}
+    explicit CEvrmoreAddressVisitor(CEvrmoreAddress* addrIn) : addr(addrIn) {}
 
     bool operator()(const CKeyID& id) const { return addr->Set(id); }
     bool operator()(const CScriptID& id) const { return addr->Set(id); }
@@ -229,29 +230,29 @@ public:
 
 } // namespace
 
-bool CRavenAddress::Set(const CKeyID& id)
+bool CEvrmoreAddress::Set(const CKeyID& id)
 {
     SetData(GetParams().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
     return true;
 }
 
-bool CRavenAddress::Set(const CScriptID& id)
+bool CEvrmoreAddress::Set(const CScriptID& id)
 {
     SetData(GetParams().Base58Prefix(CChainParams::SCRIPT_ADDRESS), &id, 20);
     return true;
 }
 
-bool CRavenAddress::Set(const CTxDestination& dest)
+bool CEvrmoreAddress::Set(const CTxDestination& dest)
 {
-    return boost::apply_visitor(CRavenAddressVisitor(this), dest);
+    return boost::apply_visitor(CEvrmoreAddressVisitor(this), dest);
 }
 
-bool CRavenAddress::IsValid() const
+bool CEvrmoreAddress::IsValid() const
 {
     return IsValid(GetParams());
 }
 
-bool CRavenAddress::IsValid(const CChainParams& params) const
+bool CEvrmoreAddress::IsValid(const CChainParams& params) const
 {
     bool fCorrectSize = vchData.size() == 20;
     bool fKnownVersion = vchVersion == params.Base58Prefix(CChainParams::PUBKEY_ADDRESS) ||
@@ -259,21 +260,26 @@ bool CRavenAddress::IsValid(const CChainParams& params) const
     return fCorrectSize && fKnownVersion;
 }
 
-CTxDestination CRavenAddress::Get() const
+CTxDestination CEvrmoreAddress::Get() const
 {
-    if (!IsValid())
+    return Get(GetParams());
+}
+
+CTxDestination CEvrmoreAddress::Get(const CChainParams& params) const
+{
+    if (!IsValid(params))
         return CNoDestination();
     uint160 id;
     memcpy(&id, vchData.data(), 20);
-    if (vchVersion == GetParams().Base58Prefix(CChainParams::PUBKEY_ADDRESS))
+    if (vchVersion == params.Base58Prefix(CChainParams::PUBKEY_ADDRESS))
         return CKeyID(id);
-    else if (vchVersion == GetParams().Base58Prefix(CChainParams::SCRIPT_ADDRESS))
+    else if (vchVersion == params.Base58Prefix(CChainParams::SCRIPT_ADDRESS))
         return CScriptID(id);
     else
         return CNoDestination();
 }
 
-bool CRavenAddress::GetIndexKey(uint160& hashBytes, int& type) const
+bool CEvrmoreAddress::GetIndexKey(uint160& hashBytes, int& type) const
 {
     if (!IsValid()) {
         return false;
@@ -290,7 +296,7 @@ bool CRavenAddress::GetIndexKey(uint160& hashBytes, int& type) const
     return false;
 }
 
-void CRavenSecret::SetKey(const CKey& vchSecret)
+void CEvrmoreSecret::SetKey(const CKey& vchSecret)
 {
     assert(vchSecret.IsValid());
     SetData(GetParams().Base58Prefix(CChainParams::SECRET_KEY), vchSecret.begin(), vchSecret.size());
@@ -298,7 +304,7 @@ void CRavenSecret::SetKey(const CKey& vchSecret)
         vchData.push_back(1);
 }
 
-CKey CRavenSecret::GetKey()
+CKey CEvrmoreSecret::GetKey()
 {
     CKey ret;
     assert(vchData.size() >= 32);
@@ -306,41 +312,41 @@ CKey CRavenSecret::GetKey()
     return ret;
 }
 
-bool CRavenSecret::IsValid() const
+bool CEvrmoreSecret::IsValid() const
 {
     bool fExpectedFormat = vchData.size() == 32 || (vchData.size() == 33 && vchData[32] == 1);
     bool fCorrectVersion = vchVersion == GetParams().Base58Prefix(CChainParams::SECRET_KEY);
     return fExpectedFormat && fCorrectVersion;
 }
 
-bool CRavenSecret::SetString(const char* pszSecret)
+bool CEvrmoreSecret::SetString(const char* pszSecret)
 {
     return CBase58Data::SetString(pszSecret) && IsValid();
 }
 
-bool CRavenSecret::SetString(const std::string& strSecret)
+bool CEvrmoreSecret::SetString(const std::string& strSecret)
 {
     return SetString(strSecret.c_str());
 }
 
 std::string EncodeDestination(const CTxDestination& dest)
 {
-    CRavenAddress addr(dest);
+    CEvrmoreAddress addr(dest);
     if (!addr.IsValid()) return "";
     return addr.ToString();
 }
 
 CTxDestination DecodeDestination(const std::string& str)
 {
-    return CRavenAddress(str).Get();
+    return CEvrmoreAddress(str).Get();
 }
 
 bool IsValidDestinationString(const std::string& str, const CChainParams& params)
 {
-    return CRavenAddress(str).IsValid(params);
+    return CEvrmoreAddress(str).IsValid(params);
 }
 
 bool IsValidDestinationString(const std::string& str)
 {
-    return CRavenAddress(str).IsValid();
+    return CEvrmoreAddress(str).IsValid();
 }

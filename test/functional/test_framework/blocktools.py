@@ -8,7 +8,7 @@
 
 from .mininode import (CBlock, uint256_from_str, ser_uint256, hash256, CTxInWitness, CTxOut, CTxIn,
                        CTransaction, COutPoint, ser_string, COIN)
-from .script import CScript, OP_TRUE, OP_CHECKSIG, OP_RETURN
+from .script import CScript, OP_TRUE, OP_CHECKSIG, OP_RETURN, CScriptOp, CScriptNum, OP_1
 
 # Create a block (with regtest difficulty)
 def create_block(hash_prev, coinbase, n_time=None):
@@ -22,11 +22,12 @@ def create_block(hash_prev, coinbase, n_time=None):
     block.nBits = 0x207fffff # Will break after a difficulty adjustment...
     block.vtx.append(coinbase)
     block.hashMerkleRoot = block.calc_merkle_root()
-    block.calc_x16r()
+    block.calc_sha256()
     return block
 
+# EVR-TODO: Update to the latest regtest genesis block time
 # Genesis block time (regtest)
-REGTEST_GENISIS_BLOCK_TIME = 1537466400
+REGTEST_GENISIS_BLOCK_TIME = 1646092801
 
 # From BIP141
 WITNESS_COMMITMENT_HEADER = b"\xaa\x21\xa9\xed"
@@ -71,13 +72,23 @@ def serialize_script_num(value):
         r[-1] |= 0x80
     return r
 
+def script_BIP34_coinbase_height(height):
+    if height <= 16:
+        res = CScriptOp.encode_op_n(height)
+        # Append dummy to increase scriptSig size above 2
+        # (see bad-cb-length consensus rule)
+        return CScript([res, OP_1])
+    return CScript([CScriptNum(height)])
+
+
 # Create a coinbase transaction, assuming no miner fees.
 # If pubkey is passed in, the coinbase output will be a P2PK output;
 # otherwise an anyone-can-spend output.
 def create_coinbase(height, pubkey = None):
     coinbase = CTransaction()
     coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), 
-                ser_string(serialize_script_num(height)), 0xffffffff))
+                #ser_string(serialize_script_num(height)), 0xffffffff))
+                script_BIP34_coinbase_height(height), 0xffffffff))
     coin_base_output = CTxOut()
     coin_base_output.nValue = 5000 * COIN
     halvings = int(height/150) # regtest
@@ -87,7 +98,7 @@ def create_coinbase(height, pubkey = None):
     else:
         coin_base_output.scriptPubKey = CScript([OP_TRUE])
     coinbase.vout = [ coin_base_output ]
-    coinbase.calc_x16r()
+    coinbase.calc_sha256()
     return coinbase
 
 # Create a transaction.
@@ -97,7 +108,7 @@ def create_transaction(prev_tx, n, sig, value, script_pub_key=CScript()):
     assert(n < len(prev_tx.vout))
     tx.vin.append(CTxIn(COutPoint(prev_tx.sha256, n), sig, 0xffffffff))
     tx.vout.append(CTxOut(value, script_pub_key))
-    tx.calc_x16r()
+    tx.calc_sha256()
     return tx
 
 def get_legacy_sigopcount_block(block, f_accurate=True):

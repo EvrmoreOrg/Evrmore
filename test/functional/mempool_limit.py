@@ -6,13 +6,13 @@
 
 """Test mempool limiting together/eviction with the wallet."""
 
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import gen_return_txouts, create_confirmed_utxos, satoshi_round, \
     create_lots_of_big_transactions
 
 
 # noinspection PyAttributeOutsideInit
-class MempoolLimitTest(RavenTestFramework):
+class MempoolLimitTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1

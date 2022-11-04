@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_CHAIN_H
-#define RAVEN_CHAIN_H
+#ifndef EVRMORE_CHAIN_H
+#define EVRMORE_CHAIN_H
 
 #include "arith_uint256.h"
 #include "primitives/block.h"
@@ -215,7 +216,7 @@ public:
     uint32_t nBits;
     uint32_t nNonce;
 
-    // KAWPOW
+    // EVRPROGPOW
     uint64_t nNonce64;
     uint256 mix_hash;
 
@@ -247,7 +248,7 @@ public:
         nBits          = 0;
         nNonce         = 0;
 
-        //KAWPOW
+        //EVRPROGPOW
         nNonce64       = 0;
         mix_hash       = uint256();
     }
@@ -267,7 +268,7 @@ public:
         nBits          = block.nBits;
         nNonce         = block.nNonce;
 
-        //KAWPOW
+        //EVRPROGPOW
         nHeight        = block.nHeight;
         nNonce64       = block.nNonce64;
         mix_hash       = block.mix_hash;
@@ -423,10 +424,11 @@ public:
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
-        if (nTime < nKAWPOWActivationTime) {
+//        if (nTime < nEVRPROGPOWActivationTime) {
+        if (!fEvrprogpowAsMiningAlgo) {
             READWRITE(nNonce);
         } else {
-            //KAWPOW
+            //EVRPROGPOW
             READWRITE(nNonce64);
             READWRITE(mix_hash);
         }
@@ -521,4 +523,4 @@ public:
     CBlockIndex* FindEarliestAtLeast(int64_t nTime) const;
 };
 
-#endif // RAVEN_CHAIN_H
+#endif // EVRMORE_CHAIN_H

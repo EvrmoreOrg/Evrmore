@@ -13,7 +13,7 @@ received a VERACK.
 This test connects to a node and sends it a few messages, trying to entice it
 into sending us something it shouldn't.
 
-Also test that nodes that send unsupported service bits to ravend are disconnected
+Also test that nodes that send unsupported service bits to evrmored are disconnected
 and don't receive a VERACK. Unsupported service bits are currently 1 << 5 and
 1 << 7 (until August 1st 2018).
 
@@ -21,7 +21,7 @@ UPDATE: Raven RIP-2 uses bit 1 << 5.  Currently there are no unsupported service
 """
 
 from test_framework.mininode import NodeConnCB, NodeConn, MsgVerack, MsgPing, MsgGetAddr, NetworkThread, mininode_lock
-from test_framework.test_framework import RavenTestFramework
+from test_framework.test_framework import EvrmoreTestFramework
 from test_framework.util import logger, p2p_port, wait_until, time
 
 banscore = 10
@@ -69,7 +69,7 @@ class CLazyNode(NodeConnCB):
 # anyway, and eventually get disconnected.
 class CNodeNoVersionBan(CLazyNode):
     # send a bunch of veracks without sending a message. This should get us disconnected.
-    # NOTE: implementation-specific check here. Remove if ravend ban behavior changes
+    # NOTE: implementation-specific check here. Remove if evrmored ban behavior changes
     def on_open(self, conn):
         super().on_open(conn)
         for _ in range(banscore):
@@ -99,7 +99,7 @@ class CNodeNoVerackIdle(CLazyNode):
         conn.send_message(MsgPing())
         conn.send_message(MsgGetAddr())
 
-class P2PLeakTest(RavenTestFramework):
+class P2PLeakTest(EvrmoreTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.extra_args = [['-banscore='+str(banscore)]]

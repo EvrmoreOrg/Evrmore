@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +14,7 @@
 #include "core_io.h"
 #include "univalue.h"
 #include "assets/assettypes.h"
-#include "ravenunits.h"
+#include "evrmoreunits.h"
 #include "optionsmodel.h"
 #include "sendcoinsdialog.h"
 #include "coincontroldialog.h"
@@ -40,6 +41,8 @@
 #include <QStringListModel>
 #include <QSortFilterProxyModel>
 #include <QCompleter>
+#include <QUrl>
+#include <QDesktopServices>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define QTversionPreFiveEleven
@@ -56,6 +59,7 @@ ReissueAssetDialog::ReissueAssetDialog(const PlatformStyle *_platformStyle, QWid
     connect(ui->comboBox, SIGNAL(activated(int)), this, SLOT(onAssetSelected(int)));
     connect(ui->quantitySpinBox, SIGNAL(valueChanged(double)), this, SLOT(onQuantityChanged(double)));
     connect(ui->ipfsBox, SIGNAL(clicked()), this, SLOT(onIPFSStateChanged()));
+    connect(ui->openIpfsButton, SIGNAL(clicked()), this, SLOT(openIpfsBrowser()));
     connect(ui->ipfsText, SIGNAL(textChanged(QString)), this, SLOT(onIPFSHashChanged(QString)));
     connect(ui->addressText, SIGNAL(textChanged(QString)), this, SLOT(onAddressNameChanged(QString)));
     connect(ui->reissueAssetButton, SIGNAL(clicked()), this, SLOT(onReissueAssetClicked()));
@@ -227,7 +231,7 @@ void ReissueAssetDialog::setModel(WalletModel *_model)
         else
             ui->confTargetSelector->setCurrentIndex(getIndexForConfTarget(settings.value("nConfTarget").toInt()));
 
-        ui->reissueCostLabel->setText(tr("Cost") + ": " + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::REISSUE)));
+        ui->reissueCostLabel->setText(tr("Cost") + ": " + EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::REISSUE)));
         ui->reissueCostLabel->setStyleSheet("font-weight: bold");
 
         // Setup the default values
@@ -277,6 +281,7 @@ void ReissueAssetDialog::setUpValues()
 
     ui->reissuableBox->setCheckState(Qt::CheckState::Checked);
     ui->ipfsText->setDisabled(true);
+    ui->openIpfsButton->setDisabled(true);
     hideMessage();
 
     ui->unitExampleLabel->setStyleSheet("font-weight: bold");
@@ -445,7 +450,7 @@ void ReissueAssetDialog::setBalance(const CAmount& balance, const CAmount& uncon
 
     if(model && model->getOptionsModel())
     {
-        ui->labelBalance->setText(RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), balance));
+        ui->labelBalance->setText(EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), balance));
     }
 }
 
@@ -521,14 +526,19 @@ void ReissueAssetDialog::CheckFormState()
     const CTxDestination dest = DecodeDestination(ui->addressText->text().toStdString());
     if (!ui->addressText->text().isEmpty()) {
         if (!IsValidDestination(dest)) {
-            showMessage(tr("Invalid Raven Destination Address"));
+            showMessage(tr("Invalid Evrmore Destination Address"));
             return;
         }
     }
 
-    if (ui->ipfsBox->isChecked())
-        if (!checkIPFSHash(ui->ipfsText->text()))
+    if (ui->ipfsBox->isChecked()) {
+        if (!checkIPFSHash(ui->ipfsText->text())) {
+            ui->openIpfsButton->setDisabled(true);
             return;
+        }
+        else
+            ui->openIpfsButton->setDisabled(false);
+    }
 
     if (fReissuingRestricted) {
 
@@ -551,7 +561,7 @@ void ReissueAssetDialog::CheckFormState()
 
             if (fHasQuantity && !IsValidDestination(dest)) {
                 ui->addressText->setStyleSheet(STYLE_INVALID);
-                showMessage(tr("Warning: Invalid Raven address"));
+                showMessage(tr("Warning: Invalid Evrmore address"));
                 return;
             }
 
@@ -584,6 +594,8 @@ void ReissueAssetDialog::CheckFormState()
     enableReissueButton();
     hideMessage();
 }
+
+
 
 void ReissueAssetDialog::disableAll()
 {
@@ -852,6 +864,26 @@ void ReissueAssetDialog::onIPFSHashChanged(QString hash)
     buildUpdatedData();
 }
 
+void ReissueAssetDialog::openIpfsBrowser()
+{
+    QString ipfshash = ui->ipfsText->text();
+    QString ipfsbrowser = model->getOptionsModel()->getIpfsUrl();
+
+    // If the ipfs hash isn't there or doesn't start with Qm, disable the action item
+    if (ipfshash.count() > 0 && ipfshash.indexOf("Qm") == 0 && ipfsbrowser.indexOf("http") == 0)
+    {
+        QUrl ipfsurl = QUrl::fromUserInput(ipfsbrowser.replace("%s", ipfshash));
+
+        // Create the box with everything.
+        if(QMessageBox::Yes == QMessageBox::question(this,
+                                                        tr("Open IPFS content?"),
+                                                        tr("Open the following IPFS content in your default browser?\n")
+                                                        + ipfsurl.toString()
+                                                    ))
+        QDesktopServices::openUrl(ipfsurl);
+    }
+}
+
 void ReissueAssetDialog::onAddressNameChanged(QString address)
 {
     const CTxDestination dest = DecodeDestination(address.toStdString());
@@ -952,7 +984,7 @@ void ReissueAssetDialog::onReissueAssetClicked()
     QStringList formatted;
 
     // generate bold amount string
-    QString amount = "<b>" + QString::fromStdString(ValueFromAmountString(GetReissueAssetBurnAmount(), 8)) + " RVN";
+    QString amount = "<b>" + QString::fromStdString(ValueFromAmountString(GetReissueAssetBurnAmount(), 8)) + " EVR";
     amount.append("</b>");
     // generate monospace address string
     QString addressburn = "<span style='font-family: monospace;'>" + QString::fromStdString(GetParams().ReissueAssetBurnAddress());
@@ -980,8 +1012,8 @@ void ReissueAssetDialog::onReissueAssetClicked()
     if(nFeeRequired > 0)
     {
         // append fee string if a fee is required
-        questionString.append("<hr /><span style='color:#aa0000;'>");
-        questionString.append(RavenUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nFeeRequired));
+        questionString.append("<hr /><span style='color:#e82121;'>");
+        questionString.append(EvrmoreUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nFeeRequired));
         questionString.append("</span> ");
         questionString.append(tr("added as transaction fee"));
 
@@ -993,13 +1025,13 @@ void ReissueAssetDialog::onReissueAssetClicked()
     questionString.append("<hr />");
     CAmount totalAmount = GetReissueAssetBurnAmount() + nFeeRequired;
     QStringList alternativeUnits;
-    for (RavenUnits::Unit u : RavenUnits::availableUnits())
+    for (EvrmoreUnits::Unit u : EvrmoreUnits::availableUnits())
     {
         if(u != model->getOptionsModel()->getDisplayUnit())
-            alternativeUnits.append(RavenUnits::formatHtmlWithUnit(u, totalAmount));
+            alternativeUnits.append(EvrmoreUnits::formatHtmlWithUnit(u, totalAmount));
     }
     questionString.append(tr("Total Amount %1")
-                                  .arg(RavenUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), totalAmount)));
+                                  .arg(EvrmoreUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), totalAmount)));
     questionString.append(QString("<span style='font-size:10pt;font-weight:normal;'><br />(=%2)</span>")
                                   .arg(alternativeUnits.join(" " + tr("or") + "<br />")));
 
@@ -1082,7 +1114,7 @@ void ReissueAssetDialog::updateSmartFeeLabel()
     FeeCalculation feeCalc;
     CFeeRate feeRate = CFeeRate(GetMinimumFee(1000, coin_control, ::mempool, ::feeEstimator, &feeCalc));
 
-    ui->labelSmartFee->setText(RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), feeRate.GetFeePerK()) + "/kB");
+    ui->labelSmartFee->setText(EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), feeRate.GetFeePerK()) + "/kB");
 
     if (feeCalc.reason == FeeReason::FALLBACK) {
         ui->labelSmartFee2->show(); // (Smart fee not initialized yet. This usually takes a few blocks...)
@@ -1210,7 +1242,7 @@ void ReissueAssetDialog::coinControlChangeEdited(const QString& text)
         }
         else if (!IsValidDestination(dest)) // Invalid address
         {
-            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Raven address"));
+            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Evrmore address"));
         }
         else // Valid address
         {
@@ -1326,7 +1358,7 @@ void ReissueAssetDialog::updateFeeMinimizedLabel()
     if (ui->radioSmartFee->isChecked())
         ui->labelFeeMinimized->setText(ui->labelSmartFee->text());
     else {
-        ui->labelFeeMinimized->setText(RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), ui->customFee->value()) + "/kB");
+        ui->labelFeeMinimized->setText(EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), ui->customFee->value()) + "/kB");
     }
 }
 
@@ -1334,7 +1366,7 @@ void ReissueAssetDialog::updateMinFeeLabel()
 {
     if (model && model->getOptionsModel())
         ui->checkBoxMinimumFee->setText(tr("Pay only the required fee of %1").arg(
-                RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetRequiredFee(1000)) + "/kB")
+                EvrmoreUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetRequiredFee(1000)) + "/kB")
         );
 }
 

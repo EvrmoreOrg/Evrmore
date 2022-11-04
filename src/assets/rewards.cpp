@@ -1,4 +1,5 @@
 // Copyright (c) 2017-2020 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -61,13 +62,13 @@ bool GenerateDistributionList(const CRewardSnapshot& p_rewardSnapshot, std::vect
     //  Get details on the specified source asset
     CNewAsset distributionAsset;
     UNUSED_VAR bool srcIsIndivisible = false;
-    CAmount srcUnitDivisor = COIN;  //  Default to divisor for RVN
+    CAmount srcUnitDivisor = COIN;  //  Default to divisor for EVR
     const int8_t COIN_DIGITS_PAST_DECIMAL = 8;
 
     //  This value is in indivisible units of the source asset
     CAmount modifiedPaymentInAssetUnits = p_rewardSnapshot.nDistributionAmount;
 
-    if (p_rewardSnapshot.strDistributionAsset != "RVN") {
+    if (p_rewardSnapshot.strDistributionAsset != "EVR") {
         if (!passets->GetAssetMetaDataIfExists(p_rewardSnapshot.strDistributionAsset, distributionAsset)) {
             LogPrint(BCLog::REWARDS, "%s: Failed to retrieve asset details for '%s'\n", __func__, p_rewardSnapshot.strDistributionAsset.c_str());
             return false;
@@ -87,7 +88,7 @@ bool GenerateDistributionList(const CRewardSnapshot& p_rewardSnapshot, std::vect
                  p_rewardSnapshot.strDistributionAsset.c_str(), distributionAsset.units, srcUnitDivisor);
     }
     else {
-        LogPrint(BCLog::REWARDS, "%s: Distribution is RVN with divisor %d\n", __func__, srcUnitDivisor);
+        LogPrint(BCLog::REWARDS, "%s: Distribution is EVR with divisor %d\n", __func__, srcUnitDivisor);
     }
 
     LogPrint(BCLog::REWARDS, "%s: Scaled payment amount in %s is %d\n", __func__,
@@ -269,8 +270,8 @@ bool BuildTransaction(
     CAmount totalPaymentAmt = 0;
 
 
-    //  Handle payouts using RVN differently from those using an asset
-    if (p_rewardSnapshot.strDistributionAsset == "RVN") {
+    //  Handle payouts using EVR differently from those using an asset
+    if (p_rewardSnapshot.strDistributionAsset == "EVR") {
         // Check amount
         CAmount curBalance = p_walletPtr->GetBalance();
 
@@ -287,7 +288,7 @@ bool BuildTransaction(
         for (int i = start; i < (int)p_pendingPayments.size() && i < stop; i++) {
             expectedCount++;
 
-            // Parse Raven address (already validated during ownership snapshot creation)
+            // Parse Evrmore address (already validated during ownership snapshot creation)
             CTxDestination dest = DecodeDestination(p_pendingPayments[i].address);
             CScript scriptPubKey = GetScriptForDestination(dest);
             CRecipient recipient = {scriptPubKey, p_pendingPayments[i].amount, false};

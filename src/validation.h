@@ -1,14 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2022 The Evrmore Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef RAVEN_VALIDATION_H
-#define RAVEN_VALIDATION_H
+#ifndef EVRMORE_VALIDATION_H
+#define EVRMORE_VALIDATION_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/raven-config.h"
+#include "config/evrmore-config.h"
 #endif
 
 #include "amount.h"
@@ -135,7 +136,7 @@ static const unsigned int INVENTORY_BROADCAST_MAX = 7 * INVENTORY_BROADCAST_INTE
 static const unsigned int AVG_FEEFILTER_BROADCAST_INTERVAL = 10 * 60;
 /** Maximum feefilter broadcast delay after significant change. */
 static const unsigned int MAX_FEEFILTER_CHANGE_DELAY = 5 * 60;
-/** Block download timeout base, expressed in millionths of the block interval (i.e. 10 min) */ // TODO Should we change this for raven, with 1 minutes block intervals?
+/** Block download timeout base, expressed in millionths of the block interval (i.e. 10 min) */ // TODO Should we change this for evrmore, with 1 minutes block intervals?
 static const int64_t BLOCK_DOWNLOAD_TIMEOUT_BASE = 1000000;
 /** Additional block download timeout per parallel downloading peer (i.e. 5 min) */
 static const int64_t BLOCK_DOWNLOAD_TIMEOUT_PER_PEER = 500000;
@@ -227,7 +228,7 @@ extern arith_uint256 nMinimumChainWork;
 extern CBlockIndex *pindexBestHeader;
 
 /** Minimum disk space required - used in CheckDiskSpace() */
-static const uint64_t nMinDiskSpace = 52428800;
+static const uint64_t nMinDiskSpace = 52428800; // that's 50-MegaBytes
 
 /** Pruning-related variables and constants */
 /** True if any block files have ever been pruned. */
@@ -617,4 +618,4 @@ bool IsRestrictedActive(unsigned int nBlockNumber);
 CAssetsCache* GetCurrentAssetCache();
 /** RVN END */
 
-#endif // RAVEN_VALIDATION_H
+#endif // EVRMORE_VALIDATION_H

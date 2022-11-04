@@ -28,7 +28,7 @@ def hex_switchEndian(s):
 	pairList = [s[i:i+2].encode() for i in range(0, len(s), 2)]
 	return b''.join(pairList[::-1]).decode()
 
-class RavenRPC:
+class EvrmoreRPC:
 	def __init__(self, host, port, username, password):
 		authpair = "%s:%s" % (username, password)
 		authpair = authpair.encode('utf-8')
@@ -70,7 +70,7 @@ class RavenRPC:
 		return 'error' in resp_obj and resp_obj['error'] is not None
 
 def get_block_hashes(settings, max_blocks_per_call=10000):
-	rpc = RavenRPC(settings['host'], settings['port'],
+	rpc = EvrmoreRPC(settings['host'], settings['port'],
 			 settings['rpcuser'], settings['rpcpassword'])
 
 	height = settings['min_height']
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 	if 'host' not in settings:
 		settings['host'] = '127.0.0.1'
 	if 'port' not in settings:
-		settings['port'] = 8766
+		settings['port'] = 8819
 	if 'min_height' not in settings:
 		settings['min_height'] = 0
 	if 'max_height' not in settings:

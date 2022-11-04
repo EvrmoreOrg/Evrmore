@@ -4,7 +4,7 @@
 
 #include <assets/assets.h>
 
-#include <test/test_raven.h>
+#include <test/test_evrmore.h>
 
 #include <boost/test/unit_test.hpp>
 #include "core_write.cpp"
@@ -47,20 +47,33 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         BOOST_CHECK(!IsAssetNameValid("A._BC", type));
         BOOST_CHECK(!IsAssetNameValid("AB_.C", type));
 
-        //- Versions of RAVENCOIN NOT allowed
+        //- Versions of EVRMORE names NOT allowed
         BOOST_CHECK(!IsAssetNameValid("RVN", type));
         BOOST_CHECK(!IsAssetNameValid("RAVEN", type));
         BOOST_CHECK(!IsAssetNameValid("RAVENCOIN", type));
+        BOOST_CHECK(!IsAssetNameValid("RVNS", type));
+        BOOST_CHECK(!IsAssetNameValid("RAVENS", type));
+        BOOST_CHECK(!IsAssetNameValid("RAVENCOINS", type));
+        BOOST_CHECK(!IsAssetNameValid("EVR", type));
+        BOOST_CHECK(!IsAssetNameValid("EVRMORE", type));
+        BOOST_CHECK(!IsAssetNameValid("EVERMORE", type));
+        BOOST_CHECK(!IsAssetNameValid("EVRMORECOIN", type));
+        BOOST_CHECK(!IsAssetNameValid("EVERMORECOIN", type));
+        BOOST_CHECK(!IsAssetNameValid("EVRS", type));
+        BOOST_CHECK(!IsAssetNameValid("EVRMORES", type));
+        BOOST_CHECK(!IsAssetNameValid("EVERMORES", type));
+        BOOST_CHECK(!IsAssetNameValid("EVRMORECOINS", type));
+        BOOST_CHECK(!IsAssetNameValid("EVERMORECOINS", type));
 
-        //- Versions of RAVENCOIN ALLOWED
-        BOOST_CHECK(IsAssetNameValid("RAVEN.COIN", type));
-        BOOST_CHECK(IsAssetNameValid("RAVEN_COIN", type));
-        BOOST_CHECK(IsAssetNameValid("RVNSPYDER", type));
-        BOOST_CHECK(IsAssetNameValid("SPYDERRVN", type));
-        BOOST_CHECK(IsAssetNameValid("RAVENSPYDER", type));
-        BOOST_CHECK(IsAssetNameValid("SPYDERAVEN", type));
-        BOOST_CHECK(IsAssetNameValid("BLACK_RAVENS", type));
-        BOOST_CHECK(IsAssetNameValid("SERVNOT", type));
+        //- Versions of EVRMORE names ALLOWED
+        BOOST_CHECK(IsAssetNameValid("EVRMORE.COIN", type));
+        BOOST_CHECK(IsAssetNameValid("EVRMORE_COIN", type));
+        BOOST_CHECK(IsAssetNameValid("EVRSPYDER", type));
+        BOOST_CHECK(IsAssetNameValid("SPYDEREVR", type));
+        BOOST_CHECK(IsAssetNameValid("EVRMORESPYDER", type));
+        BOOST_CHECK(IsAssetNameValid("SPYDEREVRMORE", type));
+        BOOST_CHECK(IsAssetNameValid("MY_EVRMOREX", type));
+        BOOST_CHECK(IsAssetNameValid("XEVRY", type));
 
         // subs
         BOOST_CHECK(IsAssetNameValid("ABC/A", type));
@@ -227,7 +240,7 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         SelectParams(CBaseChainParams::MAIN);
 
         // Create the asset scriptPubKey
-        CAssetTransfer asset("RAVEN", 1000);
+        CAssetTransfer asset("EVRMORE", 1000);
         CScript scriptPubKey = GetScriptForDestination(DecodeDestination(GetParams().GlobalBurnAddress()));
         asset.ConstructTransaction(scriptPubKey);
 
@@ -248,7 +261,7 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         SelectParams(CBaseChainParams::MAIN);
 
         // Create the asset scriptPubKey
-        CNewAsset asset("RAVEN", 1000, 8, 1, 0, "");
+        CNewAsset asset("EVRMORE", 1000, 8, 1, 0, "");
         CScript scriptPubKey = GetScriptForDestination(DecodeDestination(GetParams().GlobalBurnAddress()));
         asset.ConstructTransaction(scriptPubKey);
 
