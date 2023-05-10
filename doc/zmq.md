@@ -70,7 +70,7 @@ The same notification can be specified more than once.
 
 For instance:
 
-    $ evrmored -zmqpubhashtx=tcp://127.0.0.1:8819 \
+    $ evrmored -zmqpubhashtx=tcp://127.0.0.1:28819 \
                -zmqpubrawtx=ipc:///tmp/evrmored.tx.raw
 
 Each PUB notification has a topic and body, where the header
