@@ -25,22 +25,13 @@ cd depends
 if [[ ${OS} == "windows" ]]; then
     make HOST=x86_64-w64-mingw32 -j2
 elif [[ ${OS} == "osx" ]]; then
-    cd ${GITHUB_WORKSPACE}
-    # curl -O <url>
-    echo "LEGAL issues with OSX SDK, need to get it yourself and extract the valuable stuff."
-    echo "See github -> contrib/macdeploy/README.md"
-    echo "Countdown from 3 sec. Make sure your SDK is at /tmp/SDKs and it is the only *.tar.gz file."
-    echo "3..."
-    sleep 1
-    echo "2..."
-    sleep 1
-    echo "1..."
-    sleep 1
-    echo "0.. continuing.."
-    mkdir -p ${GITHUB_WORKSPACE}/depends/SDKs 
-    cd  ${GITHUB_WORKSPACE}/depends/SDKs
-    tar -zxf /tmp/SDKs/*.tar.gz
-    cd ${GITHUB_WORKSPACE}/depends && make HOST=x86_64-apple-darwin14 -j2
+    mkdir SDKs
+    cd SDKs
+    curl -O https://bitcoincore.org/depends-sources/sdks/Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers.tar.gz
+    tar -zxf Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers.tar.gz
+    rm -rf Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers.tar.gz
+    cd ..
+    make HOST=x86_64-apple-darwin14 -j2
 elif [[ ${OS} == "linux" || ${OS} == "linux-disable-wallet" ]]; then
     make HOST=x86_64-linux-gnu -j2
 elif [[ ${OS} == "arm32v7" || ${OS} == "arm32v7-disable-wallet" ]]; then
