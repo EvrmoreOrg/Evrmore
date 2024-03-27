@@ -121,8 +121,7 @@ static const int MAX_URI_LENGTH = 255;
 #define QAPP_APP_NAME_TESTNET "Evrmore-Qt-testnet"
 
 /* Default third party browser urls */
-// EVR-TODO: Put Evrmore browser URLs here
-#define DEFAULT_THIRD_PARTY_BROWSERS "https://api.ravencoin.org/tx/%s|https://rvn.cryptoscope.io/tx/?txid=%s|https://blockbook.ravencoin.org/tx/%s|https://explorer.mangofarmassets.com/tx/%s|https://www.assetsexplorer.com/tx/%s"
+#define DEFAULT_THIRD_PARTY_BROWSERS "https://evr.cryptoscope.io/tx/?txid=%s|https://evr-explorer-mainnet.ting.finance/index.html?route=TRANSACTION&id=%s"
 
 /* Default IPFS viewer */
 #define DEFAULT_IPFS_VIEWER "https://ipfs.io/ipfs/%s"
