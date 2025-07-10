@@ -395,14 +395,17 @@ static void registerSignalHandler(int signal, void(*handler)(int))
 }
 #endif
 
+static boost::signals2::connection rpcNotifyBlockChangeConnection;
+static boost::signals2::connection genesisWaitConnection;
+
 void OnRPCStarted()
 {
-    uiInterface.NotifyBlockTip.connect(&RPCNotifyBlockChange);
+    rpcNotifyBlockChangeConnection = uiInterface.NotifyBlockTip.connect(&RPCNotifyBlockChange);
 }
 
 void OnRPCStopped()
 {
-    uiInterface.NotifyBlockTip.disconnect(&RPCNotifyBlockChange);
+    rpcNotifyBlockChangeConnection.disconnect();
     RPCNotifyBlockChange(false, nullptr);
     cvBlockChange.notify_all();
     LogPrint(BCLog::RPC, "RPC stopped.\n");
@@ -1844,7 +1847,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Either install a handler to notify us when genesis activates, or set fHaveGenesis directly.
     // No locking, as this happens before any background thread is started.
     if (chainActive.Tip() == nullptr) {
-        uiInterface.NotifyBlockTip.connect(BlockNotifyGenesisWait);
+        genesisWaitConnection = uiInterface.NotifyBlockTip.connect(BlockNotifyGenesisWait);
     } else {
         fHaveGenesis = true;
     }
@@ -1865,7 +1868,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         while (!fHaveGenesis) {
             condvar_GenesisWait.wait(lock);
         }
-        uiInterface.NotifyBlockTip.disconnect(BlockNotifyGenesisWait);
+        genesisWaitConnection.disconnect();
     }
 
     // ********************************************************* Step 11: start node

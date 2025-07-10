@@ -733,14 +733,15 @@ if test x$use_upnp != xno; then
     [AC_CHECK_LIB([miniupnpc], [upnpDiscover], [MINIUPNPC_LIBS=-lminiupnpc], [have_miniupnpc=no])],
     [have_miniupnpc=no]
   )
-dnl The minimum supported miniUPnPc API version is set to 10. This keeps compatibility
-dnl with Ubuntu 16.04 LTS and Debian 8 libminiupnpc-dev packages.
+dnl The minimum supported miniUPnPc API version is set to 17. This modernizes
+dnl the requirement from the ancient version 10 while maintaining compatibility
+dnl with current Ubuntu LTS releases. Set this to 18 for Ubuntu 26.04 LTS.
 if test x$have_miniupnpc != xno; then
   AC_MSG_CHECKING([whether miniUPnPc API version is supported])
   AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
       @%:@include <miniupnpc/miniupnpc.h>
     ]], [[
-      #if MINIUPNPC_API_VERSION >= 10
+      #if MINIUPNPC_API_VERSION >= 17
       // Everything is okay
       #else
       #  error miniUPnPc API version is too old
@@ -749,7 +750,7 @@ if test x$have_miniupnpc != xno; then
       AC_MSG_RESULT(yes)
     ],[
     AC_MSG_RESULT(no)
-    AC_MSG_WARN([miniUPnPc API version < 10 is unsupported, disabling UPnP support.])
+    AC_MSG_WARN([miniUPnPc API version < 17 is unsupported, disabling UPnP support.])
     have_miniupnpc=no
   ])
 fi
@@ -769,7 +770,7 @@ fi
 if test x$use_boost = xyes; then
 
 dnl Minimum required Boost version
-define(MINIMUM_REQUIRED_BOOST, 1.47.0)
+define(MINIMUM_REQUIRED_BOOST, 1.83.0)
 
 dnl Check for boost libs
 AX_BOOST_BASE([MINIMUM_REQUIRED_BOOST])

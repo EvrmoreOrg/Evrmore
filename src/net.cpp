@@ -1486,7 +1486,14 @@ void ThreadMapPort()
     struct IGDdatas data;
     int r;
 
+#if MINIUPNPC_API_VERSION >= 18
+    // API version 18+ - UPNP_GetValidIGD() prototype changed to include IPv6
+    char ipv6[64];
+    r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr), ipv6, sizeof(ipv6));
+#else
+    // API version < 18 - original UPNP_GetValidIGD() prototype
     r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
+#endif
     if (r == 1)
     {
         if (fDiscover) {
