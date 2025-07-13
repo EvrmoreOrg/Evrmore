@@ -4,6 +4,66 @@ Build instructions for Evrmore
 This will install most of the dependencies from ubuntu.
 The only one we build, is Berkeley DB 4.8.
 
+Ubuntu 24.04/10/25.04 - Noble Numbat/Oracular Oriole/Plucky Puffin - Plus Berkeley DB 4.8.30 Script - Install dependencies:
+---------------------------
+`$ sudo apt install
+build-essential
+autoconf
+automake
+autotools-dev
+libtool
+pkg-config
+bsdmainutils
+python3
+patch
+make
+cmake
+g++
+gcc
+binutils
+binutils-gold
+libboost-all-dev
+libssl-dev
+libevent-dev
+libczmq-dev
+libminiupnpc-dev
+libprotobuf-dev
+libqrencode-dev
+zlib1g-dev
+qtbase5-dev
+qttools5-dev
+qttools5-dev-tools
+libexpat1-dev
+libdbus-1-dev
+libfontconfig-dev
+libfreetype-dev
+libice-dev
+libsm-dev
+libx11-dev
+libxau-dev
+libxext-dev
+libxcb1-dev
+libxkbcommon-dev
+xcb-proto
+x11proto-xext-dev
+x11proto-dev
+xtrans-dev
+bison
+protobuf-compiler
+curl
+wget
+g++-mingw-w64-x86-64
+mingw-w64-x86-64-dev
+nsis
+doxygen
+graphviz
+gettext
+ccache
+git
+btop
+zip
+unzip
+`
 
 Ubuntu 21.10 - Impish Indri - Install dependencies:
 ---------------------------
