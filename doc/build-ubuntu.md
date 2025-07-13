@@ -216,7 +216,7 @@ __Download Evrmore source.__
 
 __Download and build Berkeley DB 4.8__
 
-`contrib/install_db4.sh ../`
+`bash contrib/install_db4.sh ../`
 
 __The build process:__
 
