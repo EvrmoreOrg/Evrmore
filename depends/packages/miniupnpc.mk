@@ -2,7 +2,7 @@ package=miniupnpc
 $(package)_version=2.2.6
 $(package)_download_path=http://miniupnp.tuxfamily.org/files
 $(package)_file_name=$(package)-$($(package)_version).tar.gz
-$(package)_sha256_hash=37FCD91953508C3E62D6964BB8FFBC5D47F3E13481FA54E6214FCC68704C66F1
+$(package)_sha256_hash=37fcd91953508c3e62d6964bb8ffbc5d47f3e13481fa54e6214fcc68704c66f1
 
 define $(package)_set_vars
 $(package)_build_opts=CC="$($(package)_cc)"
