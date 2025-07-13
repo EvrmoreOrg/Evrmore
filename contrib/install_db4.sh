@@ -302,3 +302,4 @@ print_status "Configuration saved to: ${CONFIG_FILE}"
 echo -e "You can source this file before building: ${GREEN}source ${CONFIG_FILE}${NC}"
 echo
 echo -e "${RED}(㇏(•̀ᵥᵥ•́)ノ)${PURPLE} This shit ain't nothin' to me man!${NC}"
+echo

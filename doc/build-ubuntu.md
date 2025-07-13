@@ -224,7 +224,7 @@ __The build process:__
 
 `export BDB_PREFIX=$HOME/src/db4`
 
-`./configure BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" --prefix=/usr/local` 
+`./configure BDB_LIBS="${BDB_PREFIX}/lib/libdb_cxx-4.8.a ${BDB_PREFIX}/lib/libdb-4.8.a" BDB_CFLAGS="-I${BDB_PREFIX}/include" --prefix=/usr/local`
 
 
 _Adjust to own needs. This will install the binaries to `/usr/local/bin`_
