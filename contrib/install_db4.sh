@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2017-2019 The Bitcoin Core developers
 # Copyright (c) 2022 The Evrmore Core developers
-# Copyright (c) 2025 The Echelon Technology Group Developers
+# Copyright (c) 2025 The Echelon Technology Group developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
