@@ -45,7 +45,7 @@ No other options are needed, the paths are automatically configured.
 
 Common linux dependencies:
 
-    sudo apt-get install make automake cmake curl g++-multilib libtool binutils-gold bsdmainutils pkg-config python3 patch
+    sudo apt-get install make automake cmake curl g++-multilib libtool binutils-gold bsdmainutils pkg-config python3 patch bison lbzip2
 
 For linux ARM cross compilation:
 
@@ -82,3 +82,47 @@ options will be passed to Evrmore's configure. In this case, `--disable-wallet`.
 - [description.md](description.md): General description of the depends system
 - [packages.md](packages.md): Steps for adding packages
 
+### Example of how to build for the machine host on Ubuntu 24.04.2 LTS and Ubuntu 24.10/25.04
+#### *(This yields static libraries -> static binaries for release, compile using the instructions in the doc directory for shared libraries -> shared binaries which require the user to install pre-requisites; shared libraries/binaries are good for development on local development machines)*
+
+Ensure you start in $HOME, then make the directory for sources, and navigate into that directory.
+
+    cd $HOME
+    mkdir src
+    cd src
+
+Clone (download) the evrmore source repo from github, navigate into that repo, and check out the develop branch for the most recent updates.
+
+    git clone https://github.com/EvrmoreOrg/Evrmore
+    cd Evrmore
+    git checkout develop
+
+Navigate to the depends directory, download the right dependencies for the static build process, and begin the build of our static libraries, once finished, go back one directory to the root of the Evrmore project
+
+    cd depends
+    make -j$(nproc)
+    cd ..
+
+*You can adjust -j$(nproc) to be any number of processor cores/threads, for example, if you have a machine with 8 processing threads, you can run make -j4 to use half of them.*
+
+Now, we can build our static binaries (daemon, cli, qt, etc.) by running the autogen, configure, and build processes
+
+    ./autogen.sh
+    CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure --prefix=/usr/local
+    make -j$(nproc)
+
+Now, you have two options as to what you want to do with these binaries...
+
+You can first, install them locally from wherever you set the --prefix= path.
+
+    sudo make install
+
+*Now you can run the commands from anywhere on your system, when installed to /usr/local, /usr, or / : evrmored, evrmore-cli, evrmore-qt, etc.*
+
+The other option you have is navigating into the sources directory within the root of the Evrmore directory, and running the binaries from there and the other sub-directories in which they are nested within the sources directory.
+
+    cd src
+    ./evrmored
+    ./evrmore-cli getblockchaininfo
+
+*This will navigate the user to the sources directory if they are starting within the root of the Evrmore directory after the build process, then starts the daemon, and then uses the cli to check the blockchain info state.*

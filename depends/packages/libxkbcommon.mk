@@ -4,13 +4,19 @@ $(package)_download_path=https://xkbcommon.org/download/
 $(package)_file_name=$(package)-$($(package)_version).tar.xz
 $(package)_sha256_hash=60ddcff932b7fd352752d51a5c4f04f3d0403230a584df9a2e0d5ed87c486c8b
 $(package)_dependencies=libxcb
+$(package)_patches=fix_array_bounds.patch
 
 define $(package)_set_vars
 $(package)_config_opts = --enable-option-checking --disable-dependency-tracking
-$(package)_config_opts += --disable-static --disable-docs
+$(package)_config_opts += --enable-static --disable-shared --disable-docs
+$(package)_config_opts += --with-pic
+$(package)_config_opts += --enable-x11
+#$(package)_cflags += -Wno-error=array-bounds
+#$(package)_cxxflags += -Wno-error=array-bounds
 endef
 
 define $(package)_preprocess_cmds
+  patch -p1 < $($(package)_patch_dir)/fix_array_bounds.patch && \
   cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub build-aux
 endef
 
