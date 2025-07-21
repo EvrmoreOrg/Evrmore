@@ -85,7 +85,11 @@ options will be passed to Evrmore's configure. In this case, `--disable-wallet`.
 ### Example of how to build for the machine host on Ubuntu 24.04.2 LTS and Ubuntu 24.10/25.04
 #### *(This yields static libraries -> static binaries for release, compile using the instructions in the doc directory for shared libraries -> shared binaries which require the user to install pre-requisites; shared libraries/binaries are good for development on local development machines)*
 
-Ensure you start in $HOME, then make the directory for sources, and navigate into that directory.
+To begin you first want to ensure you have the dependencies to complete this process:
+
+    sudo apt install make automake cmake curl g++-multilib libtool binutils-gold bsdmainutils pkg-config python3 patch bison lbzip2
+
+Then you want to ensure that you start this process in $HOME (for simplicity sake), then make the directory for sources, and navigate into that directory.
 
     cd $HOME
     mkdir src
