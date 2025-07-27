@@ -139,26 +139,26 @@ fi
 # Apply comprehensive C++11 compatibility patches
 print_status "Applying C++11 compatibility patches..."
 
-# First, apply sed commands for atomic_compare_exchange like the manual approach
+# First, rename __atomic_compare_exchange (with two underscores) to avoid conflicts
+print_status "Renaming __atomic_compare_exchange to __atomic_compare_exchange_db..."
+sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h
+
+# Now rename atomic_compare_exchange (without underscores) - using word boundaries to avoid matching the above
 print_status "Renaming atomic_compare_exchange to atomic_compare_exchange_db..."
-sed -i 's/atomic_compare_exchange/atomic_compare_exchange_db/g' dbinc/atomic.h
-sed -i 's/atomic_compare_exchange/atomic_compare_exchange_db/g' mutex/mut_method.c
-sed -i 's/atomic_compare_exchange/atomic_compare_exchange_db/g' mutex/mut_win32.c
-sed -i 's/atomic_compare_exchange/atomic_compare_exchange_db/g' mutex/mut_tas.c
-sed -i 's/atomic_compare_exchange/atomic_compare_exchange_db/g' dbinc/mutex_int.h
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' dbinc/atomic.h
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' mutex/mut_method.c
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' mutex/mut_win32.c
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' mutex/mut_tas.c
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' dbinc/mutex_int.h
 
 # Now apply sed commands for atomic_init
 print_status "Renaming atomic_init to atomic_init_db..."
-sed -i 's/atomic_init/atomic_init_db/g' dbinc/atomic.h
-sed -i 's/atomic_init/atomic_init_db/g' mp/mp_fget.c
-sed -i 's/atomic_init/atomic_init_db/g' mp/mp_mvcc.c
-sed -i 's/atomic_init/atomic_init_db/g' mp/mp_region.c
-sed -i 's/atomic_init/atomic_init_db/g' mutex/mut_method.c
-sed -i 's/atomic_init/atomic_init_db/g' mutex/mut_tas.c
-
-# Also rename __atomic_compare_exchange to __atomic_compare_exchange_db
-print_status "Renaming __atomic_compare_exchange to __atomic_compare_exchange_db..."
-sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h
+sed -i 's/\<atomic_init\>/atomic_init_db/g' dbinc/atomic.h
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mp/mp_fget.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mp/mp_mvcc.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mp/mp_region.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mutex/mut_method.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mutex/mut_tas.c
 
 # Update config.guess and config.sub
 print_status "Updating config.guess and config.sub for modern systems..."
@@ -231,18 +231,18 @@ if ! download_with_fallback "dist/config.sub" "${CONFIG_SUB_URLS[@]}"; then
     print_warning "Continuing with original config.sub (build may fail on newer systems)"
 fi
 
-# Apply the mutex_fcntl fix from manual approach
-print_status "Applying mutex_fcntl fix to dist/configure..."
-if [ -f "dist/configure" ]; then
-    # First, let's check if the line exists and what it looks like
-    if grep -n '\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*)' dist/configure > /dev/null; then
-        # Apply the fix
-        sed -i 's/\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*)/\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*|\*mut_fcntl\*)/g' dist/configure
-        print_status "mutex_fcntl fix applied successfully"
-    else
-        print_warning "Could not find the expected pattern in dist/configure - skipping mutex_fcntl fix"
-    fi
-fi
+# DO NOT Apply the mutex_fcntl fix from manual approach, this is causing a segmentation fault on QT when compiling on Ubuntu 25+, using POSIX pthreads flag instead
+#print_status "Applying mutex_fcntl fix to dist/configure..."
+#if [ -f "dist/configure" ]; then
+#    # First, let's check if the line exists and what it looks like
+#    if grep -n '\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*)' dist/configure > /dev/null; then
+#        # Apply the fix
+#        sed -i 's/\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*)/\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*|\*mut_fcntl\*)/g' dist/configure
+#        print_status "mutex_fcntl fix applied successfully"
+#    else
+#        print_warning "Could not find the expected pattern in dist/configure - skipping mutex_fcntl fix"
+#    fi
+#fi
 
 # Configure and build
 print_status "Configuring Berkeley DB..."
@@ -258,6 +258,7 @@ fi
 "${SOURCE_PATH}/dist/configure" \
   --enable-cxx \
   --prefix="${BDB_PREFIX}" \
+  --with-mutex=POSIX/pthreads \
   "${@}"
 
 print_status "Building Berkeley DB (this may take a while)..."

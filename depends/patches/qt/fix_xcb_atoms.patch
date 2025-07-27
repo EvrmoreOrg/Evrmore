@@ -1,0 +1,13 @@
+--- a/qtbase/src/3rdparty/xcb/xcb-util/atoms.c
++++ b/qtbase/src/3rdparty/xcb/xcb-util/atoms.c
+@@ -2,10 +2,10 @@
+    possible... */
+ #ifdef HAVE_VASPRINTF
+ #define _GNU_SOURCE
+-#include <stdio.h>
+ #endif
+ 
++#include <stdio.h>
+ #include <xcb/xcb.h>
+ #include <stdlib.h>
+ #include <stdarg.h>
