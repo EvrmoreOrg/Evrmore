@@ -23,6 +23,18 @@ host:=$(HOST)
 host_toolchain:=$(HOST)-
 endif
 
+ifneq (,$(findstring darwin,$(HOST)))
+  ifeq ($(SDK_PATH),$(BASEDIR)/SDKs)
+    SDK_SEARCH := $(wildcard $(BASEDIR)/SDKs/Xcode-*-extracted-SDK-with-libcxx-headers)
+    ifneq ($(SDK_SEARCH),)
+      SDK_PATH := $(firstword $(SDK_SEARCH))
+      $(info Using auto-detected SDK_PATH: $(SDK_PATH))
+    else
+      $(error Darwin SDK not found. Please run bash ../contrib/fetch_darwin_sdk.sh or set SDK_PATH)
+    endif
+  endif
+endif
+
 ifneq ($(DEBUG),)
 release_type=debug
 else

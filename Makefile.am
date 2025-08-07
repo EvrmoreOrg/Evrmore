@@ -11,7 +11,6 @@ endif
 .PHONY: deploy FORCE
 
 override GZIP_ENV = "-9n"
-export PYTHONPATH
 
 if BUILD_EVRMORE_LIBS
 pkgconfigdir = $(libdir)/pkgconfig
@@ -167,6 +166,10 @@ deploydir: $(APP_DIST_EXTRAS)
 endif
 
 if TARGET_DARWIN
+DEPENDS_PATH = $(top_srcdir)/depends/x86_64-apple-darwin/native/lib
+override PYTHONPATH := $(DEPENDS_PATH)/python/dist-packages:$(DEPENDS_PATH)/python3/dist-packages
+export PYTHONPATH
+
 appbundle: $(OSX_APP_BUILT)
 deploy: $(OSX_DMG)
 endif
