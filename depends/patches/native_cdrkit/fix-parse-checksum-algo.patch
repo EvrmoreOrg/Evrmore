@@ -1,0 +1,8 @@
+--- a/genisoimage/genisoimage.c
++++ b/genisoimage/genisoimage.c
+@@ -57,4 +57,5 @@
+ #include <schily.h>
++#include "checksum.h"
+ #ifdef UDF
+ #include "udf.h"
+ #endif
