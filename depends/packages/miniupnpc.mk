@@ -1,8 +1,8 @@
 package=miniupnpc
-$(package)_version=2.0.20170509
-$(package)_download_path=http://miniupnp.free.fr/files
+$(package)_version=2.2.6
+$(package)_download_path=http://miniupnp.tuxfamily.org/files
 $(package)_file_name=$(package)-$($(package)_version).tar.gz
-$(package)_sha256_hash=d3c368627f5cdfb66d3ebd64ca39ba54d6ff14a61966dbecb8dd296b7039f16a
+$(package)_sha256_hash=37fcd91953508c3e62d6964bb8ffbc5d47f3e13481fa54e6214fcc68704c66f1
 
 define $(package)_set_vars
 $(package)_build_opts=CC="$($(package)_cc)"
@@ -17,12 +17,30 @@ define $(package)_preprocess_cmds
   sed -i.old "s|miniupnpcstrings.h: miniupnpcstrings.h.in wingenminiupnpcstrings|miniupnpcstrings.h: miniupnpcstrings.h.in|" Makefile.mingw
 endef
 
-define $(package)_build_cmds
-	$(MAKE) libminiupnpc.a $($(package)_build_opts)
+define $(package)_build_cmds_linux
+        $(MAKE) build/libminiupnpc.a $($(package)_build_opts)
 endef
 
-define $(package)_stage_cmds
+define $(package)_build_cmds_mingw32
+        $(MAKE) libminiupnpc.a $($(package)_build_opts)
+endef
+
+define $(package)_build_cmds
+  $($(package)_build_cmds_$(host_os))
+endef
+
+define $(package)_stage_cmds_linux
+        mkdir -p $($(package)_staging_prefix_dir)/include/miniupnpc $($(package)_staging_prefix_dir)/lib &&\
+        install *.h $($(package)_staging_prefix_dir)/include/miniupnpc &&\
+        install build/libminiupnpc.a $($(package)_staging_prefix_dir)/lib
+endef
+
+define $(package)_stage_cmds_mingw32
 	mkdir -p $($(package)_staging_prefix_dir)/include/miniupnpc $($(package)_staging_prefix_dir)/lib &&\
 	install *.h $($(package)_staging_prefix_dir)/include/miniupnpc &&\
 	install libminiupnpc.a $($(package)_staging_prefix_dir)/lib
+endef
+
+define $(package)_stage_cmds
+  $($(package)_stage_cmds_$(host_os))
 endef

@@ -1,0 +1,11 @@
+--- a/src/xkbcomp/ast-build.c
++++ b/src/xkbcomp/ast-build.c
+@@ -85,7 +85,7 @@ ExprCreate(enum expr_op_type op, enum expr_value_type type, size_t size)
+ }
+ 
+ #define EXPR_CREATE(type_, name_, op_, value_type_) \
+-    ExprDef *name_ = ExprCreate(op_, value_type_, sizeof(type_)); \
++    ExprDef *name_ = ExprCreate(op_, value_type_, sizeof(ExprDef)); \
+     if (!name_) \
+         return NULL;
+ 

@@ -1,8 +1,8 @@
 package=libxcb
-$(package)_version=1.10
+$(package)_version=1.17.0
 $(package)_download_path=http://xcb.freedesktop.org/dist
-$(package)_file_name=$(package)-$($(package)_version).tar.bz2
-$(package)_sha256_hash=98d9ab05b636dd088603b64229dd1ab2d2cc02ab807892e107d674f9c3f2d5b5
+$(package)_file_name=$(package)-$($(package)_version).tar.gz
+$(package)_sha256_hash=2c69287424c9e2128cb47ffe92171e10417041ec2963bceafb65cb3fcf8f0b85
 $(package)_dependencies=xcb_proto libXau xproto
 
 define $(package)_set_vars

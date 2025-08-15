@@ -384,6 +384,7 @@ libevrmore_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libevrmore_common_a_SOURCES = \
   base58.cpp \
   airdrop.cpp \
+  airdropitems.cpp \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \

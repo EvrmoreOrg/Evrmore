@@ -1,37 +1,78 @@
 #!/bin/sh
 # Copyright (c) 2017-2019 The Bitcoin Core developers
+# Copyright (c) 2022 The Evrmore Core developers
+# Copyright (c) 2025 The Echelon Technology Group developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-# Install libdb4.8 (Berkeley DB).
+# Install libdb4.8 (Berkeley DB v4.8.30).
 
-export LC_ALL=C
 set -e
+export LC_ALL=C
 
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[+]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[!]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[*]${NC} $1"
+}
+
+# Check if running as root
+if [ "$EUID" -eq 0 ]; then
+   print_warning "Running as root. This is not recommended."
+fi
+
+# Parse command line arguments
 if [ -z "${1}" ]; then
   echo "Usage: $0 <base-dir> [<extra-bdb-configure-flag> ...]"
   echo
   echo "Must specify a single argument: the directory in which db4 will be built."
-  echo "This is probably \`pwd\` if you're at the root of the Evrmore repository."
+  echo "This is probably \`pwd\` if you're at the root of the cryptocurrency repository."
+  echo
+  echo "Example: $0 /home/user/Evrmore"
   exit 1
 fi
 
+# Expand path function
 expand_path() {
   cd "${1}" && pwd -P
 }
 
-BDB_PREFIX="$(expand_path ${1})/db4"; shift;
+# Set up variables
+BDB_PREFIX="$(expand_path ${1})/db4"
+shift
 BDB_VERSION='db-4.8.30.NC'
+BDB_VERSION_ZIP='db-4.8.30'  # ZIP file has different naming
 BDB_HASH='12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef'
+BDB_HASH_ZIP='4f538b56681a871cc71658ed9a6120081b74b474eaa73ba2c958abea04cc98ce'  # ZIP has different hash
 BDB_URL="https://download.oracle.com/berkeley-db/${BDB_VERSION}.tar.gz"
+BDB_URL_ZIP="https://download.oracle.com/berkeley-db/${BDB_VERSION_ZIP}.zip"
 
+# Allow user to specify format preference via environment variable
+USE_ZIP=${USE_ZIP:-false}
+
+print_status "Berkeley DB 4.8.30 installation starting..."
+print_status "Installation prefix: ${BDB_PREFIX}"
+
+# Helper functions
 check_exists() {
-  command -v "$1" >/dev/null
+  command -v "$1" >/dev/null 2>&1
 }
 
 sha256_check() {
-  # Args: <sha256_hash> <filename>
-  #
   if check_exists sha256sum; then
     echo "${1}  ${2}" | sha256sum -c
   elif check_exists sha256; then
@@ -46,13 +87,8 @@ sha256_check() {
 }
 
 http_get() {
-  # Args: <url> <filename> <sha256_hash>
-  #
-  # It's acceptable that we don't require SSL here because we manually verify
-  # content hashes below.
-  #
   if [ -f "${2}" ]; then
-    echo "File ${2} already exists; not downloading again"
+    print_status "File ${2} already exists; not downloading again"
   elif check_exists curl; then
     curl --insecure --retry 5 "${1}" -o "${2}"
   else
@@ -62,190 +98,209 @@ http_get() {
   sha256_check "${3}" "${2}"
 }
 
+# Install dependencies if needed
+print_status "Checking for required tools..."
+if ! check_exists make; then
+    print_error "make not found. Please install build-essential"
+    exit 1
+fi
+
+if ! check_exists g++; then
+    print_error "g++ not found. Please install build-essential"
+    exit 1
+fi
+
+# Create prefix directory
 mkdir -p "${BDB_PREFIX}"
-http_get "${BDB_URL}" "${BDB_VERSION}.tar.gz" "${BDB_HASH}"
-tar -xzvf ${BDB_VERSION}.tar.gz -C "$BDB_PREFIX"
-cd "${BDB_PREFIX}/${BDB_VERSION}/"
 
-# Apply a patch necessary when building with clang and c++11 (see https://community.oracle.com/thread/3952592)
-patch --ignore-whitespace -p1 << 'EOF'
-commit 3311d68f11d1697565401eee6efc85c34f022ea7
-Author: fanquake <fanquake@gmail.com>
-Date:   Mon Aug 17 20:03:56 2020 +0800
+# Download and extract
+if [ "${USE_ZIP}" = "true" ]; then
+    print_status "Downloading Berkeley DB ${BDB_VERSION_ZIP}.zip..."
+    http_get "${BDB_URL_ZIP}" "${BDB_VERSION_ZIP}.zip" "${BDB_HASH_ZIP}"
 
-    Fix C++11 compatibility
+    # Check for unzip
+    if ! check_exists unzip; then
+        print_error "unzip not found. Please install it or use USE_ZIP=false for tar.gz"
+        exit 1
+    fi
 
-diff --git a/dbinc/atomic.h b/dbinc/atomic.h
-index 0034dcc..7c11d4a 100644
---- a/dbinc/atomic.h
-+++ b/dbinc/atomic.h
-@@ -70,7 +70,7 @@ typedef struct {
-  * These have no memory barriers; the caller must include them when necessary.
-  */
- #define	atomic_read(p)		((p)->value)
--#define	atomic_init(p, val)	((p)->value = (val))
-+#define	atomic_init_db(p, val)	((p)->value = (val))
+    print_status "Extracting ZIP archive..."
+    unzip -q "${BDB_VERSION_ZIP}.zip" -d "$BDB_PREFIX"
+    cd "${BDB_PREFIX}/${BDB_VERSION_ZIP}/"
+else
+    print_status "Downloading Berkeley DB ${BDB_VERSION}.tar.gz..."
+    http_get "${BDB_URL}" "${BDB_VERSION}.tar.gz" "${BDB_HASH}"
 
- #ifdef HAVE_ATOMIC_SUPPORT
+    print_status "Extracting TAR.GZ archive..."
+    tar -xzf ${BDB_VERSION}.tar.gz -C "$BDB_PREFIX"
+    cd "${BDB_PREFIX}/${BDB_VERSION}/"
+fi
 
-@@ -144,7 +144,7 @@ typedef LONG volatile *interlocked_val;
- #define	atomic_inc(env, p)	__atomic_inc(p)
- #define	atomic_dec(env, p)	__atomic_dec(p)
- #define	atomic_compare_exchange(env, p, o, n)	\
--	__atomic_compare_exchange((p), (o), (n))
-+	__atomic_compare_exchange_db((p), (o), (n))
- static inline int __atomic_inc(db_atomic_t *p)
- {
- 	int	temp;
-@@ -176,7 +176,7 @@ static inline int __atomic_dec(db_atomic_t *p)
-  * http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html
-  * which configure could be changed to use.
-  */
--static inline int __atomic_compare_exchange(
-+static inline int __atomic_compare_exchange_db(
- 	db_atomic_t *p, atomic_value_t oldval, atomic_value_t newval)
- {
- 	atomic_value_t was;
-@@ -206,7 +206,7 @@ static inline int __atomic_compare_exchange(
- #define	atomic_dec(env, p)	(--(p)->value)
- #define	atomic_compare_exchange(env, p, oldval, newval)		\
- 	(DB_ASSERT(env, atomic_read(p) == (oldval)),		\
--	atomic_init(p, (newval)), 1)
-+	atomic_init_db(p, (newval)), 1)
- #else
- #define atomic_inc(env, p)	__atomic_inc(env, p)
- #define atomic_dec(env, p)	__atomic_dec(env, p)
-diff --git a/mp/mp_fget.c b/mp/mp_fget.c
-index 5fdee5a..0b75f57 100644
---- a/mp/mp_fget.c
-+++ b/mp/mp_fget.c
-@@ -617,7 +617,7 @@ alloc:		/* Allocate a new buffer header and data space. */
+# Apply comprehensive C++11 compatibility patches
+print_status "Applying C++11 compatibility patches..."
 
- 		/* Initialize enough so we can call __memp_bhfree. */
- 		alloc_bhp->flags = 0;
--		atomic_init(&alloc_bhp->ref, 1);
-+		atomic_init_db(&alloc_bhp->ref, 1);
- #ifdef DIAGNOSTIC
- 		if ((uintptr_t)alloc_bhp->buf & (sizeof(size_t) - 1)) {
- 			__db_errx(env,
-@@ -911,7 +911,7 @@ alloc:		/* Allocate a new buffer header and data space. */
- 			MVCC_MPROTECT(bhp->buf, mfp->stat.st_pagesize,
- 			    PROT_READ);
+# First, rename __atomic_compare_exchange (with two underscores) to avoid conflicts
+print_status "Renaming __atomic_compare_exchange to __atomic_compare_exchange_db..."
+sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h
 
--		atomic_init(&alloc_bhp->ref, 1);
-+		atomic_init_db(&alloc_bhp->ref, 1);
- 		MUTEX_LOCK(env, alloc_bhp->mtx_buf);
- 		alloc_bhp->priority = bhp->priority;
- 		alloc_bhp->pgno = bhp->pgno;
-diff --git a/mp/mp_mvcc.c b/mp/mp_mvcc.c
-index 34467d2..f05aa0c 100644
---- a/mp/mp_mvcc.c
-+++ b/mp/mp_mvcc.c
-@@ -276,7 +276,7 @@ __memp_bh_freeze(dbmp, infop, hp, bhp, need_frozenp)
- #else
- 	memcpy(frozen_bhp, bhp, SSZA(BH, buf));
- #endif
--	atomic_init(&frozen_bhp->ref, 0);
-+	atomic_init_db(&frozen_bhp->ref, 0);
- 	if (mutex != MUTEX_INVALID)
- 		frozen_bhp->mtx_buf = mutex;
- 	else if ((ret = __mutex_alloc(env, MTX_MPOOL_BH,
-@@ -428,7 +428,7 @@ __memp_bh_thaw(dbmp, infop, hp, frozen_bhp, alloc_bhp)
- #endif
- 		alloc_bhp->mtx_buf = mutex;
- 		MUTEX_LOCK(env, alloc_bhp->mtx_buf);
--		atomic_init(&alloc_bhp->ref, 1);
-+		atomic_init_db(&alloc_bhp->ref, 1);
- 		F_CLR(alloc_bhp, BH_FROZEN);
- 	}
+# Now rename atomic_compare_exchange (without underscores) - using word boundaries to avoid matching the above
+print_status "Renaming atomic_compare_exchange to atomic_compare_exchange_db..."
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' dbinc/atomic.h
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' mutex/mut_method.c
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' mutex/mut_win32.c
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' mutex/mut_tas.c
+sed -i 's/\<atomic_compare_exchange\>/atomic_compare_exchange_db/g' dbinc/mutex_int.h
 
-diff --git a/mp/mp_region.c b/mp/mp_region.c
-index e6cece9..ddbe906 100644
---- a/mp/mp_region.c
-+++ b/mp/mp_region.c
-@@ -224,7 +224,7 @@ __memp_init(env, dbmp, reginfo_off, htab_buckets, max_nreg)
- 			     MTX_MPOOL_FILE_BUCKET, 0, &htab[i].mtx_hash)) != 0)
- 				return (ret);
- 			SH_TAILQ_INIT(&htab[i].hash_bucket);
--			atomic_init(&htab[i].hash_page_dirty, 0);
-+			atomic_init_db(&htab[i].hash_page_dirty, 0);
- 		}
+# Now apply sed commands for atomic_init
+print_status "Renaming atomic_init to atomic_init_db..."
+sed -i 's/\<atomic_init\>/atomic_init_db/g' dbinc/atomic.h
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mp/mp_fget.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mp/mp_mvcc.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mp/mp_region.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mutex/mut_method.c
+sed -i 's/\<atomic_init\>/atomic_init_db/g' mutex/mut_tas.c
 
- 		/*
-@@ -269,7 +269,7 @@ __memp_init(env, dbmp, reginfo_off, htab_buckets, max_nreg)
- 		hp->mtx_hash = (mtx_base == MUTEX_INVALID) ? MUTEX_INVALID :
- 		    mtx_base + i;
- 		SH_TAILQ_INIT(&hp->hash_bucket);
--		atomic_init(&hp->hash_page_dirty, 0);
-+		atomic_init_db(&hp->hash_page_dirty, 0);
- #ifdef HAVE_STATISTICS
- 		hp->hash_io_wait = 0;
- 		hp->hash_frozen = hp->hash_thawed = hp->hash_frozen_freed = 0;
-diff --git a/mutex/mut_method.c b/mutex/mut_method.c
-index 2588763..5c6d516 100644
---- a/mutex/mut_method.c
-+++ b/mutex/mut_method.c
-@@ -426,7 +426,7 @@ atomic_compare_exchange(env, v, oldval, newval)
- 	MUTEX_LOCK(env, mtx);
- 	ret = atomic_read(v) == oldval;
- 	if (ret)
--		atomic_init(v, newval);
-+		atomic_init_db(v, newval);
- 	MUTEX_UNLOCK(env, mtx);
+# Update config.guess and config.sub
+print_status "Updating config.guess and config.sub for modern systems..."
 
- 	return (ret);
-diff --git a/mutex/mut_tas.c b/mutex/mut_tas.c
-index f3922e0..e40fcdf 100644
---- a/mutex/mut_tas.c
-+++ b/mutex/mut_tas.c
-@@ -46,7 +46,7 @@ __db_tas_mutex_init(env, mutex, flags)
+# Try to download from multiple sources
+CONFIG_GUESS_URLS=(
+    'https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.guess'
+    'https://git.savannah.gnu.org/cgit/config.git/plain/config.guess'
+    'http://git.savannah.gnu.org/cgit/config.git/plain/config.guess'
+)
 
- #ifdef HAVE_SHARED_LATCHES
- 	if (F_ISSET(mutexp, DB_MUTEX_SHARED))
--		atomic_init(&mutexp->sharecount, 0);
-+		atomic_init_db(&mutexp->sharecount, 0);
- 	else
- #endif
- 	if (MUTEX_INIT(&mutexp->tas)) {
-@@ -486,7 +486,7 @@ __db_tas_mutex_unlock(env, mutex)
- 			F_CLR(mutexp, DB_MUTEX_LOCKED);
- 			/* Flush flag update before zeroing count */
- 			MEMBAR_EXIT();
--			atomic_init(&mutexp->sharecount, 0);
-+			atomic_init_db(&mutexp->sharecount, 0);
- 		} else {
- 			DB_ASSERT(env, sharecount > 0);
- 			MEMBAR_EXIT();
-EOF
+CONFIG_SUB_URLS=(
+    'https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.sub'
+    'https://git.savannah.gnu.org/cgit/config.git/plain/config.sub'
+    'http://git.savannah.gnu.org/cgit/config.git/plain/config.sub'
+)
 
-# The packaged config.guess and config.sub are ancient (2009) and can cause build issues.
-# Replace them with modern versions.
-# See https://github.com/bitcoin/bitcoin/issues/16064
-CONFIG_GUESS_URL='https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=55eaf3e779455c4e5cc9f82efb5278be8f8f900b'
-CONFIG_GUESS_HASH='2d1ff7bca773d2ec3c6217118129220fa72d8adda67c7d2bf79994b3129232c1'
-CONFIG_SUB_URL='https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=55eaf3e779455c4e5cc9f82efb5278be8f8f900b'
-CONFIG_SUB_HASH='3a4befde9bcdf0fdb2763fc1bfa74e8696df94e1ad7aac8042d133c8ff1d2e32'
+# Function to try downloading from multiple URLs
+download_with_fallback() {
+    local filename="$1"
+    shift
+    local urls=("$@")
 
-rm -f "dist/config.guess"
-rm -f "dist/config.sub"
+    for url in "${urls[@]}"; do
+        print_status "Trying to download ${filename} from ${url}..."
+        if check_exists curl; then
+            if curl -fsSL "${url}" -o "${filename}.tmp" 2>/dev/null; then
+                # Check if we got an HTML file instead of the script
+                if ! head -n1 "${filename}.tmp" | grep -q "^#!" ; then
+                    print_warning "Got HTML instead of script from ${url}, trying next source..."
+                    rm -f "${filename}.tmp"
+                    continue
+                fi
+                mv "${filename}.tmp" "${filename}"
+                chmod +x "${filename}"
+                print_status "Successfully downloaded ${filename}"
+                return 0
+            fi
+        else
+            if wget -q "${url}" -O "${filename}.tmp" 2>/dev/null; then
+                if ! head -n1 "${filename}.tmp" | grep -q "^#!" ; then
+                    print_warning "Got HTML instead of script from ${url}, trying next source..."
+                    rm -f "${filename}.tmp"
+                    continue
+                fi
+                mv "${filename}.tmp" "${filename}"
+                chmod +x "${filename}"
+                print_status "Successfully downloaded ${filename}"
+                return 0
+            fi
+        fi
+        rm -f "${filename}.tmp"
+    done
 
-http_get "${CONFIG_GUESS_URL}" dist/config.guess "${CONFIG_GUESS_HASH}"
-http_get "${CONFIG_SUB_URL}" dist/config.sub "${CONFIG_SUB_HASH}"
+    return 1
+}
 
+# Remove old files
+rm -f "dist/config.guess" "dist/config.sub"
+
+# Try to download config.guess
+if ! download_with_fallback "dist/config.guess" "${CONFIG_GUESS_URLS[@]}"; then
+    print_warning "Could not download config.guess from any source"
+    print_warning "Continuing with original config.guess (build may fail on newer systems)"
+fi
+
+# Try to download config.sub
+if ! download_with_fallback "dist/config.sub" "${CONFIG_SUB_URLS[@]}"; then
+    print_warning "Could not download config.sub from any source"
+    print_warning "Continuing with original config.sub (build may fail on newer systems)"
+fi
+
+# DO NOT Apply the mutex_fcntl fix from manual approach, this is causing a segmentation fault on QT when compiling on Ubuntu 25+, using POSIX pthreads flag instead
+#print_status "Applying mutex_fcntl fix to dist/configure..."
+#if [ -f "dist/configure" ]; then
+#    # First, let's check if the line exists and what it looks like
+#    if grep -n '\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*)' dist/configure > /dev/null; then
+#        # Apply the fix
+#        sed -i 's/\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*)/\*mut_pthread\*|\*mut_tas\*|\*mut_win32\*|\*mut_fcntl\*)/g' dist/configure
+#        print_status "mutex_fcntl fix applied successfully"
+#    else
+#        print_warning "Could not find the expected pattern in dist/configure - skipping mutex_fcntl fix"
+#    fi
+#fi
+
+# Configure and build
+print_status "Configuring Berkeley DB..."
 cd build_unix/
 
-"${BDB_PREFIX}/${BDB_VERSION}/dist/configure" \
-  --enable-cxx --disable-shared --disable-replication --with-pic --prefix="${BDB_PREFIX}" \
+# Determine the correct source path based on which format we used
+if [ "${USE_ZIP}" = "true" ]; then
+    SOURCE_PATH="${BDB_PREFIX}/${BDB_VERSION_ZIP}"
+else
+    SOURCE_PATH="${BDB_PREFIX}/${BDB_VERSION}"
+fi
+
+"${SOURCE_PATH}/dist/configure" \
+  --enable-cxx \
+  --prefix="${BDB_PREFIX}" \
+  --with-mutex=POSIX/pthreads \
   "${@}"
 
+print_status "Building Berkeley DB (this may take a while)..."
+make -j$(nproc)
+
+print_status "Installing Berkeley DB..."
 make install
 
+# Display completion message
 echo
-echo "db4 build complete."
+print_status "Berkeley DB 4.8.30 build complete!"
 echo
-# shellcheck disable=SC2016
-echo 'When compiling Evrmore, run `./configure` in the following way:'
+echo -e "Installation prefix: ${GREEN}${BDB_PREFIX}${NC}"
+echo
+echo "When compiling your cryptocurrency node (e.g., Evrmore), configure with:"
 echo
 echo "  export BDB_PREFIX='${BDB_PREFIX}'"
-# shellcheck disable=SC2016
 echo '  ./configure BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" ...'
+echo
+echo "Or directly:"
+echo "  ./configure BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${BDB_PREFIX}/include\" ..."
+echo
+
+# Optional: Create a config file for easy sourcing
+CONFIG_FILE="${BDB_PREFIX}/db4-config.sh"
+cat > "${CONFIG_FILE}" << EOF
+# Berkeley DB 4.8.30 Configuration
+# Source this file before building your cryptocurrency node
+# Usage: source ${CONFIG_FILE}
+
+export BDB_PREFIX='${BDB_PREFIX}'
+export BDB_LIBS="-L\${BDB_PREFIX}/lib -ldb_cxx-4.8"
+export BDB_CFLAGS="-I\${BDB_PREFIX}/include"
+
+echo "Berkeley DB 4.8.30 environment configured:"
+echo "  BDB_PREFIX: \${BDB_PREFIX}"
+echo "  BDB_LIBS: \${BDB_LIBS}"
+echo "  BDB_CFLAGS: \${BDB_CFLAGS}"
+EOF
+
+print_status "Configuration saved to: ${CONFIG_FILE}"
+echo -e "You can source this file before building: ${GREEN}source ${CONFIG_FILE}${NC}"
+echo
+echo -e "${RED}(㇏(•̀ᵥᵥ•́)ノ)${PURPLE} This shit ain't nothin' to me man!${NC}"
+echo

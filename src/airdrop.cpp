@@ -1,13 +1,61 @@
 // Copyright (c) 2022 The Evrmore Core developers
+// Copyright (c) 2025 The Echelon Technology Group developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "airdrop.h"
+#include "airdropitems.h"
 //#include "util.h"
 #include "utilstrencodings.h"
+#include <mutex>
 
+// New Code For Compile Efficiency
+std::unique_ptr<std::vector<AirdropScriptItem>> AirdropDataManager::mainnetAirdrop;
+static std::mutex airdropMutex;
 
-std::vector<AirdropScriptItem> LoadAirdrop() {
+void AirdropDataManager::LoadMainnetAirdrop() {
+    auto data = std::make_unique<std::vector<AirdropScriptItem>>();
+    data->reserve(49003 + 999);
+
+    // Process P2PKH
+    for (size_t i = 0; i < 49003; ++i) {
+        const auto& item = airdrop_items_p2pkh[i];
+        std::vector<unsigned char> hash = ParseHex(item.hashaddr);
+
+        CScript script;
+        script << OP_DUP << OP_HASH160 << hash << OP_EQUALVERIFY << OP_CHECKSIG;
+
+        data->emplace_back(AirdropScriptItem{std::move(script), item.amount});
+    }
+
+    // Process P2SH
+    for (size_t i = 0; i < 999; ++i) {
+        const auto& item = airdrop_items_p2sh[i];
+        std::vector<unsigned char> hash = ParseHex(item.hashaddr);
+
+        CScript script;
+        script << OP_HASH160 << hash << OP_EQUAL;
+
+        data->emplace_back(AirdropScriptItem{std::move(script), item.amount});
+    }
+
+    mainnetAirdrop = std::move(data);
+}
+
+const std::vector<AirdropScriptItem>& AirdropDataManager::GetMainnetAirdrop() {
+    std::lock_guard<std::mutex> lock(airdropMutex);
+    if (!mainnetAirdrop) {
+        LoadMainnetAirdrop();
+    }
+    return *mainnetAirdrop;
+}
+
+std::vector<AirdropScriptItem> AirdropDataManager::GetEmptyAirdrop() {
+    return std::vector<AirdropScriptItem>();
+}
+
+// Old, less memory efficient way
+/*std::vector<AirdropScriptItem> LoadAirdrop() {
 
     // The two airdrop arrays are declared as global here but initialized in "chainparams.cpp" via the "airdrop.h" include file there
     extern const AirdropAddressItem airdrop_items_p2pkh[49003]; // number of p2pkh addresses
@@ -42,9 +90,10 @@ std::vector<AirdropScriptItem> LoadAirdrop() {
     vAirdrop.insert(vAirdrop.end(), vAirdrop_p2sh.begin(), vAirdrop_p2sh.end());
 
     return vAirdrop;
-}
+}*/
 
-std::vector<AirdropScriptItem> EmptyAirdrop() {
+
+/*std::vector<AirdropScriptItem> EmptyAirdrop() {
     std::vector<AirdropScriptItem> vAirdrop;
     return vAirdrop;
-}
+}*/

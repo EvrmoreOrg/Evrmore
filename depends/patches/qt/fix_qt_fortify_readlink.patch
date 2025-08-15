@@ -1,0 +1,43 @@
+--- a/qtbase/src/corelib/kernel/qcore_unix.cpp
++++ b/qtbase/src/corelib/kernel/qcore_unix.cpp
+@@ -56,6 +56,22 @@
+ 
+ QT_BEGIN_NAMESPACE
+ 
++// Workaround for FORTIFY_SOURCE false positive with readlink
++// on newer GCC/glibc (Ubuntu 24.04+)
++#ifdef _FORTIFY_SOURCE
++static inline ssize_t qt_safe_readlink(const char *path, char *buf, size_t bufsiz)
++{
++    // Call readlink directly, bypassing fortification
++#ifdef Q_OS_DARWIN
++    return ::readlink(path, buf, bufsiz);
++#else
++    return syscall(SYS_readlink, path, buf, bufsiz);
++#endif
++}
++#else
++#define qt_safe_readlink ::readlink
++#endif
++
+ QByteArray qt_readlink(const char *path)
+ {
+ #ifndef PATH_MAX
+@@ -65,7 +77,7 @@ QByteArray qt_readlink(const char *path)
+ 
+     QByteArray buf(256, Qt::Uninitialized);
+ 
+-    ssize_t len = ::readlink(path, buf.data(), buf.size());
++    ssize_t len = qt_safe_readlink(path, buf.data(), buf.size());
+     while (len == buf.size()) {
+         // readlink(2) will fill our buffer and not necessarily terminate with NUL;
+         if (buf.size() >= PATH_MAX) {
+@@ -75,7 +87,7 @@ QByteArray qt_readlink(const char *path)
+ 
+         // double the size and try again
+         buf.resize(buf.size() * 2);
+-        len = ::readlink(path, buf.data(), buf.size());
++        len = qt_safe_readlink(path, buf.data(), buf.size());
+     }
+ 
+     if (len == -1)

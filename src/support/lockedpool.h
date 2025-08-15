@@ -11,6 +11,7 @@
 #include <map>
 #include <mutex>
 #include <memory>
+#include <stdexcept>
 
 /**
  * OS-dependent allocation and deallocation of locked/pinned memory pages.

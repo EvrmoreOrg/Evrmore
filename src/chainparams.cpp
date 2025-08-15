@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
 // Copyright (c) 2022 The Evrmore Core developers
+// Copyright (c) 2025 The Echelon Technology Group developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,7 +21,7 @@
 
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint64_t nNonce64, 
-    uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, std::vector<AirdropScriptItem>& vAirdrop)
+    uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const std::vector<AirdropScriptItem>& vAirdrop)
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -54,7 +55,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     return genesis;
 }
 
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint64_t nNonce64, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, std::vector<AirdropScriptItem> vAirdrop)
+static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint64_t nNonce64, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const std::vector<AirdropScriptItem>& vAirdrop)
 {
     const char* pszTimestamp = "Bloomberg.com October 27 2022:  Hong Kong Plans to Legalize Retail Crypto Trading to Become Hub";
     const CScript genesisOutputScript = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
@@ -62,7 +63,7 @@ static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint64_t nNonc
 }
 
 // EVR - Start of code to mine the genesis block. Once found, we can use the nonce and block hash found to create a valid genesis block
-void GenesisGenerator(Consensus::Params &consensus1, uint32_t nGenesisTime1, uint32_t nTarget1, std::vector<AirdropScriptItem> vAirdrop1) {
+void GenesisGenerator(Consensus::Params &consensus1, uint32_t nGenesisTime1, uint32_t nTarget1, const std::vector<AirdropScriptItem>& vAirdrop) {
     uint32_t nNonce = 0;
 	uint64_t nNonce64 = 0;
 	arith_uint256 test;
@@ -77,9 +78,9 @@ void GenesisGenerator(Consensus::Params &consensus1, uint32_t nGenesisTime1, uin
 	uint256 BestBlockHash = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
     if (fEvrprogpowAsMiningAlgo) {
-        genesis1 = CreateGenesisBlock(nGenesisTime1, 0, nNonce64, nTarget1, 4, consensus1.baseReward, vAirdrop1);
+        genesis1 = CreateGenesisBlock(nGenesisTime1, 0, nNonce64, nTarget1, 4, consensus1.baseReward, vAirdrop);
     } else {
-        genesis1 = CreateGenesisBlock(nGenesisTime1, nNonce, 0, nTarget1, 4, consensus1.baseReward, vAirdrop1);
+        genesis1 = CreateGenesisBlock(nGenesisTime1, nNonce, 0, nTarget1, 4, consensus1.baseReward, vAirdrop);
     }
 
     while(true)
@@ -248,7 +249,8 @@ public:
         nDefaultPort = 8820;	// currently unassigned by IANA
         nPruneAfterHeight = 100000;
 
-        vAirdrop = LoadAirdrop();
+        //vAirdrop = LoadAirdrop();
+        vAirdrop = AirdropDataManager::GetMainnetAirdrop();
 
         // Use SHA256 or EvrprogPow depending on this choice
         fEvrprogpowAsMiningAlgo = true;     // The value is set here but declared as global in primitives/block.h
@@ -416,8 +418,9 @@ public:
         nDefaultPort = 18820;	// currently unassigned by IANA
         nPruneAfterHeight = 1000;
 
-        vAirdrop = EmptyAirdrop();
-        vAirdrop = LoadAirdrop();
+        vAirdrop = AirdropDataManager::GetMainnetAirdrop();
+        //vAirdrop = EmptyAirdrop();
+        //vAirdrop = LoadAirdrop();
 
         // Use SHA256 or EvrprogPow depending on this choice
         fEvrprogpowAsMiningAlgo = false;     // The value is set here but declared as global in primitives/block.h
@@ -576,8 +579,9 @@ public:
         nDefaultPort = 18444;   // same as bitcoin
         nPruneAfterHeight = 1000;
 
-        vAirdrop = EmptyAirdrop();
-        vAirdrop = LoadAirdrop();
+        vAirdrop = AirdropDataManager::GetMainnetAirdrop();
+        //vAirdrop = EmptyAirdrop();
+        //vAirdrop = LoadAirdrop();
 
         // Use SHA256 or EvrprogPow depending on this choice
         fEvrprogpowAsMiningAlgo = false;     // The value is set here but declared as global in primitives/block.h
