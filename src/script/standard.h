@@ -19,6 +19,8 @@ static const bool DEFAULT_ACCEPT_DATACARRIER = true;
 
 class CKeyID;
 class CScript;
+class COutPoint;
+class CCoinsViewCache;
 
 /** A reference to a CScript: the Hash160 of its serialization (see script.h) */
 class CScriptID : public uint160
@@ -27,6 +29,14 @@ public:
     CScriptID() : uint160() {}
     CScriptID(const CScript& in);
     CScriptID(const uint160& in) : uint160(in) {}
+};
+
+/** A reference to an Asset Hash160 for P2AH addresses */
+class CAssetID : public uint160
+{
+public:
+    CAssetID() : uint160() {}
+    CAssetID(const uint160& in) : uint160(in) {}
 };
 
 /**
@@ -72,6 +82,14 @@ enum txnouttype
     TX_TRANSFER_ASSET = 10,
     TX_RESTRICTED_ASSET_DATA = 11, //!< unspendable OP_EVRMORE_ASSET script that carries data
     /** RVN END */
+    /** P2AH START */
+    TX_ASSETHASH_BASE = 12,
+    TX_ASSETHASH_MULTISIG = 13,
+    TX_ASSETHASH_CHAIN_SIGNING = 14,
+    TX_ASSETHASH_RESTRICTED = 15,
+    // Reserved transaction type 16 for future use
+    TX_ASSETHASH_EPHEMERAL = 17,
+    /** P2AH END */
 };
 
 class CNoDestination {
@@ -85,9 +103,10 @@ public:
  *  * CNoDestination: no destination set
  *  * CKeyID: TX_PUBKEYHASH destination
  *  * CScriptID: TX_SCRIPTHASH destination
+ *  * CAssetID: TX_ASSETHASH destination (P2AH)
  *  A CTxDestination is the internal data type encoded in a evrmore address
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID, CAssetID> CTxDestination;
 
 /** Check whether a CTxDestination is a CNoDestination. */
 bool IsValidDestination(const CTxDestination& dest);
@@ -138,6 +157,72 @@ CScript GetScriptForRawPubKey(const CPubKey& pubkey);
 
 /** Generate a multisig script. */
 CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
+
+/** Generate a P2AH multisig script. */
+CScript GetScriptForP2AHMultisig(int nRequired, const std::vector<CPubKey>& keys);
+
+/** Get deterministic P2AH address for a root asset (calculated from asset name). */
+CScript GetScriptForRootAssetP2AH(const std::string& assetName);
+std::string GetRootAssetP2AHAddress(const std::string& assetName);
+
+/** Check if script is a P2AH chain signing script (OP_P2AH_CHAIN_SIGNING). */
+bool IsP2AHChainSigning(const CScript& scriptPubKey);
+
+/** Check if script is a P2AH restricted asset script (OP_P2AH_RESTRICTED). */
+bool IsP2AHRestricted(const CScript& scriptPubKey);
+
+/** Extract asset hash from P2AH script (for chain signing validation). */
+bool ExtractAssetHashFromP2AH(const CScript& scriptPubKey, uint160& assetHash);
+
+/** Check if script is a P2AH ephemeral script (OP_P2AH_EPHEMERAL). */
+bool IsP2AHEphemeral(const CScript& scriptPubKey);
+
+/** Resolve asset name from P2AH asset hash (requires asset database access). */
+bool ResolveAssetNameFromHash(const uint160& assetHash, CAssetsCache* assetCache, std::string& assetName);
+
+/** Validate chain signing for P2AH addresses (Asset A signing for Asset B). */
+bool ValidateP2AHChainSigning(const CTransaction& tx, const CScript& signingAssetScript, const CScript& targetAssetScript, CAssetsCache* assetCache, int64_t nBlocktime, std::string& strError, const CCoinsViewCache* inputs = nullptr);
+
+/** Validate ephemeral asset expiration and burn fee. */
+bool ValidateP2AHEphemeralAsset(const CScript& ephemeralScript, const CTransaction& tx, CAssetsCache* assetCache, int64_t nBlocktime, int nBlockHeight, std::string& strError, const CCoinsViewCache* inputs = nullptr);
+
+/** Validate address requirements for restricted P2AH addresses only (whitelist/blacklist).
+ *  Basic P2AH addresses have no requirements - keep it simple.
+ */
+bool ValidateRestrictedP2AHAddressRequirements(const CScript& scriptPubKey, const std::string& assetName, CAmount amount, CAssetsCache* assetCache, std::string& strError);
+
+/** Check if ephemeral asset script is proof-only (no UTXO created). */
+bool IsEphemeralAssetProofOnly(const CScript& scriptPubKey, CAssetsCache* assetCache = nullptr);
+
+/** Check if ephemeral asset script creates a UTXO. */
+bool IsEphemeralAssetUTXO(const CScript& scriptPubKey, CAssetsCache* assetCache = nullptr);
+
+/** Check if ephemeral asset has expired. */
+bool IsEphemeralAssetExpired(const CEphemeralAsset& asset, int nCurrentHeight, int64_t nCurrentTime);
+
+/** Check if a P2AH UTXO is locked by an ephemeral asset. Returns true if locked and not expired. */
+bool IsP2AHUTXOLocked(const COutPoint& outpoint, CAssetsCache* assetCache, std::string& strError, int nCurrentHeight = 0, int64_t nCurrentTime = 0);
+
+/** Validate that parent UTXO is not already locked when creating ephemeral asset. */
+bool ValidateEphemeralAssetParentNotLocked(const CScript& ephemeralScript, const CTransaction& tx, CAssetsCache* assetCache, std::string& strError, const CCoinsViewCache* inputs);
+
+/** Check if ephemeral assets are being spent to authorize spending a locked UTXO (for M-of-N multisig). */
+bool ValidateEphemeralAssetsAuthorizeSpending(const CTransaction& tx, const COutPoint& lockedOutpoint, CAssetsCache* assetCache, std::string& strError, const CCoinsViewCache* inputs);
+
+/** Extract M-of-N values from a P2AH multisig script. Returns false if not a multisig script. */
+bool ExtractMultisigMN(const CScript& scriptPubKey, uint8_t& m, uint8_t& n, std::string& strError);
+
+/** Extract M-of-N values from a multisig redeem script. */
+bool ExtractMultisigMNFromRedeemScript(const CScript& redeemScript, uint8_t& m, uint8_t& n, std::string& strError);
+
+/** Extract redeem script from scriptSig (last element). */
+bool ExtractRedeemScriptFromScriptSig(const CScript& scriptSig, CScript& redeemScript, std::string& strError);
+
+/** Check if M-of-N multisig has already created an ephemeral asset for this UTXO. */
+bool ValidateMultisigEphemeralNotDuplicate(const CScript& utxoScript, const COutPoint& outpoint, const CScript& ephemeralScript, const CScript& scriptSig, CAssetsCache* assetCache, std::string& strError);
+
+/** Check if script is a P2AH multisig script. */
+bool IsP2AHMultisig(const CScript& scriptPubKey);
 
 /** Generate a script that contains an address used for qualifier, and restricted assets data transactions */
 CScript GetScriptForNullAssetDataDestination(const CTxDestination &dest);

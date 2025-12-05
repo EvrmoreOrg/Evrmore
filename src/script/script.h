@@ -189,6 +189,15 @@ enum opcodetype
     OP_EVR_ASSET = 0xc0,
     /** RVN END */
 
+    /** P2AH START */
+    OP_P2AH_BASE = 0xc1,
+    OP_P2AH_MULTISIG = 0xc2,
+    OP_P2AH_CHAIN_SIGNING = 0xc3,
+    OP_P2AH_RESTRICTED = 0xc4,
+    // Reserved opcode 0xc5 for future use
+    OP_P2AH_EPHEMERAL = 0xc6,
+    /** P2AH END */
+
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -670,6 +679,7 @@ public:
     bool IsAssetScript(int& nType, int& nScriptType, bool& fIsOwner) const;
     bool IsAssetScript(int& nTXType, int& nScriptType, bool& fIsOwner, int& nStartingIndex, bool nP2Active = true) const;
     bool IsP2SHAssetScript() const;
+    bool IsP2AHAssetScript() const;
     bool IsNewAsset() const;
     bool IsOwnerAsset() const;
     bool IsReissueAsset() const;

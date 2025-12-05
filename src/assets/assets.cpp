@@ -339,6 +339,248 @@ bool IsAssetNameAnMsgChannel(const std::string& name)
     return IsAssetNameValid(name) && std::regex_match(name, MSG_CHANNEL_INDICATOR);
 }
 
+bool IsAssetNameAnEphemeral(const std::string& name)
+{
+    AssetType type;
+    return IsAssetNameValid(name, type) && type == AssetType::EPHEMERAL;
+}
+
+bool CAssetsCache::GetRestrictedP2AHAddressRequirements(const uint160& assetHash, CRestrictedP2AHAddressRequirements& requirements)
+{
+    // Check in-memory cache first
+    auto it = mapRestrictedP2AHAddressRequirements.find(assetHash);
+    if (it != mapRestrictedP2AHAddressRequirements.end()) {
+        requirements = it->second;
+        return true;
+    }
+    
+    // Check parent cache if available
+    if (passets) {
+        auto parentIt = passets->mapRestrictedP2AHAddressRequirements.find(assetHash);
+        if (parentIt != passets->mapRestrictedP2AHAddressRequirements.end()) {
+            requirements = parentIt->second;
+            return true;
+        }
+    }
+    
+    // Check database
+    if (passetsdb) {
+        if (passetsdb->ReadRestrictedP2AHAddressRequirements(assetHash, requirements)) {
+            // Cache it for future use
+            mapRestrictedP2AHAddressRequirements[assetHash] = requirements;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::SetRestrictedP2AHAddressRequirements(const uint160& assetHash, const CRestrictedP2AHAddressRequirements& requirements)
+{
+    // Store in cache
+    mapRestrictedP2AHAddressRequirements[assetHash] = requirements;
+    
+    // Write to database if available
+    if (passetsdb) {
+        return passetsdb->WriteRestrictedP2AHAddressRequirements(assetHash, requirements);
+    }
+    
+    return true;
+}
+
+bool CAssetsCache::GetP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, CP2AHMultisigSigningRequirements& requirements)
+{
+    // Check in-memory cache first
+    auto it = mapP2AHMultisigSigningRequirements.find(multisigAssetHash);
+    if (it != mapP2AHMultisigSigningRequirements.end()) {
+        requirements = it->second;
+        return true;
+    }
+    
+    // Check parent cache if available
+    if (passets) {
+        auto parentIt = passets->mapP2AHMultisigSigningRequirements.find(multisigAssetHash);
+        if (parentIt != passets->mapP2AHMultisigSigningRequirements.end()) {
+            requirements = parentIt->second;
+            return true;
+        }
+    }
+    
+    // Check database
+    if (passetsdb) {
+        if (passetsdb->ReadP2AHMultisigSigningRequirements(multisigAssetHash, requirements)) {
+            // Cache it for future use
+            mapP2AHMultisigSigningRequirements[multisigAssetHash] = requirements;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::SetP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, const CP2AHMultisigSigningRequirements& requirements)
+{
+    // Update in-memory cache
+    mapP2AHMultisigSigningRequirements[multisigAssetHash] = requirements;
+    
+    // Write to database if available
+    if (passetsdb) {
+        return passetsdb->WriteP2AHMultisigSigningRequirements(multisigAssetHash, requirements);
+    }
+    return true;
+}
+
+bool CAssetsCache::IsUTXOLockedByEphemeral(const COutPoint& outpoint) const
+{
+    // First check if this UTXO has been explicitly unlocked (overrides parent cache locks)
+    if (setUnlockedUTXOs.count(outpoint)) {
+        return false; // Explicitly unlocked
+    }
+    
+    // Check in-memory cache first
+    if (mapLockedUTXOs.count(outpoint)) {
+        return true;
+    }
+    
+    // Check parent cache if available
+    if (passets && passets->mapLockedUTXOs.count(outpoint)) {
+        // Check if parent cache has this UTXO explicitly unlocked
+        if (passets->setUnlockedUTXOs.count(outpoint)) {
+            return false; // Unlocked in parent cache
+        }
+        return true;
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::GetLockingEphemeralHash(const COutPoint& outpoint, uint160& ephemeralHash) const
+{
+    // Check in-memory cache first
+    auto it = mapLockedUTXOs.find(outpoint);
+    if (it != mapLockedUTXOs.end()) {
+        ephemeralHash = it->second;
+        return true;
+    }
+    
+    // Check parent cache if available
+    if (passets) {
+        auto parentIt = passets->mapLockedUTXOs.find(outpoint);
+        if (parentIt != passets->mapLockedUTXOs.end()) {
+            ephemeralHash = parentIt->second;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::LockUTXOForEphemeral(const COutPoint& outpoint, const uint160& ephemeralAssetHash)
+{
+    // Check if already locked
+    if (IsUTXOLockedByEphemeral(outpoint)) {
+        return false; // Already locked
+    }
+    
+    // Lock the UTXO
+    mapLockedUTXOs[outpoint] = ephemeralAssetHash;
+    // Remove from unlocked set if it was there (shouldn't be, but be safe)
+    setUnlockedUTXOs.erase(outpoint);
+    return true;
+}
+
+bool CAssetsCache::UnlockUTXOForEphemeral(const COutPoint& outpoint)
+{
+    // Remove lock if it exists in current cache
+    auto it = mapLockedUTXOs.find(outpoint);
+    if (it != mapLockedUTXOs.end()) {
+        mapLockedUTXOs.erase(it);
+        // Also remove from unlocked set if it was there (shouldn't be, but be safe)
+        setUnlockedUTXOs.erase(outpoint);
+        return true;
+    }
+    
+    // Check parent cache
+    if (passets) {
+        auto parentIt = passets->mapLockedUTXOs.find(outpoint);
+        if (parentIt != passets->mapLockedUTXOs.end()) {
+            // Lock exists in parent cache - we can't modify it directly
+            // Track the unlock in the current cache so it overrides the parent lock
+            setUnlockedUTXOs.insert(outpoint);
+            return true;
+        }
+    }
+    
+    // If not found in current or parent cache, check if it's already in unlocked set
+    if (setUnlockedUTXOs.count(outpoint)) {
+        return true; // Already marked as unlocked
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::FindParentUTXOByEphemeralHash(const uint160& ephemeralHash, COutPoint& parentOutpoint) const
+{
+    // Check in-memory cache first
+    for (const auto& pair : mapLockedUTXOs) {
+        if (pair.second == ephemeralHash) {
+            parentOutpoint = pair.first;
+            return true;
+        }
+    }
+    
+    // Check parent cache if available
+    if (passets) {
+        for (const auto& pair : passets->mapLockedUTXOs) {
+            if (pair.second == ephemeralHash) {
+                parentOutpoint = pair.first;
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::HasMultisigEphemeralAsset(const COutPoint& outpoint, uint8_t m, uint8_t n) const
+{
+    // Check in-memory cache first
+    MultisigEphemeralKey key;
+    key.outpoint = outpoint;
+    key.m = m;
+    key.n = n;
+    
+    if (mapMultisigEphemeralAssets.count(key)) {
+        return true;
+    }
+    
+    // Check parent cache if available
+    if (passets) {
+        if (passets->mapMultisigEphemeralAssets.count(key)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool CAssetsCache::RegisterMultisigEphemeralAsset(const COutPoint& outpoint, uint8_t m, uint8_t n, const uint160& ephemeralAssetHash)
+{
+    // Check if already registered
+    if (HasMultisigEphemeralAsset(outpoint, m, n)) {
+        return false; // Already registered
+    }
+    
+    // Register the ephemeral asset
+    MultisigEphemeralKey key;
+    key.outpoint = outpoint;
+    key.m = m;
+    key.n = n;
+    
+    mapMultisigEphemeralAssets[key] = ephemeralAssetHash;
+    return true;
+}
+
 // TODO get the string translated below
 bool IsTypeCheckNameValid(const AssetType type, const std::string& name, std::string& error)
 {
@@ -4095,6 +4337,24 @@ bool CAssetsCache::GetAssetMetaDataIfExists(const std::string &name, CNewAsset &
 
     LogPrintf("%s : Didn't find asset meta data anywhere. Returning False\n", __func__);
     return false;
+}
+
+bool CAssetsCache::GetEphemeralAssetMetaDataIfExists(const std::string &name, CEphemeralAsset &ephemeralAsset)
+{
+    int height;
+    uint256 hash;
+    return GetEphemeralAssetMetaDataIfExists(name, ephemeralAsset, height, hash);
+}
+
+bool CAssetsCache::GetEphemeralAssetMetaDataIfExists(const std::string &name, CEphemeralAsset &ephemeralAsset, int& nHeight, uint256& blockHash)
+{
+    CNewAsset baseAsset;
+    if (!GetAssetMetaDataIfExists(name, baseAsset, nHeight, blockHash)) {
+        return false;
+    }
+    
+    ephemeralAsset = CEphemeralAsset(baseAsset);
+    return true;
 }
 
 bool GetAssetInfoFromScript(const CScript& scriptPubKey, std::string& strName, CAmount& nAmount)

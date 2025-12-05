@@ -275,6 +275,8 @@ public:
         
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,33);	// produces 'E' as first char of address after base58 encoding
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,92);	// produces 'e' as first char of address after base58 encoding
+        base58Prefixes[ASSET_ADDRESS] = std::vector<unsigned char>(1,23);      // mainnet asset address prefix: 'A' 
+        base58Prefixes[ASSETHASH_ADDRESS] = std::vector<unsigned char>(1,83); // mainnet assethash address prefix: 'a' 
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,128); // after base58 encoding, produces a first char of '5' for uncompressed
                                                                             //      WIF, 'K' or 'L' for compressed WIF (as for Bitcoin)
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
@@ -325,6 +327,7 @@ public:
         nIssueSubQualifierAssetBurnAmount = 100 * COIN;
         nIssueRestrictedAssetBurnAmount = 1500 * COIN;
         nAddNullQualifierTagBurnAmount = .1 * COIN;
+        nEphemeralAssetBurnAmount = .1 * COIN;  // 0.1 EVR - small burn fee for unused ephemeral assets
 
         nReissueMetaDataOnly = 1 * COIN;
         nRemintingOnly = 0.1 * COIN;
@@ -445,6 +448,8 @@ public:
  
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);  // produces 'm' or 'n' as first char of address after base58 encoding
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);  // produces '2' as first char of address after base58 encoding
+        base58Prefixes[ASSET_ADDRESS] = std::vector<unsigned char>(1,80);      // testnet asset address prefix: 'Z' 
+        base58Prefixes[ASSETHASH_ADDRESS] = std::vector<unsigned char>(1,142); // testnet assethash address prefix: 'z' 
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);  // after base58 encoding, produces a first char of '9' for uncompressed
                                                                             //      WIF, 'c' for compressed WIF (as for Bitcoin)
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
@@ -489,6 +494,7 @@ public:
         nIssueSubQualifierAssetBurnAmount = 100 * COIN;
         nIssueRestrictedAssetBurnAmount = 1500 * COIN;
         nAddNullQualifierTagBurnAmount = .1 * COIN;
+        nEphemeralAssetBurnAmount = .1 * COIN;  // 0.1 EVR - small burn fee for unused ephemeral assets
 
         nReissueMetaDataOnly = 1 * COIN;
         nRemintingOnly = 0.1 * COIN;
@@ -615,6 +621,8 @@ public:
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);  // produces 'm' or 'n' as first char of address after base58 encoding
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);  // produces '2' as first char of address after base58 encoding
+        base58Prefixes[ASSET_ADDRESS] = std::vector<unsigned char>(1,80);     // regtest asset address prefix: 'Z' (matches testnet, verified: 100% accuracy)
+        base58Prefixes[ASSETHASH_ADDRESS] = std::vector<unsigned char>(1,142); // regtest assethash address prefix: 'z' (matches testnet, verified: 100% accuracy)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);  // after base58 encoding, produces a first char of '9' for uncompressed
                                                                             //      WIF, 'c' for compressed WIF (as for Bitcoin)
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
@@ -633,6 +641,7 @@ public:
         nIssueSubQualifierAssetBurnAmount = 100 * COIN;
         nIssueRestrictedAssetBurnAmount = 1500 * COIN;
         nAddNullQualifierTagBurnAmount = .1 * COIN;
+        nEphemeralAssetBurnAmount = .1 * COIN;  // 0.1 EVR - small burn fee for unused ephemeral assets
 
         nReissueMetaDataOnly = 1 * COIN;
         nRemintingOnly = 0.1 * COIN;

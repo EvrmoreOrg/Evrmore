@@ -1121,6 +1121,17 @@ bool EvalScript(std::vector<std::vector<unsigned char> > &stack, const CScript &
                         break;
                         /** RVN END */
 
+                        /** P2AH START */
+                    case OP_P2AH_BASE:
+                    case OP_P2AH_MULTISIG:
+                    case OP_P2AH_CHAIN_SIGNING:
+                    case OP_P2AH_RESTRICTED:
+                    // Reserved opcode case for future use
+                    case OP_P2AH_EPHEMERAL:
+                        // P2AH opcodes are markers in scriptPubKey, no-op during execution
+                        break;
+                        /** P2AH END */
+
 
                     default:
                         return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
@@ -1604,7 +1615,7 @@ bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const C
     }
 
     // Additional validation for spend-to-script-hash transactions:
-    if ((flags & SCRIPT_VERIFY_P2SH) && (scriptPubKey.IsPayToScriptHash() || scriptPubKey.IsP2SHAssetScript()))
+    if ((flags & SCRIPT_VERIFY_P2SH) && (scriptPubKey.IsPayToScriptHash() || scriptPubKey.IsP2SHAssetScript() || scriptPubKey.IsP2AHAssetScript()))
     {
         // scriptSig must be literals-only or validation fails
         if (!scriptSig.IsPushOnly())

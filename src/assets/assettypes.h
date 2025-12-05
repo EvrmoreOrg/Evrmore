@@ -40,7 +40,8 @@ enum class AssetType
     REMINTING = 10,
     OWNER = 11,
     NULL_ADD_QUALIFIER = 12,
-    INVALID = 13
+    EPHEMERAL = 13,  // P2AH ephemeral asset type (proof-only or UTXO)
+    INVALID = 14
 };
 
 enum class QualifierType
@@ -287,8 +288,8 @@ public:
     void HandleVersionSerialization(Stream& s, Operation ser_action, uint32_t& nVersion)
     {
         if (ser_action.ForRead()) {
+            unsigned int originalReadPos = s.nreadPos();
             try {
-                unsigned int originalReadPos = s.nreadPos();
                 READWRITE(nVersion);
 
                 if (nVersion != TOLL_UPGRADE_VERSION) {
@@ -296,10 +297,10 @@ public:
                     nVersion = STANDARD_VERSION;
                 }
             } catch (const std::exception& e) {
-                s.Rewind(s.nreadPos());
+                s.Rewind(s.nreadPos() - originalReadPos);
                 nVersion = STANDARD_VERSION;
             } catch (...) {
-                s.Rewind(s.nreadPos());
+                s.Rewind(s.nreadPos() - originalReadPos);
                 nVersion = STANDARD_VERSION;
             }
         } else {
@@ -317,6 +318,75 @@ public:
     bool operator()(const CNewAsset& s1, const CNewAsset& s2) const
     {
         return s1.strName < s2.strName;
+    }
+};
+
+/** P2AH Ephemeral Asset - can exist as proof-only or UTXO */
+class CEphemeralAsset : public CNewAsset
+{
+public:
+    // Ephemeral-specific fields
+    uint32_t nExpirationTime;           // 4 bytes - Unix timestamp (0 = no expiration)
+    int32_t nExpirationHeight;          // 4 bytes - Block height (0 = no expiration)
+    uint32_t nCreationHeight;           // 4 bytes - Block height when created
+    uint160 parentAssetHash;             // 20 bytes - Hash of parent asset
+    std::string strTargetAddress;       // MAX 34 bytes - Address where ephemeral asset is placed (empty = proof only)
+    uint8_t nExpirationType;             // 1 byte - 0=none, 1=timestamp, 2=blockheight, 3=both
+    bool fIsUTXO;                        // 1 byte - true if created as UTXO, false if proof-only
+    
+    CEphemeralAsset() : CNewAsset(), fIsUTXO(false) {
+        nExpirationTime = 0;
+        nExpirationHeight = 0;
+        nCreationHeight = 0;
+        nExpirationType = 0;
+        parentAssetHash = uint160();
+        strTargetAddress = "";
+    }
+    
+    CEphemeralAsset(const CNewAsset& base) : CNewAsset(base), fIsUTXO(false) {
+        nExpirationTime = 0;
+        nExpirationHeight = 0;
+        nCreationHeight = 0;
+        nExpirationType = 0;
+        parentAssetHash = uint160();
+        strTargetAddress = "";
+    }
+    
+    // Check if this ephemeral asset is proof-only (no UTXO created)
+    bool IsProofOnly() const {
+        return !fIsUTXO && strTargetAddress.empty();
+    }
+    
+    // Check if this ephemeral asset creates a UTXO
+    bool CreatesUTXO() const {
+        return fIsUTXO || !strTargetAddress.empty();
+    }
+    
+    void SetNull() {
+        CNewAsset::SetNull();
+        nExpirationTime = 0;
+        nExpirationHeight = 0;
+        nCreationHeight = 0;
+        nExpirationType = 0;
+        parentAssetHash = uint160();
+        strTargetAddress = "";
+        fIsUTXO = false;
+    }
+    
+    ADD_SERIALIZE_METHODS;
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        // Serialize base CNewAsset first
+        CNewAsset::SerializationOp(s, ser_action);
+        
+        // Then serialize ephemeral-specific fields
+        READWRITE(nExpirationTime);
+        READWRITE(nExpirationHeight);
+        READWRITE(nCreationHeight);
+        READWRITE(parentAssetHash);
+        READWRITE(strTargetAddress);
+        READWRITE(nExpirationType);
+        READWRITE(fIsUTXO);
     }
 };
 
@@ -345,6 +415,144 @@ public:
         READWRITE(asset);
         READWRITE(nHeight);
         READWRITE(blockHash);
+    }
+};
+
+/** P2AH Multisig Signing Requirements - declares who can sign for what assets */
+struct CP2AHMultisigSigningRequirements
+{
+    uint160 multisigAssetHash;              // P2AH multisig asset hash
+    std::string multisigAssetName;          // Asset name (for convenience)
+    
+    // Signing permissions: which assets can be signed for by this multisig
+    std::set<std::string> setAllowedTargetAssets;  // Assets that can be signed for (empty = all assets)
+    bool fAllowAllAssets;                           // true = can sign for all assets, false = only setAllowedTargetAssets
+    
+    // Ephemeral asset requirements for signing
+    bool fRequireEphemeralAssetBurn;                // true = requires ephemeral asset burn when signing
+    CAmount nEphemeralAssetBurnAmount;              // Burn amount for ephemeral asset (0 = use default)
+    
+    // Metadata
+    uint256 declarationTxHash;                      // Transaction that declared these requirements
+    int nDeclarationHeight;                         // Block height when declared
+    uint32_t nVersion;                              // Version for future extensions
+    
+    CP2AHMultisigSigningRequirements() {
+        SetNull();
+    }
+    
+    void SetNull() {
+        multisigAssetHash = uint160();
+        multisigAssetName = "";
+        setAllowedTargetAssets.clear();
+        fAllowAllAssets = true;
+        fRequireEphemeralAssetBurn = true;  // Default: require ephemeral asset burn for signing
+        nEphemeralAssetBurnAmount = 0;      // 0 = use default from chainparams
+        declarationTxHash = uint256();
+        nDeclarationHeight = 0;
+        nVersion = STANDARD_VERSION;
+    }
+    
+    ADD_SERIALIZE_METHODS;
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        HandleVersionSerialization(s, ser_action, nVersion);
+        READWRITE(multisigAssetHash);
+        READWRITE(multisigAssetName);
+        READWRITE(setAllowedTargetAssets);
+        READWRITE(fAllowAllAssets);
+        READWRITE(fRequireEphemeralAssetBurn);
+        READWRITE(nEphemeralAssetBurnAmount);
+        READWRITE(declarationTxHash);
+        READWRITE(nDeclarationHeight);
+        READWRITE(nVersion);
+    }
+};
+
+/** Restricted P2AH Address Requirements - whitelist/blacklist
+ *  NOTE: This is reserved for restricted P2AH addresses only. Basic P2AH addresses are kept simple.
+ */
+class CRestrictedP2AHAddressRequirements
+{
+public:
+    uint160 assetHash;                    // P2AH asset hash
+    std::string assetName;                // Asset name (for convenience)
+    
+    // Whitelist/Blacklist
+    std::set<std::string> setAllowedAssets;      // Whitelist (empty = allow all)
+    std::set<std::string> setBlockedAssets;     // Blacklist
+    bool fUseWhitelist;                          // true = whitelist mode, false = blacklist mode
+    
+    // Metadata
+    uint256 declarationTxHash;                   // Transaction that declared these requirements
+    int nDeclarationHeight;                     // Block height when declared
+    uint32_t nVersion;                           // Version for future extensions
+    
+    CRestrictedP2AHAddressRequirements() {
+        SetNull();
+    }
+    
+    void SetNull() {
+        assetHash = uint160();
+        assetName = "";
+        setAllowedAssets.clear();
+        setBlockedAssets.clear();
+        fUseWhitelist = false;
+        declarationTxHash = uint256();
+        nDeclarationHeight = 0;
+        nVersion = STANDARD_VERSION;  // Use STANDARD_VERSION for backward compatibility
+    }
+    
+    ADD_SERIALIZE_METHODS;
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        // Use version-based serialization for backward compatibility
+        // RVN nodes will skip this if they don't understand the version
+        HandleVersionSerialization(s, ser_action, nVersion);
+        
+        READWRITE(assetHash);
+        READWRITE(assetName);
+        
+        // Only serialize new fields if version >= TOLL_UPGRADE_VERSION
+        // This ensures RVN nodes can skip the rest if they don't understand it
+        // Note: P2AH features use TOLL_UPGRADE_VERSION for backward compatibility
+        if (nVersion >= TOLL_UPGRADE_VERSION) {
+            READWRITE(setAllowedAssets);
+            READWRITE(setBlockedAssets);
+            READWRITE(fUseWhitelist);
+            READWRITE(declarationTxHash);
+            READWRITE(nDeclarationHeight);
+        }
+    }
+    
+private:
+    template <typename Stream, typename Operation>
+    void HandleVersionSerialization(Stream& s, Operation ser_action, uint32_t& nVersion)
+    {
+        if (ser_action.ForRead()) {
+            unsigned int originalReadPos = s.nreadPos();
+            try {
+                READWRITE(nVersion);
+                
+                // If version is not recognized, rewind and use STANDARD_VERSION
+                // This allows RVN nodes to skip this structure
+                if (nVersion != TOLL_UPGRADE_VERSION && nVersion != STANDARD_VERSION) {
+                    s.Rewind(s.nreadPos() - originalReadPos);
+                    nVersion = STANDARD_VERSION;
+                }
+            } catch (const std::exception& e) {
+                s.Rewind(s.nreadPos() - originalReadPos);
+                nVersion = STANDARD_VERSION;
+            } catch (...) {
+                s.Rewind(s.nreadPos() - originalReadPos);
+                nVersion = STANDARD_VERSION;
+            }
+        } else {
+            // Only write the version if it isn't the original
+            if (nVersion >= TOLL_UPGRADE_VERSION) {
+                READWRITE(nVersion);
+            }
+        }
     }
 };
 
@@ -502,8 +710,8 @@ public:
     void HandleVersionSerialization(Stream& s, Operation ser_action, uint32_t& nVersion)
     {
         if (ser_action.ForRead()) {
+            unsigned int originalReadPos = s.nreadPos();
             try {
-                unsigned int originalReadPos = s.nreadPos();
                 READWRITE(nVersion);
 
                 if (nVersion != TOLL_UPGRADE_VERSION) {
@@ -511,10 +719,10 @@ public:
                     nVersion = STANDARD_VERSION;
                 }
             } catch (const std::exception& e) {
-                s.Rewind(s.nreadPos());
+                s.Rewind(s.nreadPos() - originalReadPos);
                 nVersion = STANDARD_VERSION;
             } catch (...) {
-                s.Rewind(s.nreadPos());
+                s.Rewind(s.nreadPos() - originalReadPos);
                 nVersion = STANDARD_VERSION;
             }
         } else {

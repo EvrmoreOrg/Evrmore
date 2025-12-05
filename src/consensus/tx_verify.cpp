@@ -13,6 +13,8 @@
 
 #include "consensus.h"
 #include "primitives/transaction.h"
+#include "primitives/block.h"
+#include "primitives/outpoint.h"
 #include "script/interpreter.h"
 #include "validation.h"
 #include <cmath>
@@ -643,6 +645,47 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
             if (!GetAssetData(coin.out.scriptPubKey, data))
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-failed-to-get-asset-from-script", false, "", tx.GetHash());
 
+            // Check if P2AH UTXO is locked by ephemeral asset
+            if (coin.out.scriptPubKey.IsP2AHAssetScript() && assetCache) {
+                std::string lockError;
+                // Check if locked (expired ephemeral assets don't lock the UTXO)
+                if (IsP2AHUTXOLocked(prevout, assetCache, lockError, 0, nBlocktime)) {
+                    // UTXO is locked by a non-expired ephemeral asset
+                    // Check if ephemeral assets are being spent to authorize it
+                    // This enables M-of-N multisig workflows
+                    std::string authError;
+                    if (!ValidateEphemeralAssetsAuthorizeSpending(tx, prevout, assetCache, authError, &inputs)) {
+                        return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-utxo-locked-by-ephemeral", false, authError, tx.GetHash());
+                    }
+                    // Ephemeral assets authorize spending - allow it
+                }
+                
+                // Check if this is an M-of-N multisig UTXO and if that specific M has already issued an ephemeral asset
+                if (IsP2AHMultisig(coin.out.scriptPubKey)) {
+                    // Extract M-of-N from the redeem script in scriptSig
+                    const CScript& scriptSig = tx.vin[i].scriptSig;
+                    CScript redeemScript;
+                    std::string redeemError;
+                    if (ExtractRedeemScriptFromScriptSig(scriptSig, redeemScript, redeemError)) {
+                        uint8_t m, n;
+                        std::string mnError;
+                        if (ExtractMultisigMNFromRedeemScript(redeemScript, m, n, mnError)) {
+                            // For M=1, proof-only ephemeral assets don't lock the UTXO, so allow direct spending
+                            // For M>1, if a UTXO ephemeral asset exists, require ephemeral assets to authorize spending
+                            if (m > 1) {
+                                // Check if this M-of-N has already created a UTXO ephemeral asset for this UTXO
+                                if (assetCache->HasMultisigEphemeralAsset(prevout, m, n)) {
+                                    std::string duplicateError = strprintf("M-of-N multisig (%d-of-%d) has already created an ephemeral asset for UTXO %s:%d. Cannot spend UTXO directly - must use ephemeral assets to authorize.", 
+                                                                          m, n, prevout.hash.ToString(), prevout.n);
+                                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-multisig-ephemeral-already-exists", false, duplicateError, tx.GetHash());
+                                }
+                            }
+                            // For M=1, proof-only ephemeral assets are allowed and don't prevent direct spending
+                        }
+                    }
+                }
+            }
+
             // Add to the total value of assets in the inputs
             if (totalInputs.count(data.assetName))
                 totalInputs.at(data.assetName) += data.nAmount;
@@ -718,6 +761,140 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
                 mapEVRSentInTransaction[toAddress] += txout.nValue;
             } else {
                 mapEVRSentInTransaction[toAddress] = txout.nValue;
+            }
+        }
+
+        // Check for P2AH restricted addresses in outputs
+        if (assetCache && IsP2AHRestricted(txout.scriptPubKey)) {
+            if (!AreRestrictedAssetsDeployed())
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-restricted-before-restricted-assets-activated", false, "", tx.GetHash());
+            // P2AH restricted addresses require additional validation (basic check complete)
+        }
+
+        // Check for P2AH chain signing addresses in outputs
+        if (IsP2AHChainSigning(txout.scriptPubKey)) {
+            // Validate chain signing: check if signing asset is spending target asset's UTXO
+            if (assetCache) {
+                // Check all inputs to see if any contain assets that match chain signing pattern
+                for (unsigned int inputIdx = 0; inputIdx < tx.vin.size(); ++inputIdx) {
+                    const COutPoint &prevout = tx.vin[inputIdx].prevout;
+                    const Coin& coin = inputs.AccessCoin(prevout);
+                    if (coin.IsAsset()) {
+                        CAssetOutputEntry inputData;
+                        if (GetAssetData(coin.out.scriptPubKey, inputData)) {
+                            // Check if input asset script is also a chain signing script
+                            if (coin.out.scriptPubKey.IsP2AHAssetScript() && IsP2AHChainSigning(coin.out.scriptPubKey)) {
+                                std::string strError;
+                                if (!ValidateP2AHChainSigning(tx, coin.out.scriptPubKey, txout.scriptPubKey, assetCache, nBlocktime, strError, &inputs)) {
+                                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-chain-signing-validation", false, strError, tx.GetHash());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check for P2AH ephemeral addresses in outputs
+        if (IsP2AHEphemeral(txout.scriptPubKey)) {
+            // Validate ephemeral asset expiration and burn fee
+            if (assetCache) {
+                std::string strError;
+                // Note: nBlockHeight not available in CheckTxAssets, using 0 as placeholder
+                // Full block height validation should be done at block validation level
+                // Proof-only ephemeral assets are validated but don't create UTXOs
+                if (!ValidateP2AHEphemeralAsset(txout.scriptPubKey, tx, assetCache, nBlocktime, 0, strError, &inputs)) {
+                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-ephemeral-validation", false, strError, tx.GetHash());
+                }
+                
+                // Check if this ephemeral asset is for an M-of-N multisig UTXO
+                // Validate that this M-of-N hasn't already created an ephemeral asset for the parent UTXO
+                // Check all inputs to find the parent UTXO
+                for (unsigned int inputIdx = 0; inputIdx < tx.vin.size(); ++inputIdx) {
+                    const COutPoint &prevout = tx.vin[inputIdx].prevout;
+                    const Coin& coin = inputs.AccessCoin(prevout);
+                    if (coin.IsAsset() && coin.out.scriptPubKey.IsP2AHAssetScript()) {
+                        // Check if this is a multisig UTXO
+                        if (IsP2AHMultisig(coin.out.scriptPubKey)) {
+                            // Extract M-of-N from the redeem script in scriptSig
+                            const CScript& scriptSig = tx.vin[inputIdx].scriptSig;
+                            CScript redeemScript;
+                            std::string redeemError;
+                            if (ExtractRedeemScriptFromScriptSig(scriptSig, redeemScript, redeemError)) {
+                                uint8_t m, n;
+                                std::string mnError;
+                                if (ExtractMultisigMNFromRedeemScript(redeemScript, m, n, mnError)) {
+                                    // For M=1 (1-of-N), allow proof-only ephemeral assets
+                                    // For M>1, require UTXO ephemeral assets
+                                    bool isProofOnly = IsEphemeralAssetProofOnly(txout.scriptPubKey, assetCache);
+                                    bool isUTXO = IsEphemeralAssetUTXO(txout.scriptPubKey, assetCache);
+                                    
+                                    if (m == 1) {
+                                        // M=1: Allow proof-only ephemeral assets
+                                        // No need to register or check duplicates for proof-only (they don't lock UTXOs)
+                                        if (isProofOnly) {
+                                            // Proof-only ephemeral assets for 1-of-N are allowed
+                                            // They don't create UTXOs or lock the parent UTXO
+                                            continue;
+                                        }
+                                    } else {
+                                        // M>1: Require UTXO ephemeral assets
+                                        if (isProofOnly) {
+                                            std::string error = strprintf("M-of-N multisig (%d-of-%d) requires UTXO ephemeral assets, but proof-only ephemeral asset provided for UTXO %s:%d", 
+                                                                         m, n, prevout.hash.ToString(), prevout.n);
+                                            return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-multisig-ephemeral-proof-only-invalid", false, error, tx.GetHash());
+                                        }
+                                        if (!isUTXO) {
+                                            std::string error = strprintf("M-of-N multisig (%d-of-%d) requires UTXO ephemeral assets for UTXO %s:%d", 
+                                                                         m, n, prevout.hash.ToString(), prevout.n);
+                                            return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-multisig-ephemeral-utxo-required", false, error, tx.GetHash());
+                                        }
+                                    }
+                                    
+                                    // For UTXO ephemeral assets (M>1 or M=1 with UTXO), check for duplicates
+                                    if (isUTXO) {
+                                        // Check if this M-of-N has already created an ephemeral asset for this UTXO
+                                        if (assetCache->HasMultisigEphemeralAsset(prevout, m, n)) {
+                                            std::string duplicateError = strprintf("M-of-N multisig (%d-of-%d) has already created an ephemeral asset for UTXO %s:%d", 
+                                                                                  m, n, prevout.hash.ToString(), prevout.n);
+                                            return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-multisig-ephemeral-duplicate", false, duplicateError, tx.GetHash());
+                                        }
+                                        
+                                        // Extract ephemeral asset hash
+                                        uint160 ephemeralHash;
+                                        if (ExtractAssetHashFromP2AH(txout.scriptPubKey, ephemeralHash)) {
+                                            // Register this M-of-N ephemeral asset
+                                            assetCache->RegisterMultisigEphemeralAsset(prevout, m, n, ephemeralHash);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Also check for duplicate using the general validation
+                        std::string multisigError;
+                        const CScript& scriptSig = tx.vin[inputIdx].scriptSig;
+                        if (!ValidateMultisigEphemeralNotDuplicate(coin.out.scriptPubKey, prevout, txout.scriptPubKey, scriptSig, assetCache, multisigError)) {
+                            return state.DoS(100, false, REJECT_INVALID, "bad-txns-p2ah-multisig-ephemeral-duplicate", false, multisigError, tx.GetHash());
+                        }
+                    }
+                }
+                
+                // Only UTXO ephemeral assets need to be tracked for burn fees
+                // Proof-only ephemeral assets are validated but don't create UTXOs or incur fees
+            }
+        }
+        
+        // Validate address requirements for RESTRICTED P2AH outputs only (receiving assets)
+        // Basic P2AH addresses have no requirements - keep it simple
+        if (IsP2AHRestricted(txout.scriptPubKey) && assetCache) {
+            // Check if this output contains a restricted P2AH asset that needs address requirement validation
+            CAssetOutputEntry outputData;
+            if (GetAssetData(txout.scriptPubKey, outputData)) {
+                std::string strError;
+                if (!ValidateRestrictedP2AHAddressRequirements(txout.scriptPubKey, outputData.assetName, outputData.nAmount, assetCache, strError)) {
+                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-restricted-p2ah-address-requirements", false, strError, tx.GetHash());
+                }
             }
         }
 
@@ -1030,7 +1207,210 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
     return true;
 }
 
+/** Structure to track ephemeral assets created in a block */
+bool TrackEphemeralAssetsInBlock(const CBlock& block, CAssetsCache* assetCache, 
+                                  const CCoinsViewCache& view, const CAmount& nBurnFee,
+                                  std::vector<EphemeralAssetInfo>& vEphemeralAssetsCreated,
+                                  CAmount& totalBurnFee, CValidationState& state)
+{
+    // Phase 1: Identify ephemeral assets created in this block
+    // IMPORTANT: Only track UTXO ephemeral assets (proof-only don't incur fees)
+    vEphemeralAssetsCreated.clear();
+    std::map<uint160, size_t> mapEphemeralAssetIndex;  // hash -> index in vector
+    
+    for (unsigned int i = 0; i < block.vtx.size(); ++i) {
+        const CTransaction& tx = *block.vtx[i];
+        for (unsigned int j = 0; j < tx.vout.size(); ++j) {
+            const CTxOut& txout = tx.vout[j];
+            
+            // Check if this is an ephemeral asset UTXO (not proof-only)
+            if (IsP2AHEphemeral(txout.scriptPubKey) && IsEphemeralAssetUTXO(txout.scriptPubKey, assetCache)) {
+                uint160 ephemeralHash;
+                if (!ExtractAssetHashFromP2AH(txout.scriptPubKey, ephemeralHash)) {
+                    continue;  // Skip if we can't extract hash
+                }
+                
+                EphemeralAssetInfo info;
+                info.assetHash = ephemeralHash;
+                info.creationTxHash = tx.GetHash();
+                info.nCreationOutputIndex = j;
+                info.fSpentInBlock = false;
+                info.fIsUTXO = true;
+                info.nBurnFee = nBurnFee;
+                
+                // Resolve asset name if possible
+                ResolveAssetNameFromHash(ephemeralHash, assetCache, info.assetName);
+                
+                // Find parent UTXO that this ephemeral asset locks
+                // Check transaction inputs for P2AH assets
+                for (unsigned int inputIdx = 0; inputIdx < tx.vin.size(); ++inputIdx) {
+                    const COutPoint &prevout = tx.vin[inputIdx].prevout;
+                    const Coin& coin = view.AccessCoin(prevout);
+                    if (coin.IsAsset() && coin.out.scriptPubKey.IsP2AHAssetScript()) {
+                        info.parentOutpoint = prevout;
+                        break;  // Use first P2AH asset input as parent
+                    }
+                }
+                
+                vEphemeralAssetsCreated.push_back(info);
+                mapEphemeralAssetIndex[ephemeralHash] = vEphemeralAssetsCreated.size() - 1;
+            }
+            // Note: Proof-only ephemeral assets are validated but not tracked for fees
+        }
+    }
+    
+    // Phase 2: Check if ephemeral assets are spent in this block
+    for (unsigned int i = 0; i < block.vtx.size(); ++i) {
+        const CTransaction& tx = *block.vtx[i];
+        for (const auto& vin : tx.vin) {
+            // Check if this input spends an ephemeral asset created in this block
+            COutPoint prevout = vin.prevout;
+            for (auto& info : vEphemeralAssetsCreated) {
+                if (info.creationTxHash == prevout.hash && 
+                    info.nCreationOutputIndex == prevout.n) {
+                    info.fSpentInBlock = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Phase 3: Calculate total burn fee for unused ephemeral assets
+    totalBurnFee = 0;
+    for (const auto& info : vEphemeralAssetsCreated) {
+        if (!info.fSpentInBlock) {
+            totalBurnFee += info.nBurnFee;
+        }
+    }
+    
+    // Phase 4: Validate burn fee is paid (if any)
+    // Check all transactions in the block for burn outputs to GlobalBurnAddress
+    if (totalBurnFee > 0) {
+        CAmount totalBurned = 0;
+        std::string globalBurnAddress = GetParams().GlobalBurnAddress();
+        
+        for (const auto& tx : block.vtx) {
+            for (const auto& txout : tx->vout) {
+                // Extract destination
+                CTxDestination destination;
+                if (!ExtractDestination(txout.scriptPubKey, destination)) {
+                    continue;
+                }
+                
+                // Check if this is a burn address
+                std::string strDestination = EncodeDestination(destination);
+                if (strDestination == globalBurnAddress) {
+                    totalBurned += txout.nValue;
+                }
+            }
+        }
+        
+        // Validate that burn fee requirement is met
+        if (totalBurned < totalBurnFee) {
+            std::string errorMsg = strprintf("Ephemeral asset burn fee not paid: required %d, found %d", 
+                                            totalBurnFee, totalBurned);
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-ephemeral-burn-fee-insufficient", 
+                           false, errorMsg);
+        }
+    }
+    
+    return true;
+}
 
-
+bool ProcessEphemeralAssetUTXOLocks(const CBlock& block, CAssetsCache* assetCache,
+                                     const CCoinsViewCache& view, CValidationState& state)
+{
+    if (!assetCache) {
+        return true;  // Can't process without cache
+    }
+    
+    // Phase 1: Lock UTXOs when ephemeral assets are created
+    for (unsigned int i = 0; i < block.vtx.size(); ++i) {
+        const CTransaction& tx = *block.vtx[i];
+        for (unsigned int j = 0; j < tx.vout.size(); ++j) {
+            const CTxOut& txout = tx.vout[j];
+            
+            // Check if this is a UTXO ephemeral asset
+            if (IsP2AHEphemeral(txout.scriptPubKey) && IsEphemeralAssetUTXO(txout.scriptPubKey, assetCache)) {
+                uint160 ephemeralHash;
+                if (!ExtractAssetHashFromP2AH(txout.scriptPubKey, ephemeralHash)) {
+                    continue;
+                }
+                
+                // Find parent UTXO and lock it
+                for (unsigned int inputIdx = 0; inputIdx < tx.vin.size(); ++inputIdx) {
+                    const COutPoint &prevout = tx.vin[inputIdx].prevout;
+                    const Coin& coin = view.AccessCoin(prevout);
+                    if (coin.IsAsset() && coin.out.scriptPubKey.IsP2AHAssetScript()) {
+                        // Lock the parent UTXO
+                        if (!assetCache->LockUTXOForEphemeral(prevout, ephemeralHash)) {
+                            return state.DoS(100, false, REJECT_INVALID, "bad-txns-ephemeral-utxo-lock-failed", false, 
+                                           strprintf("Failed to lock UTXO %s:%d for ephemeral asset", 
+                                                    prevout.hash.ToString(), prevout.n), tx.GetHash());
+                        }
+                        break;  // Only lock first parent UTXO
+                    }
+                }
+            }
+        }
+    }
+    
+    // Phase 2: Unlock UTXOs when ephemeral assets are spent
+    // When an ephemeral asset is spent, it unlocks the parent UTXO and that parent UTXO should be spent in the same transaction
+    for (unsigned int i = 0; i < block.vtx.size(); ++i) {
+        const CTransaction& tx = *block.vtx[i];
+        
+        // First, collect all ephemeral assets being spent in this transaction
+        std::vector<std::pair<uint160, COutPoint>> vEphemeralAssetsSpent;  // (ephemeralHash, ephemeralOutpoint)
+        for (const auto& vin : tx.vin) {
+            const Coin& coin = view.AccessCoin(vin.prevout);
+            if (coin.IsAsset() && IsP2AHEphemeral(coin.out.scriptPubKey)) {
+                uint160 ephemeralHash;
+                if (ExtractAssetHashFromP2AH(coin.out.scriptPubKey, ephemeralHash)) {
+                    vEphemeralAssetsSpent.push_back(std::make_pair(ephemeralHash, vin.prevout));
+                }
+            }
+        }
+        
+        // For each ephemeral asset being spent, find and unlock its parent UTXO
+        // The parent UTXO must exist and must be spent in this transaction
+        for (const auto& ephemeralPair : vEphemeralAssetsSpent) {
+            const uint160& ephemeralHash = ephemeralPair.first;
+            COutPoint parentOutpoint;
+            
+            // Find the parent UTXO that was locked by this ephemeral asset
+            // The parent UTXO MUST exist - if it doesn't, this is an error
+            if (!assetCache->FindParentUTXOByEphemeralHash(ephemeralHash, parentOutpoint)) {
+                // Parent UTXO not found - this is an error
+                // The ephemeral asset must have locked a parent UTXO that still exists
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-ephemeral-parent-not-found", false,
+                               strprintf("Ephemeral asset spent but parent UTXO not found (ephemeral hash: %s)",
+                                        ephemeralHash.ToString()), tx.GetHash());
+            }
+            
+            // Verify that the parent UTXO is being spent in this transaction
+            bool parentSpentInTx = false;
+            for (const auto& vin : tx.vin) {
+                if (vin.prevout == parentOutpoint) {
+                    parentSpentInTx = true;
+                    break;
+                }
+            }
+            
+            if (parentSpentInTx) {
+                // Parent UTXO is being spent - unlock it
+                assetCache->UnlockUTXOForEphemeral(parentOutpoint);
+            } else {
+                // Ephemeral asset is spent but parent UTXO is not - this is an error
+                // The ephemeral asset should authorize spending the parent UTXO in the same transaction
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-ephemeral-spent-without-parent", false,
+                               strprintf("Ephemeral asset spent but parent UTXO %s:%d not spent in same transaction",
+                                        parentOutpoint.hash.ToString(), parentOutpoint.n), tx.GetHash());
+            }
+        }
+    }
+    
+    return true;
+}
 
 
