@@ -53,6 +53,8 @@ public:
     enum Base58Type {
         PUBKEY_ADDRESS,
         SCRIPT_ADDRESS,
+        ASSET_ADDRESS,       // Direct asset addresses ('A' prefix)
+        ASSETHASH_ADDRESS,  // P2AH addresses - multisig, conditional signatures ('a' prefix)
         SECRET_KEY,
         EXT_PUBLIC_KEY,
         EXT_SECRET_KEY,
@@ -96,6 +98,7 @@ public:
     const CAmount& IssueAssetBurnAmount() const { return nIssueAssetBurnAmount; }
     const CAmount& ReissueAssetBurnAmount() const { return nReissueAssetBurnAmount; }
     const CAmount& IssueSubAssetBurnAmount() const { return nIssueSubAssetBurnAmount; }
+    const CAmount& EphemeralAssetBurnAmount() const { return nEphemeralAssetBurnAmount; }
     const CAmount& IssueUniqueAssetBurnAmount() const { return nIssueUniqueAssetBurnAmount; }
     const CAmount& IssueMsgChannelAssetBurnAmount() const { return nIssueMsgChannelAssetBurnAmount; }
     const CAmount& IssueQualifierAssetBurnAmount() const { return nIssueQualifierAssetBurnAmount; }
@@ -171,6 +174,7 @@ protected:
     CAmount nIssueAssetBurnAmount;
     CAmount nReissueAssetBurnAmount;
     CAmount nIssueSubAssetBurnAmount;
+    CAmount nEphemeralAssetBurnAmount;
     CAmount nIssueUniqueAssetBurnAmount;
     CAmount nIssueMsgChannelAssetBurnAmount;
     CAmount nIssueQualifierAssetBurnAmount;

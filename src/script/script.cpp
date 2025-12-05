@@ -148,6 +148,15 @@ const char* GetOpName(opcodetype opcode)
     case OP_EVR_ASSET              : return "OP_EVR_ASSET";
     /** RVN END */
 
+    /** P2AH START */
+    case OP_P2AH_BASE              : return "OP_P2AH_BASE";
+    case OP_P2AH_MULTISIG          : return "OP_P2AH_MULTISIG";
+    case OP_P2AH_CHAIN_SIGNING     : return "OP_P2AH_CHAIN_SIGNING";
+    case OP_P2AH_RESTRICTED        : return "OP_P2AH_RESTRICTED";
+    // Reserved opcode case for future use
+    case OP_P2AH_EPHEMERAL         : return "OP_P2AH_EPHEMERAL";
+    /** P2AH END */
+
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
     // Note:
@@ -312,6 +321,23 @@ bool CScript::IsP2SHAssetScript() const
     bool isOwner = false;
     IsAssetScript(nType, nScriptType, isOwner);
     return nScriptType == TX_SCRIPTHASH;
+}
+
+bool CScript::IsP2AHAssetScript() const
+{
+    // P2AH scripts: OP_HASH160 <20-byte hash> OP_EQUAL [OP_P2AH_*]
+    if (this->size() >= 24 && 
+        (*this)[0] == OP_HASH160 && 
+        (*this)[1] == 0x14 && 
+        (*this)[22] == OP_EQUAL) {
+        opcodetype p2ahOpcode = (opcodetype)(*this)[23];
+        return (p2ahOpcode == OP_P2AH_BASE ||
+                p2ahOpcode == OP_P2AH_MULTISIG ||
+                p2ahOpcode == OP_P2AH_CHAIN_SIGNING ||
+                p2ahOpcode == OP_P2AH_RESTRICTED ||
+                p2ahOpcode == OP_P2AH_EPHEMERAL);
+    }
+    return false;
 }
 
 

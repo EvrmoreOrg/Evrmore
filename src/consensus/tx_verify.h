@@ -17,12 +17,14 @@
 class CBlockIndex;
 class CCoinsViewCache;
 class CTransaction;
+class CBlock;
 class CValidationState;
 class CAssetsCache;
 class CTxOut;
 class uint256;
 class CMessage;
 class CNullAssetTxData;
+class COutPoint;
 
 /** Transaction validation functions */
 
@@ -42,6 +44,30 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
 bool CheckTxAssets(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, CAssetsCache* assetCache, bool fCheckMempool, std::vector<std::pair<std::string, uint256> >& vPairReissueAssets, const bool fRunningUnitTests = false, std::set<CMessage>* setMessages = nullptr, int64_t nBlocktime = 0,  std::vector<std::pair<std::string, CNullAssetTxData>>* myNullAssetData = nullptr);
 /** RVN END */
 } // namespace Consensus
+
+/** Structure to track ephemeral assets created in a block */
+struct EphemeralAssetInfo {
+    uint160 assetHash;
+    std::string assetName;
+    uint256 creationTxHash;
+    int nCreationOutputIndex;
+    CAmount nBurnFee;
+    bool fSpentInBlock;
+    bool fIsUTXO;  // true if UTXO was created, false if proof-only
+    COutPoint parentOutpoint;  // UTXO that was locked by this ephemeral asset
+    
+    EphemeralAssetInfo() : fSpentInBlock(false), fIsUTXO(false), nBurnFee(0), nCreationOutputIndex(0) {}
+};
+
+/** Track ephemeral assets created in current block and calculate burn fees */
+bool TrackEphemeralAssetsInBlock(const CBlock& block, CAssetsCache* assetCache, 
+                                  const CCoinsViewCache& view, const CAmount& nBurnFee,
+                                  std::vector<EphemeralAssetInfo>& vEphemeralAssetsCreated,
+                                  CAmount& totalBurnFee, CValidationState& state);
+
+/** Lock/unlock UTXOs when ephemeral assets are created/spent */
+bool ProcessEphemeralAssetUTXOLocks(const CBlock& block, CAssetsCache* assetCache,
+                                     const CCoinsViewCache& view, CValidationState& state);
 
 /** Auxiliary functions for transaction validation (ideally should not be exposed) */
 

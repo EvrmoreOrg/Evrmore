@@ -129,6 +129,16 @@ public:
     bool EraseAssetAddressQuantity(const std::string &assetName, const std::string &address);
     bool EraseAddressAssetQuantity(const std::string &address, const std::string &assetName);
 
+    // Restricted P2AH address requirements methods (reserved for restricted P2AH addresses only)
+    bool WriteRestrictedP2AHAddressRequirements(const uint160& assetHash, const CRestrictedP2AHAddressRequirements& requirements);
+    bool ReadRestrictedP2AHAddressRequirements(const uint160& assetHash, CRestrictedP2AHAddressRequirements& requirements);
+    bool EraseRestrictedP2AHAddressRequirements(const uint160& assetHash);
+    
+    // P2AH multisig signing requirements methods
+    bool WriteP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, const CP2AHMultisigSigningRequirements& requirements);
+    bool ReadP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, CP2AHMultisigSigningRequirements& requirements);
+    bool EraseP2AHMultisigSigningRequirements(const uint160& multisigAssetHash);
+
     // Helper functions
     bool LoadAssets();
     bool AssetDir(std::vector<CDatabasedAssetData>& assets, const std::string filter, const size_t count, const long start);

@@ -2599,6 +2599,12 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             }
 
             /** RVN END */
+            
+            // Process ephemeral asset UTXO locks/unlocks
+            if (AreAssetsDeployed() && assetsCache) {
+                // Note: This processes locks/unlocks for the current transaction
+                // Full block-level processing happens after all transactions are validated
+            }
 
             // Check that transaction is BIP68 final
             // BIP68 lock checks (as opposed to nLockTime checks) must
@@ -2797,6 +2803,24 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     }
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
+
+    // Track ephemeral assets and calculate burn fees
+    if (AreAssetsDeployed() && assetsCache) {
+        std::vector<EphemeralAssetInfo> vEphemeralAssetsCreated;
+        CAmount totalEphemeralBurnFee = 0;
+        if (!TrackEphemeralAssetsInBlock(block, assetsCache, view, chainparams.EphemeralAssetBurnAmount(), 
+                                         vEphemeralAssetsCreated, totalEphemeralBurnFee, state)) {
+            return error("%s: TrackEphemeralAssetsInBlock failed: %s", __func__, FormatStateMessage(state));
+        }
+        
+        // Process UTXO locks/unlocks for ephemeral assets
+        if (!ProcessEphemeralAssetUTXOLocks(block, assetsCache, view, state)) {
+            return error("%s: ProcessEphemeralAssetUTXOLocks failed: %s", __func__, FormatStateMessage(state));
+        }
+        
+        // Burn fee validation is done in TrackEphemeralAssetsInBlock()
+        // If validation fails, TrackEphemeralAssetsInBlock will return false and we'll error out above
+    }
 
     CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
     // EVR - add exception for the Genesis block to support the funds for the airdrop

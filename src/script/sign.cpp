@@ -174,6 +174,11 @@ bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& fromPu
         modifiedScript = CScript(fromPubKey.begin(), fromPubKey.begin() + 23);
         script = modifiedScript;
     }
+    // If this is a P2AH Asset Script, grab the P2SH section of the script (same pattern)
+    else if(fromPubKey.IsP2AHAssetScript()) {
+        modifiedScript = CScript(fromPubKey.begin(), fromPubKey.begin() + 23);
+        script = modifiedScript;
+    }
 
     std::vector<valtype> result;
     txnouttype whichType;
@@ -454,7 +459,7 @@ SignatureData CombineSignatures(const CScript& scriptPubKey, const BaseSignature
     CScript modifiedScript = scriptPubKey;
 
     // If this is a P2SH Asset Script, grab the P2SH section of the script
-    if(scriptPubKey.IsP2SHAssetScript()) {
+    if(scriptPubKey.IsP2SHAssetScript() || scriptPubKey.IsP2AHAssetScript()) {
         modifiedScript = CScript(scriptPubKey.begin(), scriptPubKey.begin() + 23);
     }
 

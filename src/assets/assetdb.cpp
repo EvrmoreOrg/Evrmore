@@ -18,6 +18,7 @@ static const char ADDRESS_ASSET_QUANTITY_FLAG = 'C';
 static const char MY_ASSET_FLAG = 'M';
 static const char BLOCK_ASSET_UNDO_DATA = 'U';
 static const char MEMPOOL_REISSUED_TX = 'Z';
+static const char ADDRESS_REQUIREMENTS_FLAG = 'R';  // restricted P2AH address requirements
 
 static size_t MAX_DATABASE_RESULTS = 50000;
 
@@ -114,6 +115,36 @@ bool CAssetsDB::ReadReissuedMempoolState()
             mapReissuedTx.insert(std::make_pair(pair.second, pair.first));
     }
     return rv;
+}
+
+bool CAssetsDB::WriteRestrictedP2AHAddressRequirements(const uint160& assetHash, const CRestrictedP2AHAddressRequirements& requirements)
+{
+    return Write(std::make_pair(ADDRESS_REQUIREMENTS_FLAG, assetHash), requirements);
+}
+
+bool CAssetsDB::ReadRestrictedP2AHAddressRequirements(const uint160& assetHash, CRestrictedP2AHAddressRequirements& requirements)
+{
+    return Read(std::make_pair(ADDRESS_REQUIREMENTS_FLAG, assetHash), requirements);
+}
+
+bool CAssetsDB::EraseRestrictedP2AHAddressRequirements(const uint160& assetHash)
+{
+    return Erase(std::make_pair(ADDRESS_REQUIREMENTS_FLAG, assetHash));
+}
+
+bool CAssetsDB::WriteP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, const CP2AHMultisigSigningRequirements& requirements)
+{
+    return Write(std::make_pair('M', multisigAssetHash), requirements);  // 'M' for Multisig
+}
+
+bool CAssetsDB::ReadP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, CP2AHMultisigSigningRequirements& requirements)
+{
+    return Read(std::make_pair('M', multisigAssetHash), requirements);
+}
+
+bool CAssetsDB::EraseP2AHMultisigSigningRequirements(const uint160& multisigAssetHash)
+{
+    return Erase(std::make_pair('M', multisigAssetHash));
 }
 
 bool CAssetsDB::LoadAssets()

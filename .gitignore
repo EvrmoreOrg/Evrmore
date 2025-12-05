@@ -124,3 +124,6 @@ cmake-build-debug
 CMakeLists.txt
 contrib/devtools/split-debug.sh
 
+# Python utility scripts
+find_base58_prefix.py
+

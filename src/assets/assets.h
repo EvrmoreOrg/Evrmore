@@ -180,6 +180,16 @@ public :
     std::map<CAssetCacheRootQualifierChecker, std::set<std::string> > mapRootQualifierAddressesAdd;
     std::map<CAssetCacheRootQualifierChecker, std::set<std::string> > mapRootQualifierAddressesRemove;
 
+    //! Restricted P2AH Address Requirements Cache (reserved for restricted P2AH addresses only)
+    std::map<uint160, CRestrictedP2AHAddressRequirements> mapRestrictedP2AHAddressRequirements;
+    std::map<uint160, CP2AHMultisigSigningRequirements> mapP2AHMultisigSigningRequirements;
+
+    //! P2AH Ephemeral Asset Lock Tracking
+    // Maps UTXO (COutPoint) to ephemeral asset hash that locks it
+    std::map<COutPoint, uint160> mapLockedUTXOs;
+    //! UTXOs that have been explicitly unlocked (overrides parent cache locks)
+    std::set<COutPoint> setUnlockedUTXOs;
+
     //! Burn Mint Tracking Caches
     std::set<CAssetCacheNewTransfer> setNewBurnsToAdd;
     std::set<CAssetCacheNewTransfer> setNewBurnsToRemove;
@@ -232,9 +242,17 @@ public :
         this->mapRootQualifierAddressesAdd = cache.mapRootQualifierAddressesAdd;
         this->mapRootQualifierAddressesRemove = cache.mapRootQualifierAddressesRemove;
 
+        //! Restricted P2AH Address Requirements Cache
+        this->mapRestrictedP2AHAddressRequirements = cache.mapRestrictedP2AHAddressRequirements;
+        this->mapP2AHMultisigSigningRequirements = cache.mapP2AHMultisigSigningRequirements;
+
         //! Burn Mint Tracking Caches
         this->setNewBurnsToAdd = cache.setNewBurnsToAdd;
         this->setNewBurnsToRemove = cache.setNewBurnsToRemove;
+
+        //! P2AH Ephemeral Asset Lock Tracking
+        this->mapLockedUTXOs = cache.mapLockedUTXOs;
+        this->setUnlockedUTXOs = cache.setUnlockedUTXOs;
     }
 
     CAssetsCache& operator=(const CAssetsCache& cache)
@@ -282,9 +300,17 @@ public :
         this->mapRootQualifierAddressesAdd = cache.mapRootQualifierAddressesAdd;
         this->mapRootQualifierAddressesRemove = cache.mapRootQualifierAddressesRemove;
 
+        //! Restricted P2AH Address Requirements Cache
+        this->mapRestrictedP2AHAddressRequirements = cache.mapRestrictedP2AHAddressRequirements;
+        this->mapP2AHMultisigSigningRequirements = cache.mapP2AHMultisigSigningRequirements;
+
         //! Burn Mint Tracking Caches
         this->setNewBurnsToAdd = cache.setNewBurnsToAdd;
         this->setNewBurnsToRemove = cache.setNewBurnsToRemove;
+
+        //! P2AH Ephemeral Asset Lock Tracking
+        this->mapLockedUTXOs = cache.mapLockedUTXOs;
+        this->setUnlockedUTXOs = cache.setUnlockedUTXOs;
 
         return *this;
     }
@@ -323,6 +349,10 @@ public :
     //! Returns true if an asset with the name exists, and it was able to get the asset metadata from database
     bool GetAssetMetaDataIfExists(const std::string &name, CNewAsset &asset);
     bool GetAssetMetaDataIfExists(const std::string &name, CNewAsset &asset, int& nHeight, uint256& blockHash);
+    
+    //! Returns true if an ephemeral asset with the name exists, and it was able to get the ephemeral asset metadata from database
+    bool GetEphemeralAssetMetaDataIfExists(const std::string &name, CEphemeralAsset &ephemeralAsset);
+    bool GetEphemeralAssetMetaDataIfExists(const std::string &name, CEphemeralAsset &ephemeralAsset, int& nHeight, uint256& blockHash);
 
     //! Returns true if the Asset Verifier String was found for an asset_name, if fSkipTempCache is true, it will only search passets pointer and databases
     bool GetAssetVerifierStringIfExists(const std::string &name, CNullAssetTxVerifierString& verifier, bool fSkipTempCache = false);
@@ -335,6 +365,26 @@ public :
 
     //! Return true if the restricted asset is globally freezing trading
     bool CheckForGlobalRestriction(const std::string &restricted_name, bool fSkipTempCache = false);
+
+    //! Restricted P2AH Address Requirements methods (reserved for restricted P2AH addresses only)
+    bool GetRestrictedP2AHAddressRequirements(const uint160& assetHash, CRestrictedP2AHAddressRequirements& requirements);
+    bool SetRestrictedP2AHAddressRequirements(const uint160& assetHash, const CRestrictedP2AHAddressRequirements& requirements);
+    
+    //! P2AH Multisig Signing Requirements methods
+    bool GetP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, CP2AHMultisigSigningRequirements& requirements);
+    bool SetP2AHMultisigSigningRequirements(const uint160& multisigAssetHash, const CP2AHMultisigSigningRequirements& requirements);
+
+    //! P2AH Ephemeral Asset Locking methods
+    bool IsUTXOLockedByEphemeral(const COutPoint& outpoint) const;
+    bool GetLockingEphemeralHash(const COutPoint& outpoint, uint160& ephemeralHash) const;
+    bool LockUTXOForEphemeral(const COutPoint& outpoint, const uint160& ephemeralAssetHash);
+    bool UnlockUTXOForEphemeral(const COutPoint& outpoint);
+    //! Find parent UTXO locked by a specific ephemeral asset hash
+    bool FindParentUTXOByEphemeralHash(const uint160& ephemeralHash, COutPoint& parentOutpoint) const;
+    
+    //! P2AH M-of-N Ephemeral Asset Tracking methods
+    bool HasMultisigEphemeralAsset(const COutPoint& outpoint, uint8_t m, uint8_t n) const;
+    bool RegisterMultisigEphemeralAsset(const COutPoint& outpoint, uint8_t m, uint8_t n, const uint160& ephemeralAssetHash);
 
     //! Calculate the size of the CAssets (in bytes)
     size_t DynamicMemoryUsage() const;
@@ -451,6 +501,9 @@ bool IsAssetNameASubQualifier(const std::string& name);
 bool IsAssetNameAnMsgChannel(const std::string& name);
 
 bool IsAssetNameARoot(const std::string& name);
+
+//! Check if an asset is an ephemeral asset
+bool IsAssetNameAnEphemeral(const std::string& name);
 
 //! Get the root name of an asset
 std::string GetParentName(const std::string& name); // Gets the parent name of a subasset TEST/TESTSUB would return TEST

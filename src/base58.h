@@ -105,6 +105,9 @@ class CEvrmoreAddress : public CBase58Data {
 public:
     bool Set(const CKeyID &id);
     bool Set(const CScriptID &id);
+    bool SetAssetAddress(const CAssetID &assetID);      // Direct asset address ('A' prefix)
+    bool SetAssetHashAddress(const CAssetID &assetID);   // P2AH address - multisig, conditional ('a' prefix)
+    bool Set(const CAssetID &assetID);                   // Defaults to ASSETHASH_ADDRESS for backward compatibility
     bool Set(const CTxDestination &dest);
     bool IsValid() const;
     bool IsValid(const CChainParams &params) const;
