@@ -1,7 +1,18 @@
 
 # This is the respository for Evrmore Core
 
-Evrmore is a fork of Ravencoin https://github.com/RavenProject/Ravencoin
+### A note about branches
+
+This repository contains (at least) 3 git branches which serve the following purposes:
+
+    branch "release_v1.0.5.1"
+        This branch contains the code used to generate the "official release" binary executables of the latest mainnet release of Evmore Core.
+
+    branch "maintenance"
+        This branch is for updates to the latest mainnet release which are low risk and which do not affect blockchain consensus. It will contain bug fixes and changes to support updated operating systems and dependencies. This branch is not the lowest risk most tested code for Core. Since it is work-in-process, it may not build properly. But if you want a particular bug fix or update, and you want to build Core binaries for youself, then this is the best code for you.
+
+    branch "develop"
+        This branch contains possible future changes to Evrmore Core which add major new features, which change blockchain consensus, or which may be considered risky. This code is generally deployed to the testnet network during development. You should not use this code unless you are doing Core development work.
 
 ### What is Evrmore?
 
