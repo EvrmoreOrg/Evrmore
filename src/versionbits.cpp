@@ -11,7 +11,7 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
     {
         /*.name =*/ "testdummy",
         /*.gbt_force =*/ true,
-//  },
+    },
 //	{
 //		/*.name =*/ "segwit",
 //		/*.gbt_force =*/ true,
@@ -19,6 +19,10 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
 //  {
 //      /*.name =*/ "assets",
 //      /*.gbt_force =*/ true,
+//  },
+    {
+        /*.name =*/ "transfer_overflow",
+        /*.gbt_force =*/ true,
      }
 };
 

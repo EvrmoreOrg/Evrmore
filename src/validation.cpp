@@ -5879,6 +5879,11 @@ void SetEnforcedCoinbase(bool value) {
     fCheckCoinbaseAssetsIsActive = value;
 }
 
+// Only used by test framework
+void SetTransferOverflow(bool value) {
+    fCheckTransferOverflowIsActive = value;
+}
+
 bool AreEnforcedValuesDeployed() {
     fEnforcedValuesIsActive = true;
     return fEnforcedValuesIsActive;
@@ -5926,6 +5931,18 @@ bool IsRestrictedActive(unsigned int nBlockNumber) {
 
 bool AreP2SHAssetsAllowed() {
     return true;
+}
+
+bool IsTransferOverflowCheckDeployed()
+{
+    if (fCheckTransferOverflowIsActive)
+        return true;
+
+    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_TRANSFER_OVERFLOW);
+    if (thresholdState == THRESHOLD_ACTIVE)
+        fCheckTransferOverflowIsActive = true;
+
+    return fCheckTransferOverflowIsActive;
 }
 
 CAssetsCache* GetCurrentAssetCache() {

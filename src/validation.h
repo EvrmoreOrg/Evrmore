@@ -602,9 +602,12 @@ bool AreCoinbaseCheckAssetsDeployed();
 
 bool AreP2SHAssetsAllowed();
 
+bool IsTransferOverflowCheckDeployed();
+
 // Only used by test framework
 void SetEnforcedValues(bool value);
 void SetEnforcedCoinbase(bool value);
+void SetTransferOverflow(bool value);
 
 bool IsRip5Active();
 

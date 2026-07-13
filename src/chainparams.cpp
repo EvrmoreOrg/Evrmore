@@ -218,6 +218,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nOverrideMinerConfirmationWindow = 2016; // Approx 90% of 2016
         // Removed the Ravencoin BIP9 parameters for ASSETS (RIP2), MSG_REST_ASSETS (RIP5), TRANSFER_SCRIPT_SIZE, 
         //     ENFORCE_VALUE, COINBASE_ASSETS, and P2SH_ASSETS
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].bit = 6;  // Asset transfer overflow check
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nStartTime = 1780704001; // UTC: Sat June 06 2026 12:00:01
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nTimeout = 1783382399; // UTC: Mon July 06 2026 23:59:59
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideRuleChangeActivationThreshold = 1411; // Approx 70% of 2016
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideMinerConfirmationWindow = 2016;
 
         // The best chain should have at least this much work
         // consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000020d4ac871fb7009b63"); // Block 1186833
@@ -381,6 +386,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nOverrideMinerConfirmationWindow = 2016; // Approx 90% of 2016
         // Removed the Ravencoin BIP9 parameters for ASSETS (RIP2), MSG_REST_ASSETS (RIP5), TRANSFER_SCRIPT_SIZE, 
         //     ENFORCE_VALUE, COINBASE_ASSETS, and P2SH_ASSETS
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].bit = 6;  // Asset transfer overflow check
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nStartTime = 1780704001; // UTC: Sat June 06 2026 12:00:01
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nTimeout = 1783382399; // UTC: Mon July 06 2026 23:59:59
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideRuleChangeActivationThreshold = 1411; // Approx 70% of 2016
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideMinerConfirmationWindow = 2016;
 
         // The best chain should have at least this much work.
         //consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000168050db560b4");
@@ -533,6 +543,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nOverrideMinerConfirmationWindow = 2016; // Approx 90% of 2016
         // Removed the Ravencoin BIP9 parameters for ASSETS (RIP2), MSG_REST_ASSETS (RIP5), TRANSFER_SCRIPT_SIZE, 
         //     ENFORCE_VALUE, COINBASE_ASSETS, and P2SH_ASSETS
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].bit = 6;  // Asset transfer overflow check
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideRuleChangeActivationThreshold = 400;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideMinerConfirmationWindow = 500;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");

@@ -42,6 +42,7 @@ UNUSED_VAR static bool fRip5IsActive = true;
 UNUSED_VAR static bool fTransferScriptIsActive = true;
 UNUSED_VAR static bool fEnforcedValuesIsActive = true;
 UNUSED_VAR static bool fCheckCoinbaseAssetsIsActive = true;
+UNUSED_VAR static bool fCheckTransferOverflowIsActive = false;
 
 unsigned int GetMaxBlockWeight();
 unsigned int GetMaxBlockSerializedSize();
