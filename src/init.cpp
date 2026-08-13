@@ -1575,7 +1575,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                     delete pDistributeSnapshotDb;
 
                     // Basic assets
-                    passetsdb = new CAssetsDB(nBlockTreeDBCache, false, fReset);
+                    passetsdb = new CAssetsDB(nBlockTreeDBCache, false, fReset || fReindexChainState);
                     passets = new CAssetsCache();
                     passetsCache = new CLRUCache<std::string, CDatabasedAssetData>(MAX_CACHE_ASSETS_SIZE);
 
@@ -1590,7 +1590,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                     pmyrestricteddb = new CMyRestrictedDB(nBlockTreeDBCache, false, false);
 
                     // Restricted assets
-                    prestricteddb = new CRestrictedDB(nBlockTreeDBCache, false, fReset);
+                    prestricteddb = new CRestrictedDB(nBlockTreeDBCache, false, fReset || fReindexChainState);
                     passetsVerifierCache = new CLRUCache<std::string, CNullAssetTxVerifierString>(
                             MAX_CACHE_ASSETS_SIZE);
                     passetsQualifierCache = new CLRUCache<std::string, int8_t>(MAX_CACHE_ASSETS_SIZE);
