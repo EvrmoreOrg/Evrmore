@@ -4234,6 +4234,15 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
 
+    // The height declared inside the KAWPOW header feeds the PoW hash, the DAG epoch
+    // and the ProgPoW period. It must match the actual height of the block.
+    // The lack of this check was responsible for the Ravencoin DAG/GPU-bypass mining bug.
+    if (fEvrprogpowAsMiningAlgo && block.nHeight != (uint32_t)nHeight) {
+        return state.DoS(100,
+                         error("%s: declared header height %u does not match chain height %d",
+                               __func__, block.nHeight, nHeight),
+                         REJECT_INVALID, "bad-blk-height");
+    }
     // Check against checkpoints
     if (fCheckpointsEnabled) {
         // Don't accept any forks from the main chain prior to last checkpoint.
